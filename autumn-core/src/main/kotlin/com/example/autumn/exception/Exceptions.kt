@@ -7,3 +7,5 @@ class BeanTypeException(override val message: String) : BeanDefinitionException(
 class NoSuchBeanException(override val message: String) : BeanDefinitionException(message)
 class NoUniqueBeanException(override val message: String) : BeanDefinitionException(message)
 class DependencyException(override val message: String) : BeanCreationException(message)
+
+class AopConfigException(override val message: String?, override val cause: Throwable? = null) : Throwable()

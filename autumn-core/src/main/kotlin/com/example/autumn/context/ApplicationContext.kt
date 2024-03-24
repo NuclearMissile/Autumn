@@ -2,8 +2,8 @@ package com.example.autumn.context
 
 import com.example.autumn.annotation.*
 import com.example.autumn.exception.*
-import com.example.autumn.resolver.PropertyResolver
-import com.example.autumn.resolver.ResourceResolver
+import com.example.autumn.io.PropertyResolver
+import com.example.autumn.io.ResourceResolver
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import com.example.autumn.utils.ClassUtils.findAnnotationMethod
 import com.example.autumn.utils.ClassUtils.getAnnotation
