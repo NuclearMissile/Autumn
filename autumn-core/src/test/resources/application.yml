@@ -1,9 +1,9 @@
 app:
-  title: Summer Framework
+  title: Autumn Framework
   version: 1.0.0
 
 # standard structure for datasource, mail, etc:
-summer:
+autumn:
   datasource:
     url: jdbc:hsqldb:file:testdb.tmp
     username: sa

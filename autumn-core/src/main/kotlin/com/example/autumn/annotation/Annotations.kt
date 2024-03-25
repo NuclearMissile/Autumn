@@ -13,7 +13,8 @@ annotation class AllOpen
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
     AnnotationTarget.PROPERTY_SETTER,
-    AnnotationTarget.VALUE_PARAMETER
+    AnnotationTarget.VALUE_PARAMETER,
+    AnnotationTarget.CONSTRUCTOR
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
@@ -120,3 +121,9 @@ annotation class Around(
      */
     val value: String
 )
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+@Inherited
+annotation class Transactional(val value: String = "transactionManager")

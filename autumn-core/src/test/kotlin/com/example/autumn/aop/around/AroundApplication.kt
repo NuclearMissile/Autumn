@@ -49,5 +49,5 @@ class OriginBean {
 
 @Order(0)
 @Component
-class OtherBean(@Autowired var origin: OriginBean)
+class OtherBean @Autowired constructor(val origin: OriginBean)
 

@@ -1,13 +1,48 @@
 package com.example.scan
 
+import com.example.autumn.annotation.Autowired
 import com.example.autumn.annotation.Component
 import com.example.autumn.annotation.Value
 import java.time.*
 
 @Component
-class ValueConverterBean {
+class ValueConverterBean @Autowired constructor(
+    @Value("\${convert.short}")
+    val injectedShortPrimitive: Short,
+    @Value("\${convert.short}")
+    val injectedShort: Short?,
+    @Value("\${convert.integer}")
+    val injectedIntPrimitive: Int,
+    @Value("\${convert.integer}")
+    val injectedInteger: Int?,
+    @Value("\${convert.long}")
+    val injectedLongPrimitive: Long,
+    @Value("\${convert.long}")
+    val injectedLong: Long?,
+    @Value("\${convert.float}")
+    val injectedFloatPrimitive: Float,
+    @Value("\${convert.float}")
+    val injectedFloat: Float?,
+    @Value("\${convert.double}")
+    val injectedDoublePrimitive: Double,
+    @Value("\${convert.double}")
+    val injectedDouble: Double?,
+    @Value("\${convert.localdate}")
+    val injectedLocalDate: LocalDate?,
+    @Value("\${convert.localtime}")
+    val injectedLocalTime: LocalTime?,
+    @Value("\${convert.localdatetime}")
+    val injectedLocalDateTime: LocalDateTime?,
+    @Value("\${convert.zoneddatetime}")
+    val injectedZonedDateTime: ZonedDateTime?,
+    @Value("\${convert.duration}")
+    val injectedDuration: Duration?,
+    @Value("\${convert.zoneid}")
+    val injectedZoneId: ZoneId?,
+    val studentBean: StudentBean,
+) {
     @Value("\${convert.boolean}")
-    var injectedBooleanPrimitive: Boolean = false
+    var injectedBooleanPrimitive: Boolean = true
 
     @Value("\${convert.boolean}")
     var injectedBoolean: Boolean? = null
@@ -18,51 +53,6 @@ class ValueConverterBean {
     @Value("\${convert.byte}")
     var injectedByte: Byte? = null
 
-    @Value("\${convert.short}")
-    var injectedShortPrimitive: Short = 0
-
-    @Value("\${convert.short}")
-    var injectedShort: Short? = null
-
-    @Value("\${convert.integer}")
-    var injectedIntPrimitive: Int = 0
-
-    @Value("\${convert.integer}")
-    var injectedInteger: Int? = null
-
-    @Value("\${convert.long}")
-    var injectedLongPrimitive: Long = 0
-
-    @Value("\${convert.long}")
-    var injectedLong: Long? = null
-
-    @Value("\${convert.float}")
-    var injectedFloatPrimitive: Float = 0f
-
-    @Value("\${convert.float}")
-    var injectedFloat: Float? = null
-
-    @Value("\${convert.double}")
-    var injectedDoublePrimitive: Double = 0.0
-
-    @Value("\${convert.double}")
-    var injectedDouble: Double? = null
-
-    @Value("\${convert.localdate}")
-    var injectedLocalDate: LocalDate? = null
-
-    @Value("\${convert.localtime}")
-    var injectedLocalTime: LocalTime? = null
-
-    @Value("\${convert.localdatetime}")
-    var injectedLocalDateTime: LocalDateTime? = null
-
-    @Value("\${convert.zoneddatetime}")
-    var injectedZonedDateTime: ZonedDateTime? = null
-
-    @Value("\${convert.duration}")
-    var injectedDuration: Duration? = null
-
-    @Value("\${convert.zoneid}")
-    var injectedZoneId: ZoneId? = null
+    @Autowired
+    var teacherBean: TeacherBean? = null
 }

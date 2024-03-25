@@ -4,10 +4,6 @@ import com.example.autumn.io.PropertyResolver
 import com.example.imported.LocalDateConfiguration
 import com.example.imported.ZonedDateConfiguration
 import com.example.scan.*
-import com.example.scan.InjectProxyOnConstructorBean
-import com.example.scan.InjectProxyOnPropertyBean
-import com.example.scan.OriginBean
-import com.example.scan.SecondProxyBean
 import com.example.scan.sub1.Sub1Bean
 import com.example.scan.sub1.sub2.Sub2Bean
 import com.example.scan.sub1.sub2.sub3.Sub3Bean
@@ -99,6 +95,9 @@ class AnnotationConfigApplicationContextTest {
             assertEquals(ZonedDateTime.parse("2023-03-29T20:45:01+08:00[Asia/Shanghai]"), bean.injectedZonedDateTime)
             assertEquals(Duration.parse("P2DT3H4M"), bean.injectedDuration)
             assertEquals(ZoneId.of("Asia/Shanghai"), bean.injectedZoneId)
+
+            assertNotNull(bean.studentBean)
+            assertTrue(bean.teacherBean is TeacherBean)
         }
     }
 

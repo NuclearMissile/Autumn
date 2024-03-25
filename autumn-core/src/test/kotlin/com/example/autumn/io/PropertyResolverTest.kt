@@ -13,23 +13,25 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+
 class PropertyResolverTest {
     @Test
     fun propertyValue() {
-        val props = Properties()
-        props.setProperty("app.title", "Summer Framework")
-        props.setProperty("app.version", "v1.0")
-        props.setProperty("jdbc.url", "jdbc:mysql://localhost:3306/simpsons")
-        props.setProperty("jdbc.username", "bart")
-        props.setProperty("jdbc.password", "51mp50n")
-        props.setProperty("jdbc.pool-size", "20")
-        props.setProperty("jdbc.auto-commit", "true")
-        props.setProperty("scheduler.started-at", "2023-03-29T21:45:01")
-        props.setProperty("scheduler.backup-at", "03:05:10")
-        props.setProperty("scheduler.cleanup", "P2DT8H21M")
-
-        val pr = PropertyResolver(props)
-        assertEquals("Summer Framework", pr.getProperty("app.title"))
+        val pr = PropertyResolver(
+            mapOf(
+                "app.title" to "Autumn Framework",
+                "app.version" to "v1.0",
+                "jdbc.url" to "jdbc:mysql://localhost:3306/simpsons",
+                "jdbc.username" to "bart",
+                "jdbc.password" to "51mp50n",
+                "jdbc.pool-size" to "20",
+                "jdbc.auto-commit" to "true",
+                "scheduler.started-at" to "2023-03-29T21:45:01",
+                "scheduler.backup-at" to "03:05:10",
+                "scheduler.cleanup" to "P2DT8H21M",
+            ).toProperties()
+        )
+        assertEquals("Autumn Framework", pr.getProperty("app.title"))
         assertEquals("v1.0", pr.getProperty("app.version"))
         assertEquals("v1.0", pr.getProperty("app.version", "unknown"))
         assertNull(pr.getProperty("app.author"))
@@ -63,7 +65,7 @@ class PropertyResolverTest {
     @Test
     fun requiredProperty() {
         val props = Properties()
-        props.setProperty("app.title", "Summer Framework")
+        props.setProperty("app.title", "Autumn Framework")
         props.setProperty("app.version", "v1.0")
 
         val pr = PropertyResolver(props)
@@ -79,10 +81,10 @@ class PropertyResolverTest {
         println("env HOME=$home")
 
         val props = Properties()
-        props.setProperty("app.title", "Summer Framework")
+        props.setProperty("app.title", "Autumn Framework")
 
         val pr = PropertyResolver(props)
-        assertEquals("Summer Framework", pr.getProperty("\${app.title}"))
+        assertEquals("Autumn Framework", pr.getProperty("\${app.title}"))
         assertThrows(NullPointerException::class.java) {
             pr.getProperty("\${app.version}")
         }

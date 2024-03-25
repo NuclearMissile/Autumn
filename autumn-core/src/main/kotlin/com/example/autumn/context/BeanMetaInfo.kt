@@ -10,7 +10,6 @@ import java.util.*
 class BeanMetaInfo private constructor(
     val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean
 ) : Comparable<BeanMetaInfo> {
-    var isInit: Boolean = false
     var instance: Any? = null
         set(value) {
             requireNotNull(value) { "Bean instance is null." }
@@ -25,12 +24,6 @@ class BeanMetaInfo private constructor(
         private set
     var factoryMethod: Method? = null
         private set
-    val factoryDetail: String?
-        get() {
-            if (factoryMethod == null) return null
-            val params = factoryMethod!!.parameterTypes.joinToString(transform = Class<*>::getSimpleName)
-            return "${factoryMethod!!.declaringClass.simpleName}.${factoryMethod!!.name}($params)"
-        }
     var initMethodName: String? = null
         private set
     var initMethod: Method? = null
@@ -93,7 +86,7 @@ class BeanMetaInfo private constructor(
 
     override fun toString(): String {
         return "BeanMetaInfo(beanName='$beanName', beanClass=$beanClass, order=$order, isPrimary=$isPrimary, " +
-            "isInit=$isInit, instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
+            "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
             "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
     }
 }

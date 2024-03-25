@@ -18,9 +18,7 @@ class OriginBean {
 }
 
 @Component
-class InjectProxyOnConstructorBean(@Autowired injected: OriginBean) {
-    val injected: OriginBean = injected
-}
+class InjectProxyOnConstructorBean(@Autowired val injected: OriginBean)
 
 @Component
 class InjectProxyOnPropertyBean {

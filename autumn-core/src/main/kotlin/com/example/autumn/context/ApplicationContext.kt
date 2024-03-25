@@ -353,32 +353,35 @@ class AnnotationConfigApplicationContext private constructor(
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
         }
         val createFn = (if (info.factoryName == null) info.beanCtor else info.factoryMethod)!!
+        val createFnParams = createFn.parameters
+        val ctorAutowiredAnno = if (createFn is Constructor<*>) createFn.getAnnotation(Autowired::class.java) else null
+        val args = arrayOfNulls<Any>(createFnParams.size)
+        
+        for (i in createFnParams.indices) {
+            val param = createFnParams[i]
+            val paramAnnos = createFn.parameterAnnotations[i].toList()
+            val paramValueAnno = getAnnotation(paramAnnos, Value::class.java)
+            var paramAutowiredAnno = getAnnotation(paramAnnos, Autowired::class.java)
+            if (ctorAutowiredAnno != null && paramValueAnno == null && paramAutowiredAnno == null) {
+                paramAutowiredAnno = Autowired()
+            }
 
-        val params = createFn.parameters
-        val paramsAnnos = createFn.parameterAnnotations
-        val args = arrayOfNulls<Any>(params.size)
-        for (i in params.indices) {
-            val param = params[i]
-            val paramAnnos = paramsAnnos[i].toList()
-            val valueAnno = getAnnotation(paramAnnos, Value::class.java)
-            val autowiredAnno = getAnnotation(paramAnnos, Autowired::class.java)
-
-            if (info.isConfiguration && autowiredAnno != null) {
+            if (info.isConfiguration && paramAutowiredAnno != null) {
                 throw BeanCreationException(
                     "Cannot specify @Autowired when create @Configuration bean '${info.beanName}': ${info.beanClass.name}."
                 )
             }
-            if (info.isBeanPostProcessor && autowiredAnno != null) {
+            if (info.isBeanPostProcessor && paramAutowiredAnno != null) {
                 throw BeanCreationException(
                     "Cannot specify @Autowired when create BeanPostProcessor '${info.beanName}': ${info.beanClass.name}."
                 )
             }
-            if (valueAnno != null && autowiredAnno != null) {
+            if (paramValueAnno != null && paramAutowiredAnno != null) {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when create bean '${info.beanName}': ${info.beanClass.name}."
                 )
             }
-            if (valueAnno == null && autowiredAnno == null) {
+            if (paramValueAnno == null && paramAutowiredAnno == null) {
                 throw BeanCreationException(
                     "Must specify @Autowired or @Value when create bean '${info.beanName}': ${info.beanClass.name}."
                 )
@@ -386,13 +389,13 @@ class AnnotationConfigApplicationContext private constructor(
 
             val type = param.type
             when {
-                valueAnno != null -> {
-                    args[i] = propertyResolver.getRequiredProperty(valueAnno.value, type)
+                paramValueAnno != null -> {
+                    args[i] = propertyResolver.getRequiredProperty(paramValueAnno.value, type)
                 }
 
-                autowiredAnno != null -> {
-                    val name = autowiredAnno.name
-                    val required = autowiredAnno.value
+                paramAutowiredAnno != null -> {
+                    val name = paramAutowiredAnno.name
+                    val required = paramAutowiredAnno.value
                     val dependsOnInfo = if (name.isEmpty()) findBeanMetaInfo(type) else findBeanMetaInfo(name, type)
                     if (required && dependsOnInfo == null) {
                         throw BeanCreationException(

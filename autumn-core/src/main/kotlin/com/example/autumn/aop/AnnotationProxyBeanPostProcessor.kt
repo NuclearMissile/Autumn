@@ -18,12 +18,12 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
     private val originBeans = mutableMapOf<String, Any>()
     private val annotationClass by lazy {
         val type = javaClass.genericSuperclass
-        require(type is ParameterizedType) { "Class " + javaClass.name + " does not have parameterized type." }
+        require(type is ParameterizedType) { "Class ${javaClass.name} does not have parameterized type." }
         val types = type.actualTypeArguments
-        require(types.size == 1) { "Class " + javaClass.name + " has more than 1 parameterized types." }
-        val r = types[0]
-        require(r is Class<*>) { "Class " + javaClass.name + " does not have parameterized type of class." }
-        r as Class<A>
+        require(types.size == 1) { "Class ${javaClass.name} has more than 1 parameterized types." }
+        val ret = types.single()
+        require(ret is Class<*>) { "Class ${javaClass.name} does not have parameterized type of class." }
+        ret as Class<A>
     }
 
     override fun beforeInitialization(bean: Any, beanName: String): Any {
