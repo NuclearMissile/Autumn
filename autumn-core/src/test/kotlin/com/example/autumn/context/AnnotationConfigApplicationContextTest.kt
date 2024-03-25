@@ -7,7 +7,6 @@ import com.example.scan.*
 import com.example.scan.sub1.Sub1Bean
 import com.example.scan.sub1.sub2.Sub2Bean
 import com.example.scan.sub1.sub2.sub3.Sub3Bean
-import org.junit.jupiter.api.Test
 import java.time.*
 import kotlin.test.*
 

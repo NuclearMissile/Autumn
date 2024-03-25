@@ -2,8 +2,8 @@ package com.example.autumn.aop.before
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.io.PropertyResolver
-import org.junit.jupiter.api.Test
 import java.util.*
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BeforeProxyTest {

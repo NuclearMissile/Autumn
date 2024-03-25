@@ -16,7 +16,7 @@ class AroundProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Around>()
 
 abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProcessor {
     private val originBeans = mutableMapOf<String, Any>()
-    private val annotationClass by lazy {
+    private val annotationClass = run {
         val type = javaClass.genericSuperclass
         require(type is ParameterizedType) { "Class ${javaClass.name} does not have parameterized type." }
         val types = type.actualTypeArguments

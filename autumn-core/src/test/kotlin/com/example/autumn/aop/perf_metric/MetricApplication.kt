@@ -1,5 +1,6 @@
 package com.example.autumn.aop.perf_metric
 
+import com.example.autumn.annotation.Around
 import com.example.autumn.annotation.Component
 import com.example.autumn.annotation.ComponentScan
 import com.example.autumn.annotation.Configuration
@@ -15,8 +16,6 @@ import java.security.MessageDigest
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
 )
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
@@ -53,6 +52,11 @@ class MetricInvocationHandler : InvocationHandler {
 
 @Metric("metricInvocationHandler")
 abstract class BaseWorker {
+    @Metric("MD5")
+    open fun md5(input: String): String {
+        return hash("MD5", input)
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     protected fun hash(name: String, input: String): String {
         val md = MessageDigest.getInstance(name)
@@ -66,11 +70,6 @@ abstract class BaseWorker {
 
 @Component
 class HashWorker : BaseWorker() {
-    @Metric("MD5")
-    fun md5(input: String): String {
-        return hash("MD5", input)
-    }
-
     @Metric("SHA-1f")
     final fun sha1_f(input: String): String {
         return hash("SHA-1", input)

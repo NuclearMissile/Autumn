@@ -2,12 +2,8 @@ package com.example.autumn.aop.perf_metric
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.io.PropertyResolver
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class MetricProxyTest {
     @Test
@@ -15,7 +11,7 @@ class MetricProxyTest {
         AnnotationConfigApplicationContext(MetricApplication::class.java, PropertyResolver(Properties())).use { ctx ->
             val worker = ctx.getBean(HashWorker::class.java)
             // proxy class, not origin class:
-            Assertions.assertNotSame(HashWorker::class.java, worker.javaClass)
+            assertNotSame(HashWorker::class.java, worker.javaClass)
 
             val md5 = "0x098f6bcd4621d373cade4e832627b4f6"
             val sha1 = "0xa94a8fe5ccb19ba61c4c0873d391e987982fbbd3"

@@ -2,9 +2,7 @@ package com.example.autumn.aop.around
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.io.PropertyResolver
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class AroundProxyTest {
     @Test
@@ -18,18 +16,18 @@ class AroundProxyTest {
             println(proxy.javaClass.name)
 
             // proxy class, not origin class:
-            Assertions.assertNotSame(OriginBean::class.java, proxy.javaClass)
+            assertNotSame(OriginBean::class.java, proxy.javaClass)
             // proxy.name not injected:
             val nameFiled = OriginBean::class.java.getDeclaredField("name")
             nameFiled.isAccessible = true
-            Assertions.assertNull(nameFiled.get(proxy))
+            assertNull(nameFiled.get(proxy))
 
             assertEquals("Hello, Bob!", proxy.hello())
             assertEquals("Morning, Bob.", proxy.morning())
 
             // test injected proxy:
             val other = ctx.getBean(OtherBean::class.java)
-            Assertions.assertSame(proxy, other.origin)
+            assertSame(proxy, other.origin)
             assertEquals("Hello, Bob!", other.origin.hello())
         }
     }
