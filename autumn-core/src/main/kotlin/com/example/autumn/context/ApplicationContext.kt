@@ -22,14 +22,14 @@ class AnnotationConfigApplicationContext private constructor(
     private val creatingBeanNames = mutableSetOf<String>()
 
     constructor(configClass: Class<*>, propertyResolver: PropertyResolver) : this(propertyResolver) {
-        ApplicationContextUtils.applicationContext = this
+        ApplicationContextHolder.applicationContext = this
         infos += createBeanMetaInfos(scanForClassNames(configClass))
-        infos.values.filter { it.isConfiguration }.sorted().forEach(::createBeanAsEarlySingleton)
+        infos.values.filter { it.isConfiguration }.sorted().forEach(::createBean)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
-            createBeanAsEarlySingleton(it) as BeanPostProcessor
+            createBean(it) as BeanPostProcessor
         }
         // 创建其他普通Bean:
-        infos.values.sorted().forEach { if (it.instance == null) createBeanAsEarlySingleton(it) }
+        infos.values.sorted().forEach { if (it.instance == null) createBean(it) }
         // 通过字段和set方法注入依赖:
         infos.values.forEach {
             try {
@@ -345,7 +345,7 @@ class AnnotationConfigApplicationContext private constructor(
      * 创建一个Bean，然后使用BeanPostProcessor处理，但不进行字段和方法级别的注入。
      * 如果创建的Bean不是Configuration或BeanPostProcessor，则在构造方法中注入的依赖Bean会自动创建。
      */
-    override fun createBeanAsEarlySingleton(info: BeanMetaInfo): Any {
+    override fun createBean(info: BeanMetaInfo): Any {
         logger.atDebug().log("Try to create bean {} as early singleton: {}", info.beanName, info.beanClass.name)
         if (!creatingBeanNames.add(info.beanName)) {
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
@@ -405,7 +405,7 @@ class AnnotationConfigApplicationContext private constructor(
                         var autowiredBeanInstance = dependsOnInfo.instance
                         if (autowiredBeanInstance == null && !info.isConfiguration && !info.isBeanPostProcessor) {
                             // 当前依赖Bean尚未初始化，递归调用初始化该依赖Bean:
-                            autowiredBeanInstance = createBeanAsEarlySingleton(dependsOnInfo)
+                            autowiredBeanInstance = createBean(dependsOnInfo)
                         }
                         args[i] = autowiredBeanInstance
                     } else {
@@ -489,7 +489,7 @@ class AnnotationConfigApplicationContext private constructor(
         }
         infos.clear()
         logger.info("{} closed.", this.javaClass.name)
-        ApplicationContextUtils.applicationContext = null
+        ApplicationContextHolder.applicationContext = null
     }
 
     private fun getProxiedInstance(info: BeanMetaInfo): Any {
@@ -529,16 +529,11 @@ class AnnotationConfigApplicationContext private constructor(
     }
 }
 
-object ApplicationContextUtils {
-    private val holder = ThreadLocal<ApplicationContext>()
-    var applicationContext: ApplicationContext?
-        get() = holder.get()
-        set(value) = holder.set(value)
-
+object ApplicationContextHolder {
+    var applicationContext: ApplicationContext? = null
     val requiredApplicationContext: ApplicationContext
         get() = Objects.requireNonNull(applicationContext, "ApplicationContext is not set.")!!
 }
-
 
 interface ApplicationContext : AutoCloseable {
     fun contains(name: String): Boolean
@@ -569,5 +564,5 @@ interface ConfigurableApplicationContext : ApplicationContext {
 
     fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo?
 
-    fun createBeanAsEarlySingleton(info: BeanMetaInfo): Any
+    fun createBean(info: BeanMetaInfo): Any
 }

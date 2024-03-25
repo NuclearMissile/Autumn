@@ -1,7 +1,7 @@
 package com.example.autumn.aop
 
 import com.example.autumn.annotation.Around
-import com.example.autumn.context.ApplicationContextUtils
+import com.example.autumn.context.ApplicationContextHolder
 import com.example.autumn.context.BeanPostProcessor
 import com.example.autumn.context.ConfigurableApplicationContext
 import com.example.autumn.exception.AopConfigException
@@ -34,11 +34,11 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         } catch (e: ReflectiveOperationException) {
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
         } as String
-        val ctx = ApplicationContextUtils.requiredApplicationContext as ConfigurableApplicationContext
+        val ctx = ApplicationContextHolder.requiredApplicationContext as ConfigurableApplicationContext
         val info = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
         )
-        val handlerBean = info.instance ?: ctx.createBeanAsEarlySingleton(info)
+        val handlerBean = info.instance ?: ctx.createBean(info)
         val proxy = if (handlerBean is InvocationHandler)
             AopProxyUtils.createProxy(bean, handlerBean)
         else throw AopConfigException(
