@@ -9,8 +9,6 @@ import com.example.autumn.utils.ClassUtils.findAnnotationMethod
 import com.example.autumn.utils.ClassUtils.getAnnotation
 import com.example.autumn.utils.ClassUtils.getBeanName
 import com.example.autumn.utils.ClassUtils.getNamedMethod
-import jakarta.annotation.PostConstruct
-import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
 import java.util.*
@@ -356,7 +354,7 @@ class AnnotationConfigApplicationContext private constructor(
         val createFnParams = createFn.parameters
         val ctorAutowiredAnno = if (createFn is Constructor<*>) createFn.getAnnotation(Autowired::class.java) else null
         val args = arrayOfNulls<Any>(createFnParams.size)
-        
+
         for (i in createFnParams.indices) {
             val param = createFnParams[i]
             val paramAnnos = createFn.parameterAnnotations[i].toList()

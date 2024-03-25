@@ -19,7 +19,6 @@
         <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
 
         <kotlin.version>2.0.0-Beta5</kotlin.version>
-        <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
         <logback.version>1.5.3</logback.version>
         <slf4j.version>2.0.12</slf4j.version>
         <snakeyaml.version>2.2</snakeyaml.version>
@@ -45,11 +44,6 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-reflect</artifactId>
                 <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.annotation</groupId>
-                <artifactId>jakarta.annotation-api</artifactId>
-                <version>${jakarta.annotation.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>

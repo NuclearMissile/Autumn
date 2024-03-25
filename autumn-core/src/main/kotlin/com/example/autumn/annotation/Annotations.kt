@@ -7,6 +7,16 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.ANNOTATION_CLASS)
 annotation class AllOpen
 
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
+annotation class PostConstruct
+
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
+annotation class PreDestroy
+
 @AllOpen
 @Target(
     AnnotationTarget.FIELD,

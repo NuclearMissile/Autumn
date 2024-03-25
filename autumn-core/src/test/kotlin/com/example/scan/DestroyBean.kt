@@ -1,7 +1,6 @@
 package com.example.scan
 
 import com.example.autumn.annotation.*
-import jakarta.annotation.PreDestroy
 
 
 @Component

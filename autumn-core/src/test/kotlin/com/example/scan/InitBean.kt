@@ -1,10 +1,6 @@
 package com.example.scan
 
-import com.example.autumn.annotation.Bean
-import com.example.autumn.annotation.Component
-import com.example.autumn.annotation.Configuration
-import com.example.autumn.annotation.Value
-import jakarta.annotation.PostConstruct
+import com.example.autumn.annotation.*
 
 
 @Component
