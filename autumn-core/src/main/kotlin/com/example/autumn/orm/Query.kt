@@ -39,7 +39,6 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
         }.toString()
     }
 
-    @Suppress("SqlSourceToSinkFlow")
     fun query(): List<T> {
         val queryParams = (joinParams + whereParams).toMutableList()
         if (limit > 0 && offset >= 0) {

@@ -97,16 +97,11 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> execute(callback: ConnectionCallback<T>): T? {
-        val conn = TransactionUtils.currentTransaction
-        if (conn != null) {
-            try {
-                return callback.doInConnection(conn)
-            } catch (e: SQLException) {
-                throw DataAccessException("Exception thrown while execute sql.", e)
-            }
-        }
+        val txConn = TransactionUtils.currentTransaction
         return try {
-            dataSource.connection.use { newConn ->
+            if (txConn != null)
+                callback.doInConnection(txConn)
+            else dataSource.connection.use { newConn ->
                 val autoCommit = newConn.autoCommit
                 if (!autoCommit) newConn.autoCommit = true
                 val result = callback.doInConnection(newConn)
@@ -129,7 +124,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
 }
 
 fun interface ConnectionCallback<T> {
-    fun doInConnection(con: Connection): T?
+    fun doInConnection(conn: Connection): T?
 }
 
 fun interface PreparedStatementCallback<T> {

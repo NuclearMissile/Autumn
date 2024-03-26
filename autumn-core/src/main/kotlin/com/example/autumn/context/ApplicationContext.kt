@@ -28,7 +28,7 @@ class AnnotationConfigApplicationContext private constructor(
 
     constructor(configClass: Class<*>, propertyResolver: PropertyResolver) : this(propertyResolver) {
         ApplicationContextHolder.applicationContext = this
-        infos += createBeanMetaInfos(scanForClassNames(configClass))
+        infos += createBeanMetaInfos(scanClassNamesOnConfigClass(configClass))
         infos.values.filter { it.isConfiguration }.sorted().forEach(::createBean)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
             createBean(it) as BeanPostProcessor
@@ -63,7 +63,7 @@ class AnnotationConfigApplicationContext private constructor(
         }
     }
 
-    private fun scanForClassNames(configClass: Class<*>): Set<String> {
+    private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
         val scanAnno = findAnnotation(configClass, ComponentScan::class.java)
         val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
             arrayOf(configClass.packageName) else scanAnno.value).toList()
