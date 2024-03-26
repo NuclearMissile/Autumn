@@ -4,6 +4,10 @@ import com.example.autumn.exception.DataAccessException
 import org.slf4j.LoggerFactory
 import java.sql.ResultSet
 
+fun interface RowMapper<T> {
+    fun mapRow(rs: ResultSet, rowNum: Int): T?
+}
+
 class BeanRowMapper<T>(private val clazz: Class<T>) : RowMapper<T> {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val fields = clazz.fields.associateBy {
@@ -27,30 +31,29 @@ class BeanRowMapper<T>(private val clazz: Class<T>) : RowMapper<T> {
         )
     }
 
-    override fun map(rs: ResultSet, rowNum: Int): T {
-        val bean: T
-        try {
-            bean = ctor.newInstance()
-            val meta = rs.metaData
-            for (i in 1..meta.columnCount) {
-                val label = meta.getColumnLabel(i)
-                val setter = setters[label]
-                if (setter != null) {
-                    setter.invoke(bean, rs.getObject(label))
-                } else {
-                    val field = fields[label]
-                    field?.set(bean, rs.getObject(label))
+    override fun mapRow(rs: ResultSet, rowNum: Int): T {
+        return ctor.newInstance().also { bean ->
+            try {
+                val meta = rs.metaData
+                for (i in 1..meta.columnCount) {
+                    val label = meta.getColumnLabel(i)
+                    val setter = setters[label]
+                    if (setter != null) {
+                        setter.invoke(bean, rs.getObject(label))
+                    } else {
+                        val field = fields[label]
+                        field?.set(bean, rs.getObject(label))
+                    }
                 }
+            } catch (e: ReflectiveOperationException) {
+                throw DataAccessException("Could not map result set to class ${clazz.name}", e)
             }
-        } catch (e: ReflectiveOperationException) {
-            throw DataAccessException("Could not map result set to class ${clazz.name}", e)
         }
-        return bean
     }
 }
 
 class StringRowMapper : RowMapper<String> {
-    override fun map(rs: ResultSet, rowNum: Int): String? {
+    override fun mapRow(rs: ResultSet, rowNum: Int): String? {
         return rs.getString(1)
     }
 
@@ -60,7 +63,7 @@ class StringRowMapper : RowMapper<String> {
 }
 
 class BooleanRowMapper : RowMapper<Boolean> {
-    override fun map(rs: ResultSet, rowNum: Int): Boolean {
+    override fun mapRow(rs: ResultSet, rowNum: Int): Boolean {
         return rs.getBoolean(1)
     }
 
@@ -70,7 +73,7 @@ class BooleanRowMapper : RowMapper<Boolean> {
 }
 
 class NumberRowMapper : RowMapper<Number> {
-    override fun map(rs: ResultSet, rowNum: Int): Number? {
+    override fun mapRow(rs: ResultSet, rowNum: Int): Number? {
         return rs.getObject(1) as? Number
     }
 

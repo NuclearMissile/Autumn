@@ -1,7 +1,7 @@
 package com.example.autumn.aop.perf_metric
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
-import com.example.autumn.io.PropertyResolver
+import com.example.autumn.resolver.PropertyResolver
 import java.util.*
 import kotlin.test.*
 

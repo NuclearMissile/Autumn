@@ -18,7 +18,7 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             jdbcTemplate.update(CREATE_ADDRESS)
             // insert user:
             val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", 12).toInt()
-            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", "NULL").toInt()
+            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", null).toInt()
             Assertions.assertEquals(1, userId1)
             Assertions.assertEquals(2, userId2)
             // query user:
@@ -26,10 +26,10 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             val alice = jdbcTemplate.queryForObject(SELECT_USER, User::class.java, userId2)
             assertEquals(1, bob.id)
             assertEquals("Bob", bob.name)
-            assertEquals(12, bob.theAge)
+            assertEquals(12, bob.age)
             assertEquals(2, alice.id)
             assertEquals("Alice", alice.name)
-            Assertions.assertNull(alice.theAge)
+            Assertions.assertNull(alice.age)
             // query name:
             assertEquals("Bob", jdbcTemplate.queryForObject(SELECT_USER_NAME, String::class.java, userId1))
             assertEquals(12, jdbcTemplate.queryForObject(SELECT_USER_AGE, Int::class.java, userId1))
@@ -45,7 +45,7 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             val bob = jdbcTemplate.queryForObject(SELECT_USER, User::class.java, 1)
             assertEquals("Bob Jones", bob.name)
-            assertEquals(18, bob.theAge)
+            assertEquals(18, bob.age)
             Assertions.assertThrows(
                 DataAccessException::class.java,
                 Executable {

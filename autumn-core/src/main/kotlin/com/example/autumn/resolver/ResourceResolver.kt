@@ -1,4 +1,4 @@
-package com.example.autumn.io
+package com.example.autumn.resolver
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

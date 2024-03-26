@@ -36,3 +36,16 @@ class JdbcWithoutTxApplication {
         return JdbcTemplate(dataSource)
     }
 }
+
+data class Address(
+    var id: Int = 0,
+    var userId: Int = 0,
+    var address: String? = null,
+    var zipcode: Int = 0
+) {
+    fun setZip(zip: Int?) {
+        this.zipcode = zip ?: 0
+    }
+}
+
+data class User(var id: Int = 0, var name: String? = null, var age: Int? = null)

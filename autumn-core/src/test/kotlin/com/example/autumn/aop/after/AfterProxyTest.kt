@@ -1,7 +1,7 @@
 package com.example.autumn.aop.after
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
-import com.example.autumn.io.PropertyResolver
+import com.example.autumn.resolver.PropertyResolver
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals

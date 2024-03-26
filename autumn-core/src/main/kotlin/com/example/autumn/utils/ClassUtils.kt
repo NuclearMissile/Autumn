@@ -3,7 +3,7 @@ package com.example.autumn.utils
 import com.example.autumn.annotation.Bean
 import com.example.autumn.annotation.Component
 import com.example.autumn.exception.BeanDefinitionException
-import com.example.autumn.io.InputStreamCallback
+import com.example.autumn.resolver.InputStreamCallback
 import java.io.FileNotFoundException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets

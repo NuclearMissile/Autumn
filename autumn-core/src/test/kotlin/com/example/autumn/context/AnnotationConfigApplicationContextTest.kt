@@ -1,6 +1,6 @@
 package com.example.autumn.context
 
-import com.example.autumn.io.PropertyResolver
+import com.example.autumn.resolver.PropertyResolver
 import com.example.imported.LocalDateConfiguration
 import com.example.imported.ZonedDateConfiguration
 import com.example.scan.*

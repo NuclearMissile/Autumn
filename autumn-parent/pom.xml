@@ -25,6 +25,7 @@
         <bytebuddy.version>1.14.12</bytebuddy.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <sqlite.version>3.45.2.0</sqlite.version>
+        <jakarta.persistenc-api.verion>3.1.0</jakarta.persistenc-api.verion>
     </properties>
 
     <dependencyManagement>
@@ -44,6 +45,11 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-reflect</artifactId>
                 <version>${kotlin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>${jakarta.persistenc-api.verion}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
@@ -130,6 +136,7 @@
                         <plugin>all-open</plugin>
                     </compilerPlugins>
                     <pluginOptions>
+                        <plugin>jpa</plugin>
                         <option>all-open:annotation=com.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>

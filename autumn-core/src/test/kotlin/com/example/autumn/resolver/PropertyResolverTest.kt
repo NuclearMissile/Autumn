@@ -1,4 +1,4 @@
-package com.example.autumn.io
+package com.example.autumn.resolver
 
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.condition.DisabledOnOs

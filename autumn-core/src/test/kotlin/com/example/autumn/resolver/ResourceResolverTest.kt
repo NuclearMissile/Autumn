@@ -1,4 +1,4 @@
-package com.example.autumn.io
+package com.example.autumn.resolver
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

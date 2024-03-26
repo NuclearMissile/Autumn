@@ -6,24 +6,24 @@ import java.sql.*
 import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
-    fun <T> queryForObject(sql: String, clazz: Class<T>, vararg args: Any): T {
+    fun <T> queryForObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
         return if (clazz == String::class.java)
-            queryForObject(sql, StringRowMapper.instance, args) as T
+            queryForObject(sql, StringRowMapper.instance, *args) as T
         else if (clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType)
-            queryForObject(sql, BooleanRowMapper.instance, args) as T
+            queryForObject(sql, BooleanRowMapper.instance, *args) as T
         else if (Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive)
-            queryForObject(sql, NumberRowMapper.instance, args) as T
+            queryForObject(sql, NumberRowMapper.instance, *args) as T
         else
-            queryForObject(sql, BeanRowMapper(clazz), args)
+            queryForObject(sql, BeanRowMapper(clazz), *args)
     }
 
-    fun <T> queryForObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any): T {
+    fun <T> queryForObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): T {
         return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
             var t: T? = null
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
                     if (t == null) {
-                        t = rowMapper.map(rs, rs.row)
+                        t = rowMapper.mapRow(rs, rs.row)
                     } else {
                         throw DataAccessException("Multiple rows found.")
                     }
@@ -36,27 +36,27 @@ class JdbcTemplate(private val dataSource: DataSource) {
         })!!
     }
 
-    fun <T> queryForList(sql: String, clazz: Class<T>, vararg args: Any): List<T> {
+    fun <T> queryForList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
         return queryForList(sql, BeanRowMapper(clazz), args)
     }
 
-    fun <T> queryForList(sql: String, rowMapper: RowMapper<T>, vararg args: Any): List<T> {
+    fun <T> queryForList(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): List<T> {
         return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
             val list = mutableListOf<T>()
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
-                    list.add(rowMapper.map(rs, rs.row)!!)
+                    list.add(rowMapper.mapRow(rs, rs.row)!!)
                 }
             }
             return@PreparedStatementCallback list
         })!!
     }
 
-    fun update(sql: String, vararg args: Any): Int {
+    fun update(sql: String, vararg args: Any?): Int {
         return execute(preparedStatementCreator(sql, *args), PreparedStatement::executeUpdate)!!
     }
 
-    fun updateWithGeneratedKey(sql: String, vararg args: Any): Number {
+    fun updateWithGeneratedKey(sql: String, vararg args: Any?): Number {
         return execute( // PreparedStatementCreator
             PreparedStatementCreator { con: Connection ->
                 val ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
@@ -84,7 +84,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
         return execute { conn ->
-            psc.createPreparedStatement(conn).use { ps -> callback.onPreparedStatement(ps) }
+            psc.createPreparedStatement(conn).use { ps -> callback.doInPreparedStatement(ps) }
         }
     }
 
@@ -92,7 +92,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         val conn = TransactionUtils.currentTransaction
         if (conn != null) {
             try {
-                return callback.onConnection(conn)
+                return callback.doInConnection(conn)
             } catch (e: SQLException) {
                 throw DataAccessException("Exception thrown while execute sql.", e)
             }
@@ -101,7 +101,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
             dataSource.connection.use { newConn ->
                 val autoCommit = newConn.autoCommit
                 if (!autoCommit) newConn.autoCommit = true
-                val result = callback.onConnection(newConn)
+                val result = callback.doInConnection(newConn)
                 if (!autoCommit) newConn.autoCommit = false
                 result
             }
@@ -110,7 +110,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }
     }
 
-    private fun preparedStatementCreator(sql: String, vararg args: Any): PreparedStatementCreator {
+    private fun preparedStatementCreator(sql: String, vararg args: Any?): PreparedStatementCreator {
         return PreparedStatementCreator { conn ->
             val ps = conn.prepareStatement(sql)
             for (i in args.indices)
@@ -121,11 +121,11 @@ class JdbcTemplate(private val dataSource: DataSource) {
 }
 
 fun interface ConnectionCallback<T> {
-    fun onConnection(con: Connection): T?
+    fun doInConnection(con: Connection): T?
 }
 
 fun interface PreparedStatementCallback<T> {
-    fun onPreparedStatement(ps: PreparedStatement): T?
+    fun doInPreparedStatement(ps: PreparedStatement): T?
 }
 
 fun interface PreparedStatementCreator {
@@ -134,8 +134,4 @@ fun interface PreparedStatementCreator {
 
 fun interface ResultSetExtractor<T> {
     fun extractData(rs: ResultSet): T?
-}
-
-fun interface RowMapper<T> {
-    fun map(rs: ResultSet, rowNum: Int): T?
 }

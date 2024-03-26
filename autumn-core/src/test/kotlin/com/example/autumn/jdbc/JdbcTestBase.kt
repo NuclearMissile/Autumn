@@ -1,6 +1,6 @@
 package com.example.autumn.jdbc
 
-import com.example.autumn.io.PropertyResolver
+import com.example.autumn.resolver.PropertyResolver
 import org.junit.jupiter.api.BeforeEach
 import java.io.IOException
 import java.io.UncheckedIOException
