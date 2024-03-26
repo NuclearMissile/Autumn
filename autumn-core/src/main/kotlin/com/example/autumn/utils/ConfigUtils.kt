@@ -7,13 +7,16 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
 import org.yaml.snakeyaml.resolver.Resolver
+import java.util.*
 
-/**
- * Parse yaml by snakeyaml:
- *
- * https://github.com/snakeyaml/snakeyaml
- */
-object YamlUtils {
+object ConfigUtils {
+    fun loadProperties(path: String): Map<String, Any> {
+        // try load *.properties:
+        return readInputStream(path) { input ->
+            Properties().apply { load(input) }.toMap() as Map<String, Any>
+        }
+    }
+
     fun loadYaml(path: String): Map<String, Any> {
         val loaderOptions = LoaderOptions()
         val dumperOptions = DumperOptions()
@@ -27,12 +30,12 @@ object YamlUtils {
     }
 
     fun loadYamlAsPlainMap(path: String): Map<String, Any> {
-        val result: MutableMap<String, Any> = mutableMapOf()
+        val result = mutableMapOf<String, Any>()
         flatten(loadYaml(path), "", result)
         return result
     }
 
-    fun flatten(source: Map<String, Any?>, prefix: String, plain: MutableMap<String, Any>) {
+    private fun flatten(source: Map<String, Any?>, prefix: String, plain: MutableMap<String, Any>) {
         for (key in source.keys) {
             when (val value = source[key]) {
                 is Map<*, *> -> {

@@ -22,8 +22,8 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             Assertions.assertEquals(1, userId1)
             Assertions.assertEquals(2, userId2)
             // query user:
-            val bob = jdbcTemplate.queryForObject(SELECT_USER, User::class.java, userId1)
-            val alice = jdbcTemplate.queryForObject(SELECT_USER, User::class.java, userId2)
+            val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, userId1)
+            val alice = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, userId2)
             assertEquals(1, bob.id)
             assertEquals("Bob", bob.name)
             assertEquals(12, bob.age)
@@ -31,8 +31,8 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             assertEquals("Alice", alice.name)
             Assertions.assertNull(alice.age)
             // query name:
-            assertEquals("Bob", jdbcTemplate.queryForObject(SELECT_USER_NAME, String::class.java, userId1))
-            assertEquals(12, jdbcTemplate.queryForObject(SELECT_USER_AGE, Int::class.java, userId1))
+            assertEquals("Bob", jdbcTemplate.queryRequiredObject(SELECT_USER_NAME, String::class.java, userId1))
+            assertEquals(12, jdbcTemplate.queryRequiredObject(SELECT_USER_AGE, Int::class.java, userId1))
             // update user:
             val n1 = jdbcTemplate.update(UPDATE_USER, "Bob Jones", 18, bob.id)
             Assertions.assertEquals(1, n1)
@@ -43,14 +43,14 @@ class JdbcWithoutTxTest : JdbcTestBase() {
 
         AnnotationConfigApplicationContext(JdbcWithoutTxApplication::class.java, propertyResolver).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
-            val bob = jdbcTemplate.queryForObject(SELECT_USER, User::class.java, 1)
+            val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 1)
             assertEquals("Bob Jones", bob.name)
             assertEquals(18, bob.age)
             Assertions.assertThrows(
                 DataAccessException::class.java,
                 Executable {
                     // alice was deleted:
-                    jdbcTemplate.queryForObject(SELECT_USER, User::class.java, 2)
+                    jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 2)
                 })
         }
     }

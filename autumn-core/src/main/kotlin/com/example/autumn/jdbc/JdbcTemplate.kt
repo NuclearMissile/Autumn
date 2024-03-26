@@ -6,50 +6,12 @@ import java.sql.*
 import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
-    fun <T> queryForObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
-        return if (clazz == String::class.java)
-            queryForObject(sql, StringRowMapper.instance, *args) as T
-        else if (clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType)
-            queryForObject(sql, BooleanRowMapper.instance, *args) as T
-        else if (Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive)
-            queryForObject(sql, NumberRowMapper.instance, *args) as T
-        else
-            queryForObject(sql, BeanRowMapper(clazz), *args)
-    }
-
-    fun <T> queryForObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): T {
+    fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
-            var t: T? = null
             ps.executeQuery().use { rs ->
-                while (rs.next()) {
-                    if (t == null) {
-                        t = rowMapper.mapRow(rs, rs.row)
-                    } else {
-                        throw DataAccessException("Multiple rows found.")
-                    }
-                }
+                return@PreparedStatementCallback rse.extractData(rs)
             }
-            if (t == null) {
-                throw DataAccessException("Empty result set.")
-            }
-            return@PreparedStatementCallback t!!
-        })!!
-    }
-
-    fun <T> queryForList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
-        return queryForList(sql, BeanRowMapper(clazz), args)
-    }
-
-    fun <T> queryForList(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): List<T> {
-        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
-            val list = mutableListOf<T>()
-            ps.executeQuery().use { rs ->
-                while (rs.next()) {
-                    list.add(rowMapper.mapRow(rs, rs.row)!!)
-                }
-            }
-            return@PreparedStatementCallback list
-        })!!
+        })
     }
 
     fun update(sql: String, vararg args: Any?): Int {
@@ -80,6 +42,52 @@ class JdbcTemplate(private val dataSource: DataSource) {
                 throw DataAccessException("Should not reach here.")
             }
         )!!
+    }
+
+    fun <T> queryRequiredObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
+        return if (clazz == String::class.java)
+            queryRequiredObject(sql, StringRowMapper.instance, *args) as T
+        else if (clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType)
+            queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
+        else if (Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive)
+            queryRequiredObject(sql, NumberRowMapper.instance, *args) as T
+        else
+            queryRequiredObject(sql, BeanRowMapper(clazz), *args)
+    }
+
+    fun <T> queryRequiredObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): T {
+        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
+            var t: T? = null
+            ps.executeQuery().use { rs ->
+                while (rs.next()) {
+                    if (t == null) {
+                        t = rowMapper.mapRow(rs, rs.row)
+                    } else {
+                        throw DataAccessException("Multiple rows found.")
+                    }
+                }
+            }
+            if (t == null) {
+                throw DataAccessException("Empty result set.")
+            }
+            return@PreparedStatementCallback t!!
+        })!!
+    }
+
+    fun <T> queryList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
+        return queryList(sql, BeanRowMapper(clazz), args)
+    }
+
+    fun <T> queryList(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): List<T> {
+        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
+            val list = mutableListOf<T>()
+            ps.executeQuery().use { rs ->
+                while (rs.next()) {
+                    list.add(rowMapper.mapRow(rs, rs.row)!!)
+                }
+            }
+            return@PreparedStatementCallback list
+        })!!
     }
 
     fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {

@@ -3,15 +3,20 @@ package com.example.autumn.context
 import com.example.autumn.annotation.*
 import com.example.autumn.exception.*
 import com.example.autumn.resolver.PropertyResolver
-import com.example.autumn.resolver.ResourceResolver
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import com.example.autumn.utils.ClassUtils.findAnnotationMethod
 import com.example.autumn.utils.ClassUtils.getAnnotation
 import com.example.autumn.utils.ClassUtils.getBeanName
 import com.example.autumn.utils.ClassUtils.getNamedMethod
+import com.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
-import java.util.*
+
+object ApplicationContextHolder {
+    var applicationContext: ApplicationContext? = null
+    val requiredApplicationContext: ApplicationContext
+        get() = requireNotNull(applicationContext) { "ApplicationContext is not set." }
+}
 
 class AnnotationConfigApplicationContext private constructor(
     private val propertyResolver: PropertyResolver
@@ -60,18 +65,13 @@ class AnnotationConfigApplicationContext private constructor(
 
     private fun scanForClassNames(configClass: Class<*>): Set<String> {
         val scanAnno = findAnnotation(configClass, ComponentScan::class.java)
-        val scanPackages = if (scanAnno == null || scanAnno.value.isEmpty())
-            arrayOf(configClass.packageName) else scanAnno.value
-        logger.atInfo().log("component scan in packages: {}", scanPackages.contentToString())
+        val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
+            arrayOf(configClass.packageName) else scanAnno.value).toList()
+        logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
 
-        val classNameSet = scanPackages.flatMap {
-            logger.atDebug().log("scan package: {}", it)
-            ResourceResolver(it).scanResources { res ->
-                if (res.name.endsWith(".class"))
-                    res.name.removeSuffix(".class").replace("/", ".").replace("\\", ".")
-                else null
-            }
-        }.also { logger.atDebug().log("class found by component scan: {}", it) }.toMutableSet()
+        val classNameSet = scanClassNames(scanPackages).also {
+            logger.atDebug().log("class found by component scan: {}", it)
+        }.toMutableSet()
 
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name
@@ -261,7 +261,7 @@ class AnnotationConfigApplicationContext private constructor(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -281,7 +281,7 @@ class AnnotationConfigApplicationContext private constructor(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                        "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }
@@ -527,12 +527,6 @@ class AnnotationConfigApplicationContext private constructor(
             }
         }
     }
-}
-
-object ApplicationContextHolder {
-    var applicationContext: ApplicationContext? = null
-    val requiredApplicationContext: ApplicationContext
-        get() = Objects.requireNonNull(applicationContext, "ApplicationContext is not set.")!!
 }
 
 interface ApplicationContext : AutoCloseable {

@@ -4,6 +4,7 @@ import com.example.autumn.annotation.Bean
 import com.example.autumn.annotation.Component
 import com.example.autumn.exception.BeanDefinitionException
 import com.example.autumn.resolver.InputStreamCallback
+import com.example.autumn.resolver.ResourceResolver
 import java.io.FileNotFoundException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
@@ -133,6 +134,16 @@ object ClassUtils {
         } catch (e: ReflectiveOperationException) {
             throw BeanDefinitionException("Method '$methodName' not found in class: ${clazz.name}")
         }
+    }
+
+    fun scanClassNames(basePackagePaths: List<String>): Set<String> {
+        return basePackagePaths.flatMap {
+            ResourceResolver(it).scanResources { res ->
+                if (res.name.endsWith(".class"))
+                    res.name.removeSuffix(".class").replace("/", ".").replace("\\", ".")
+                else null
+            }
+        }.toSet()
     }
 }
 
