@@ -7,6 +7,10 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.ANNOTATION_CLASS)
 annotation class AllOpen
 
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
+annotation class NoArg
+
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
@@ -53,6 +57,7 @@ annotation class Bean(
 )
 
 @AllOpen
+@NoArg
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
@@ -137,3 +142,10 @@ annotation class Around(
 @MustBeDocumented
 @Inherited
 annotation class Transactional(val value: String = "transactionManager")
+
+
+@AllOpen
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class WithTransaction

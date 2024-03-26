@@ -9,10 +9,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class JdbcWithoutTxTest : JdbcTestBase() {
+class JdbcNoTxTest : JdbcTestBase() {
     @Test
-    fun testJdbcWithoutTx() {
-        AnnotationConfigApplicationContext(JdbcWithoutTxApplication::class.java, propertyResolver).use { ctx ->
+    fun testJdbcNoTx() {
+        AnnotationConfigApplicationContext(JdbcNoTxApplication::class.java, propertyResolver).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER)
             jdbcTemplate.update(CREATE_ADDRESS)
@@ -41,7 +41,7 @@ class JdbcWithoutTxTest : JdbcTestBase() {
             assertEquals(1, n2)
         }
 
-        AnnotationConfigApplicationContext(JdbcWithoutTxApplication::class.java, propertyResolver).use { ctx ->
+        AnnotationConfigApplicationContext(JdbcNoTxApplication::class.java, propertyResolver).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 1)
             assertEquals("Bob Jones", bob.name)

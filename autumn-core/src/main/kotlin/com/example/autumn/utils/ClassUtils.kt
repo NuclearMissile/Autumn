@@ -43,7 +43,7 @@ object ClassUtils {
         }
         return res
     }
-
+    
     fun <A : Annotation> getAnnotation(annos: List<Annotation>, annoClass: Class<A>): A? {
         for (anno in annos) {
             if (annoClass.isInstance(anno)) {
@@ -106,7 +106,6 @@ object ClassUtils {
      * @PostConstruct void init() {}
      *
      */
-
     fun findAnnotationMethod(clazz: Class<*>, annoClass: Class<out Annotation>): Method? {
         // try get declared method:
         val ms = clazz.declaredMethods.filter { it.isAnnotationPresent(annoClass) }

@@ -33,7 +33,7 @@ class MetricProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Metric>()
 class MetricInvocationHandler : InvocationHandler {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
     val lastProcessedTime = mutableMapOf<String, Long>()
-    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any {
+    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
         val metric = method.getAnnotation(Metric::class.java)
             ?: // do not do performance test:
             return method.invoke(proxy, *(args ?: emptyArray()))

@@ -8,7 +8,7 @@ import javax.sql.DataSource
 
 @ComponentScan
 @Configuration
-class JdbcWithoutTxApplication {
+class JdbcNoTxApplication {
     @Bean(destroyMethod = "close")
     fun dataSource( // properties:
         @Value("\${autumn.datasource.url}") url: String?,  //
@@ -42,10 +42,6 @@ data class Address(
     var userId: Int = 0,
     var address: String? = null,
     var zipcode: Int = 0
-) {
-    fun setZip(zip: Int?) {
-        this.zipcode = zip ?: 0
-    }
-}
+)
 
 data class User(var id: Int = 0, var name: String? = null, var age: Int? = null)
