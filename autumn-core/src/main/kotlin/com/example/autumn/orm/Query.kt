@@ -4,12 +4,18 @@ import jakarta.persistence.NoResultException
 import jakarta.persistence.NonUniqueResultException
 import org.slf4j.LoggerFactory
 
+interface Query<T> {
+    fun query(): List<T>
+    fun first(): T?
+    fun unique(): T
+}
+
 /**
  * Hold criteria query information.
  *
  * @param <T> Entity type.
  */
-class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper<T>) {
+class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper<T>) : Query<T> {
     private val logger = LoggerFactory.getLogger(this::class.java)
     val joinParams = mutableListOf<Any>()
     val whereParams = mutableListOf<Any>()
@@ -39,7 +45,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
         }.toString()
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         val queryParams = (joinParams + whereParams).toMutableList()
         if (limit > 0 && offset >= 0) {
             queryParams += limit
@@ -59,7 +65,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
      *
      * @return Object T or null.
      */
-    fun first(): T? {
+    override fun first(): T? {
         limit = 1
         offset = 0
         return query().firstOrNull()
@@ -72,7 +78,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
      * @throws NoResultException        If result set is empty.
      * @throws NonUniqueResultException If more than 1 result found.
      */
-    fun unique(): T {
+    override fun unique(): T {
         limit = 2
         offset = 0
         return query().also {
@@ -86,7 +92,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
     }
 }
 
-class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) {
+class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) : Query<T> {
     init {
         criteria.distinct = distinct
     }
@@ -107,20 +113,20 @@ class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) {
         return Limit(criteria, limit, offset)
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         return criteria.query()
     }
 
-    fun first(): T? {
+    override fun first(): T? {
         return criteria.first()
     }
 
-    fun unique(): T {
+    override fun unique(): T {
         return criteria.unique()
     }
 }
 
-class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args: Any) {
+class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args: Any) : Query<T> {
     init {
         criteria.joinClauses += joinClause
         criteria.joinParams.addAll(args)
@@ -144,20 +150,20 @@ class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args
         return Limit(criteria, limit, offset)
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         return criteria.query()
     }
 
-    fun first(): T? {
+    override fun first(): T? {
         return criteria.first()
     }
 
-    fun unique(): T {
+    override fun unique(): T {
         return criteria.unique()
     }
 }
 
-class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params: Any) {
+class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params: Any) : Query<T> {
     init {
         require(clause.count { it == '?' } == params.count()) { "params counts do not match given where clause" }
         criteria.whereClause = clause
@@ -172,20 +178,20 @@ class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params:
         return Limit(criteria, offset, limit)
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         return criteria.query()
     }
 
-    fun first(): T? {
+    override fun first(): T? {
         return criteria.first()
     }
 
-    fun unique(): T {
+    override fun unique(): T {
         return criteria.unique()
     }
 }
 
-class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) {
+class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) : Query<T> {
     init {
         criteria.orderBys += orderBy
     }
@@ -199,16 +205,20 @@ class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) {
         return Limit(criteria, limit, offset)
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         return criteria.query()
     }
 
-    fun first(): T? {
+    override fun first(): T? {
         return criteria.first()
+    }
+
+    override fun unique(): T {
+        return criteria.unique()
     }
 }
 
-class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) {
+class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) : Query<T> {
     init {
         require(limit > 0) { "limit must be > 0" }
         require(offset >= 0) { "offset must be >= 0" }
@@ -216,7 +226,15 @@ class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) {
         criteria.offset = offset
     }
 
-    fun query(): List<T> {
+    override fun query(): List<T> {
         return criteria.query()
+    }
+
+    override fun first(): T? {
+        return criteria.first()
+    }
+
+    override fun unique(): T {
+        return criteria.unique()
     }
 }
