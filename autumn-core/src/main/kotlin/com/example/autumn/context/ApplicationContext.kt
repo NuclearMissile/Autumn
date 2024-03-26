@@ -28,7 +28,8 @@ class AnnotationConfigApplicationContext private constructor(
 
     constructor(configClass: Class<*>, propertyResolver: PropertyResolver) : this(propertyResolver) {
         ApplicationContextHolder.applicationContext = this
-        infos += createBeanMetaInfos(scanClassNamesOnConfigClass(configClass))
+        val classNameSet = scanClassNamesOnConfigClass(configClass)
+        infos += createBeanMetaInfos(classNameSet)
         infos.values.filter { it.isConfiguration }.sorted().forEach(::createBean)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
             createBean(it) as BeanPostProcessor

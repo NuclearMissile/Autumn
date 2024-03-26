@@ -7,8 +7,12 @@ autumn:
   datasource:
     url: jdbc:hsqldb:file:testdb.tmp
     username: sa
-    password: 
+    password:
     auto-commit: ${AUTO_COMMIT:false}
+    driver-class-name: org.sqlite.JDBC
+  db-template:
+    entity-package-path-list:
+      - com.example.autumn.orm.entity
 
 # test data types:
 other:
@@ -26,6 +30,7 @@ other:
     - Apple
     - Orange
     - Pear
+  list2: [ ]
 
 convert:
   boolean: true

@@ -132,15 +132,23 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <args>
+                        <arg>-Xjvm-default=all</arg>
+                    </args>
                     <compilerPlugins>
                         <plugin>all-open</plugin>
+                        <plugin>jpa</plugin>
                     </compilerPlugins>
                     <pluginOptions>
-                        <plugin>jpa</plugin>
                         <option>all-open:annotation=com.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
                 <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-noarg</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
                     <dependency>
                         <groupId>org.jetbrains.kotlin</groupId>
                         <artifactId>kotlin-maven-allopen</artifactId>

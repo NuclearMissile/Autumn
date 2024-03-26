@@ -10,7 +10,7 @@ import com.example.scan.sub1.sub2.sub3.Sub3Bean
 import java.time.*
 import kotlin.test.*
 
-class AnnotationConfigApplicationContextTest {
+class AnnotationConfigOrmTestApplicationContextTest {
     @Test
     fun testCustomAnnotation() {
         AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->

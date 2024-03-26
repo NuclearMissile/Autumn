@@ -23,6 +23,7 @@ class ConfigUtilsTest {
         assertEquals("0x1a2b3c", configs["other.hex-data"])
         assertEquals("0x1a2b3c", configs["other.hex-string"])
         assertEquals(listOf("Apple", "Orange", "Pear"), configs["other.list"])
+        assertEquals(emptyList<String>(), configs["other.list2"])
     }
 
     @Test

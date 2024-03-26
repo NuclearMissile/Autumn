@@ -30,11 +30,11 @@ interface EntityMixin {
     }
 }
 
-class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePaths: List<String>) {
+class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: String) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {
-        scanClassNames(entityPackagePaths).map { Class.forName(it) }.filter {
+        scanClassNames(listOf(entityPackagePath)).map { Class.forName(it) }.filter {
             findAnnotation(it, Entity::class.java) != null
         }.associateWith { Mapper(it) }
     }
