@@ -140,7 +140,7 @@
                         <plugin>jpa</plugin>
                     </compilerPlugins>
                     <pluginOptions>
-                        <option>noarg:annotation=com.example.autumn.annotation.NoArg</option>
+                        <option>no-arg:annotation=com.example.autumn.annotation.NoArg</option>
                         <option>all-open:annotation=com.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
