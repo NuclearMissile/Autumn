@@ -1,5 +1,6 @@
 package com.example.autumn.annotation
 
+import com.example.autumn.utils.WebUtils
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -143,9 +144,70 @@ annotation class Around(
 @Inherited
 annotation class Transactional(val value: String = "transactionManager")
 
-
 @AllOpen
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class WithTransaction
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+@Component
+annotation class Controller(
+    /**
+     * Bean name. Default to simple class name with first-letter-lowercase.
+     */
+    val value: String = ""
+)
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Get(
+    /**
+     * URL mapping.
+     */
+    val value: String
+)
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Post(
+    /**
+     * URL mapping.
+     */
+    val value: String
+)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class PathVariable(val value: String)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class RequestBody
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class RequestParam(val value: String, val defaultValue: String = WebUtils.DEFAULT_PARAM_VALUE)
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ResponseBody
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+@Component
+annotation class RestController(
+    /**
+     * Bean name. Default to simple class name with first-letter-lowercase.
+     */
+    val value: String = ""
+)

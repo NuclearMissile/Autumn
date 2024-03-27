@@ -14,7 +14,7 @@ class AroundApplication {
     }
 }
 
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
+@Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Polite

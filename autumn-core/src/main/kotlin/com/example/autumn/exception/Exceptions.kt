@@ -8,6 +8,12 @@ open class BeanDefinitionException(override val message: String, override val ca
 open class BeanCreationException(override val message: String, override val cause: Throwable? = null) :
     AutumnException(message, cause)
 
+open class ErrorResponseException(
+    val statusCode: Int,
+    override val message: String,
+    override val cause: Throwable? = null
+) : AutumnException(message, cause)
+
 class BeanTypeException(override val message: String) : BeanDefinitionException(message)
 class NoSuchBeanException(override val message: String) : BeanDefinitionException(message)
 class NoUniqueBeanException(override val message: String) : BeanDefinitionException(message)
@@ -21,3 +27,9 @@ class DataAccessException(override val message: String, override val cause: Thro
 
 class TransactionException(override val message: String, override val cause: Throwable? = null) :
     AutumnException(message, cause)
+
+class ServerErrorException(override val message: String, override val cause: Throwable? = null) :
+    ErrorResponseException(500, message, cause)
+
+class RequestErrorException(override val message: String, override val cause: Throwable? = null) :
+    ErrorResponseException(400, message, cause)

@@ -26,6 +26,10 @@
         <hikaricp.version>5.1.0</hikaricp.version>
         <sqlite.version>3.45.2.0</sqlite.version>
         <jakarta.persistenc-api.verion>3.1.0</jakarta.persistenc-api.verion>
+        <tomcat.version>10.1.20</tomcat.version>
+        <freemarker.version>2.3.32</freemarker.version>
+        <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
+        <jackson.version>2.17.0</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -52,6 +56,22 @@
                 <version>${jakarta.persistenc-api.verion}</version>
             </dependency>
             <dependency>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${jakarta.servlet-api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-kotlin</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
@@ -75,6 +95,16 @@
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>${hikaricp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.xerial</groupId>
@@ -140,7 +170,7 @@
                         <plugin>jpa</plugin>
                     </compilerPlugins>
                     <pluginOptions>
-                        <option>no-arg:annotation=com.example.autumn.annotation.NoArg</option>
+                        <!--<option>no-arg:annotation=com.example.autumn.annotation.NoArg</option>-->
                         <option>all-open:annotation=com.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
