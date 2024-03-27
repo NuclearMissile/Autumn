@@ -38,7 +38,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         val info = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
         )
-        val handlerBean = info.instance ?: ctx.createBean(info)
+        val handlerBean = info.instance ?: ctx.createEarlySingleton(info)
         val proxy = if (handlerBean is InvocationHandler)
             AopProxyUtils.createProxy(bean, handlerBean)
         else throw AopConfigException(

@@ -30,12 +30,12 @@ class AnnotationConfigApplicationContext private constructor(
         ApplicationContextHolder.applicationContext = this
         val classNameSet = scanClassNamesOnConfigClass(configClass)
         infos += createBeanMetaInfos(classNameSet)
-        infos.values.filter { it.isConfiguration }.sorted().forEach(::createBean)
+        infos.values.filter { it.isConfiguration }.sorted().forEach(::createEarlySingleton)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
-            createBean(it) as BeanPostProcessor
+            createEarlySingleton(it) as BeanPostProcessor
         }
         // 创建其他普通Bean:
-        infos.values.sorted().forEach { if (it.instance == null) createBean(it) }
+        infos.values.sorted().forEach { if (it.instance == null) createEarlySingleton(it) }
         // 通过字段和set方法注入依赖:
         infos.values.forEach {
             try {
@@ -346,7 +346,7 @@ class AnnotationConfigApplicationContext private constructor(
      * 创建一个Bean，然后使用BeanPostProcessor处理，但不进行字段和方法级别的注入。
      * 如果创建的Bean不是Configuration或BeanPostProcessor，则在构造方法中注入的依赖Bean会自动创建。
      */
-    override fun createBean(info: BeanMetaInfo): Any {
+    override fun createEarlySingleton(info: BeanMetaInfo): Any {
         logger.atDebug().log("Try to create bean {} as early singleton: {}", info.beanName, info.beanClass.name)
         if (!creatingBeanNames.add(info.beanName)) {
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
@@ -406,7 +406,7 @@ class AnnotationConfigApplicationContext private constructor(
                         var autowiredBeanInstance = dependsOnInfo.instance
                         if (autowiredBeanInstance == null && !info.isConfiguration && !info.isBeanPostProcessor) {
                             // 当前依赖Bean尚未初始化，递归调用初始化该依赖Bean:
-                            autowiredBeanInstance = createBean(dependsOnInfo)
+                            autowiredBeanInstance = createEarlySingleton(dependsOnInfo)
                         }
                         args[i] = autowiredBeanInstance
                     } else {
@@ -559,5 +559,5 @@ interface ConfigurableApplicationContext : ApplicationContext {
 
     fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo?
 
-    fun createBean(info: BeanMetaInfo): Any
+    fun createEarlySingleton(info: BeanMetaInfo): Any
 }
