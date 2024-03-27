@@ -46,7 +46,7 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
     }
 
     fun exportDDL(): String {
-        return classMapping.values.joinToString("\n\n") { it.ddl }
+        return classMapping.values.sortedBy { it.tableName }.joinToString("\n\n") { it.ddl }
     }
 
     inline fun <reified T : EntityMixin> selectById(id: Any): T? {

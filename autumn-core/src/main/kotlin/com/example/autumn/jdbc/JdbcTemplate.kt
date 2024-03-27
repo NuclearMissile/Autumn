@@ -75,7 +75,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> queryList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
-        return queryList(sql, BeanRowMapper(clazz), args)
+        return queryList(sql, BeanRowMapper(clazz), *args)
     }
 
     fun <T> queryList(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): List<T> {
