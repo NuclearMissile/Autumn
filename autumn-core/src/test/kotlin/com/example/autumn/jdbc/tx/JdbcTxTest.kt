@@ -25,8 +25,12 @@ class JdbcTxTest : JdbcTestBase() {
             assertNotSame(UserService::class.java, userService.javaClass)
             assertNotSame(AddressService::class.java, addressService.javaClass)
             // proxy object is not inject:
-            assertNull(userService.addressService)
-            assertNull(addressService.userService)
+            val addressServiceField = UserService::class.java.getDeclaredField("addressService")
+            addressServiceField.isAccessible = true
+            assertNull(addressServiceField.get(userService))
+            val userServiceField = AddressService::class.java.getDeclaredField("userService")
+            userServiceField.isAccessible = true
+            assertNull(userServiceField.get(addressService))
 
             // insert user:
             val bob = userService.createUser("Bob", 12)
@@ -35,7 +39,7 @@ class JdbcTxTest : JdbcTestBase() {
             // insert addresses:
             val addr1 = Address(0, bob.id, "Broadway, New York", 10012)
             val addr2 = Address(0, bob.id, "Fifth Avenue, New York", 10080)
-            // NOTE user not exist for addr3:
+            // user not exist for addr3:
             val addr3 = Address(0, bob.id + 1, "Ocean Drive, Miami, Florida", 33411)
             assertThrows(TransactionException::class.java) {
                 addressService.addAddress(addr1, addr2, addr3)
@@ -57,6 +61,7 @@ class JdbcTxTest : JdbcTestBase() {
             assertEquals("Bob", userService.getUser(1).name)
             assertEquals(2, addressService.getAddresses(bob.id).size)
         }
+
         AnnotationConfigApplicationContext(JdbcTxApplication::class.java, propertyResolver).use { ctx ->
             val addressService: AddressService = ctx.getBean(AddressService::class.java)
             val addressesOfBob = addressService.getAddresses(1)

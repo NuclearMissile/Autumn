@@ -26,11 +26,11 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
 
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    override fun invoke(proxy: Any, method: Method, vararg args: Any?): Any? {
+    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
         val txs = transactionStatus.get()
         // join current tx
         if (txs != null || !method.isAnnotationPresent(WithTransaction::class.java))
-            return method.invoke(proxy, args)
+            return method.invoke(proxy, *(args ?: emptyArray()))
 
         dataSource.connection.use { conn ->
             val autoCommit = conn.autoCommit
@@ -39,7 +39,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
             }
             try {
                 transactionStatus.set(TransactionStatus(conn))
-                val ret = method.invoke(proxy, *args)
+                val ret = method.invoke(proxy, *(args ?: emptyArray()))
                 conn.commit()
                 return ret
             } catch (e: InvocationTargetException) {
