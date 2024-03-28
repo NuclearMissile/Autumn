@@ -117,11 +117,11 @@ class DispatcherServlet(
                                 if (viewName.startsWith("redirect:")) {
                                     resp.sendRedirect(viewName.substring(9))
                                 } else {
-                                    viewResolver.render(viewName, ret.model, req, resp)
+                                    viewResolver.render(viewName, ret.getModel(), req, resp)
                                 }
                             }
 
-                            else -> {
+                            (ret != null && !dispatcher.isVoid) -> {
                                 throw ServletException("Unable to process String result when handle url: $url")
                             }
                         }
@@ -294,7 +294,7 @@ class DispatcherServlet(
         init {
             val pv = findAnnotation(annos, PathVariable::class.java)
             val rp = findAnnotation(annos, RequestParam::class.java)
-            val rb = findAnnotation(annos, ResponseBody::class.java)
+            val rb = findAnnotation(annos, RequestBody::class.java)
             // should only have 1 annotation:
             if ((if (pv == null) 0 else 1) + (if (rp == null) 0 else 1) + (if (rb == null) 0 else 1) > 1) {
                 throw ServletException(

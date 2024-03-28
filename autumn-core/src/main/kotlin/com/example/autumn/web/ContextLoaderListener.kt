@@ -21,7 +21,7 @@ class ContextLoaderListener : ServletContextListener {
         WebMvcConfiguration.servletContext = servletContext
 
         val propertyResolver = createPropertyResolver()
-        val encoding = propertyResolver.getProperty("\${summer.web.character-encoding:UTF-8}")!!
+        val encoding = propertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")!!
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
         // register filters:
