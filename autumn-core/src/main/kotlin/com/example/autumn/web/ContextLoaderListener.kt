@@ -24,14 +24,14 @@ class ContextLoaderListener : ServletContextListener {
         val encoding = propertyResolver.getProperty("\${summer.web.character-encoding:UTF-8}")!!
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
-        val applicationContext = createApplicationContext(
-            servletContext.getInitParameter("configuration"), propertyResolver
-        )
         // register filters:
         registerFilters(servletContext)
         // register DispatcherServlet:
         registerDispatcherServlet(servletContext, propertyResolver)
 
+        val applicationContext = createApplicationContext(
+            servletContext.getInitParameter("configuration"), propertyResolver
+        )
         servletContext.setAttribute("applicationContext", applicationContext)
     }
 

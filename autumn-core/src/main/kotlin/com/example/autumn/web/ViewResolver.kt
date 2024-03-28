@@ -28,12 +28,12 @@ class FreeMarkerViewResolver(
     override fun init() {
         logger.info("init {}, set template path: {}", javaClass.simpleName, templatePath)
         freeMarkerConfig = Configuration(Configuration.VERSION_2_3_32).also { cfg ->
-            cfg.setOutputFormat(HTMLOutputFormat.INSTANCE)
-            cfg.setDefaultEncoding(templateEncoding)
+            cfg.outputFormat = HTMLOutputFormat.INSTANCE
+            cfg.defaultEncoding = templateEncoding
             cfg.templateLoader = ServletTemplateLoader(servletContext, templatePath)
-            cfg.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER)
-            cfg.setAutoEscapingPolicy(Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY)
-            cfg.setLocalizedLookup(false)
+            cfg.templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
+            cfg.autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
+            cfg.localizedLookup = false
             cfg.objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_32).also { it.isExposeFields = true }
         }
     }

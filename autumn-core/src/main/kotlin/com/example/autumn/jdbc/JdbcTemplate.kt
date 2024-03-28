@@ -45,14 +45,14 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> queryRequiredObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
-        return if (clazz == String::class.java)
-            queryRequiredObject(sql, StringRowMapper.instance, *args) as T
-        else if (clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType)
-            queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
-        else if (Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive)
-            queryRequiredObject(sql, NumberRowMapper.instance, *args) as T
-        else
-            queryRequiredObject(sql, BeanRowMapper(clazz), *args)
+        return when {
+            clazz == String::class.java -> queryRequiredObject(sql, StringRowMapper.instance, *args) as T
+            clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType ->
+                queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
+            Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive ->
+                queryRequiredObject(sql, NumberRowMapper.instance, *args) as T
+            else -> queryRequiredObject(sql, BeanRowMapper(clazz), *args)
+        }
     }
 
     fun <T> queryRequiredObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): T {

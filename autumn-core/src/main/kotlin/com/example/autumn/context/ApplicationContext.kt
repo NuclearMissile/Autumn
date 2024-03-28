@@ -3,9 +3,8 @@ package com.example.autumn.context
 import com.example.autumn.annotation.*
 import com.example.autumn.exception.*
 import com.example.autumn.resolver.PropertyResolver
-import com.example.autumn.utils.ClassUtils.findAnnotation
+import com.example.autumn.utils.ClassUtils
 import com.example.autumn.utils.ClassUtils.findAnnotationMethod
-import com.example.autumn.utils.ClassUtils.getAnnotation
 import com.example.autumn.utils.ClassUtils.getBeanName
 import com.example.autumn.utils.ClassUtils.getNamedMethod
 import com.example.autumn.utils.ClassUtils.scanClassNames
@@ -65,7 +64,7 @@ class AnnotationConfigApplicationContext private constructor(
     }
 
     private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
-        val scanAnno = findAnnotation(configClass, ComponentScan::class.java)
+        val scanAnno = ClassUtils.findAnnotation(configClass, ComponentScan::class.java)
         val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
             arrayOf(configClass.packageName) else scanAnno.value).toList()
         logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
@@ -100,7 +99,7 @@ class AnnotationConfigApplicationContext private constructor(
             }
 
             // 是否标注@Component?
-            findAnnotation(clazz, Component::class.java) ?: continue
+            ClassUtils.findAnnotation(clazz, Component::class.java) ?: continue
             logger.atDebug().log("found component: {}", clazz.name)
             val mod = clazz.modifiers
             if (Modifier.isAbstract(mod)) {
@@ -122,7 +121,7 @@ class AnnotationConfigApplicationContext private constructor(
             logger.atDebug().log("define bean: {}", info)
 
             // handle factory method
-            findAnnotation(clazz, Configuration::class.java) ?: continue
+            ClassUtils.findAnnotation(clazz, Configuration::class.java) ?: continue
             if (BeanPostProcessor::class.java.isAssignableFrom(clazz)) {
                 throw BeanDefinitionException("@Configuration class '${clazz.name}' cannot be BeanPostProcessor.")
             }
@@ -359,8 +358,8 @@ class AnnotationConfigApplicationContext private constructor(
         for (i in createFnParams.indices) {
             val param = createFnParams[i]
             val paramAnnos = createFn.parameterAnnotations[i].toList()
-            val paramValueAnno = getAnnotation(paramAnnos, Value::class.java)
-            var paramAutowiredAnno = getAnnotation(paramAnnos, Autowired::class.java)
+            val paramValueAnno = ClassUtils.findAnnotation(paramAnnos, Value::class.java)
+            var paramAutowiredAnno = ClassUtils.findAnnotation(paramAnnos, Autowired::class.java)
             if (ctorAutowiredAnno != null && paramValueAnno == null && paramAutowiredAnno == null) {
                 paramAutowiredAnno = Autowired()
             }

@@ -11,7 +11,7 @@ import java.io.OutputStream
 import java.io.Reader
 import java.io.Writer
 
-object JsonUtil {
+object JsonUtils {
     /**
      * Holds ObjectMapper for internal use: NEVER modify!
      */

@@ -44,7 +44,7 @@ object ClassUtils {
         return res
     }
     
-    fun <A : Annotation> getAnnotation(annos: List<Annotation>, annoClass: Class<A>): A? {
+    fun <A : Annotation> findAnnotation(annos: List<Annotation>, annoClass: Class<A>): A? {
         for (anno in annos) {
             if (annoClass.isInstance(anno)) {
                 return anno as A

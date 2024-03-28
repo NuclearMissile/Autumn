@@ -1,7 +1,7 @@
 package com.example.autumn.utils
 
-import com.example.autumn.utils.JsonUtil.readJson
-import com.example.autumn.utils.JsonUtil.toJson
+import com.example.autumn.utils.JsonUtils.readJson
+import com.example.autumn.utils.JsonUtils.toJson
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +14,7 @@ data class OrderBookItemBean(
     }
 }
 
-class JsonUtilTest {
+class JsonUtilsTest {
     @Test
     fun testReadJson() {
         assertEquals(null, "null".readJson<String>())
