@@ -27,7 +27,7 @@ import java.lang.reflect.Parameter
 
 class DispatcherServlet(
     private val applicationContext: ApplicationContext,
-    private val propertyResolver: PropertyResolver,
+    propertyResolver: PropertyResolver,
 ) : HttpServlet() {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val viewResolver = applicationContext.getBean(ViewResolver::class.java)
@@ -86,7 +86,7 @@ class DispatcherServlet(
                             when (ret) {
                                 is String -> resp.writer.also { it.write(ret) }.flush()
                                 is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
-                                else -> throw ServletException("Unable to process REST result when handle url: $url")
+                                else -> throw ServletException("Unable to process REST @ResponseBody result when handle url: $url")
                             }
                         } else if (!dispatcher.isVoid) {
                             resp.writer.writeJson(ret).flush()
@@ -108,7 +108,7 @@ class DispatcherServlet(
                                 if (dispatcher.isResponseBody) {
                                     resp.outputStream.also { it.write(ret) }.flush()
                                 } else {
-                                    throw ServletException("Unable to process String result when handle url: $url")
+                                    throw ServletException("Unable to process ByteArray result when handle url: $url")
                                 }
                             }
 
@@ -122,7 +122,7 @@ class DispatcherServlet(
                             }
 
                             (ret != null && !dispatcher.isVoid) -> {
-                                throw ServletException("Unable to process String result when handle url: $url")
+                                throw ServletException("Unable to process ${ret.javaClass.name} result when handle url: $url")
                             }
                         }
                     }
