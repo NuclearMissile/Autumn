@@ -1,4 +1,4 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.resolver.PropertyResolver

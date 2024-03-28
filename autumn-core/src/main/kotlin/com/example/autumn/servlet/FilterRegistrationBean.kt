@@ -1,4 +1,4 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import jakarta.servlet.Filter
 

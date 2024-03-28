@@ -1,6 +1,6 @@
 package com.example.autumn.annotation
 
-import com.example.autumn.utils.WebUtils
+import com.example.autumn.utils.ServletUtils
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -194,7 +194,7 @@ annotation class RequestBody
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class RequestParam(val value: String, val defaultValue: String = WebUtils.DEFAULT_PARAM_VALUE)
+annotation class RequestParam(val value: String, val defaultValue: String = ServletUtils.DEFAULT_PARAM_VALUE)
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

@@ -1,4 +1,4 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import com.example.autumn.annotation.*
 import com.example.autumn.context.ApplicationContext
@@ -11,8 +11,8 @@ import com.example.autumn.resolver.PropertyResolver
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import com.example.autumn.utils.JsonUtils.readJson
 import com.example.autumn.utils.JsonUtils.writeJson
-import com.example.autumn.utils.PathUtils
-import com.example.autumn.utils.WebUtils
+import com.example.autumn.utils.ServletUtils
+import com.example.autumn.utils.ServletUtils.compilePath
 import com.sun.jdi.InvocationException
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
@@ -198,7 +198,7 @@ class DispatcherServlet(
         val isVoid = handlerMethod.returnType == Void.TYPE
 
         private val logger = LoggerFactory.getLogger(javaClass)
-        private val urlPattern = PathUtils.compilePath(urlPattern)
+        private val urlPattern = compilePath(urlPattern)
         private val methodParams = mutableListOf<Param>()
 
         init {
@@ -272,7 +272,7 @@ class DispatcherServlet(
         private fun getOrDefault(req: HttpServletRequest, name: String, defaultValue: String): String {
             val s = req.getParameter(name)
             if (s == null) {
-                if (WebUtils.DEFAULT_PARAM_VALUE == defaultValue) {
+                if (ServletUtils.DEFAULT_PARAM_VALUE == defaultValue) {
                     throw RequestErrorException("Request parameter '$name' not found.")
                 }
                 return defaultValue
@@ -302,24 +302,33 @@ class DispatcherServlet(
                 )
             }
 
-            if (pv != null) {
-                name = pv.value
-                paramType = ParamType.PATH_VARIABLE
-            } else if (rp != null) {
-                name = rp.value
-                defaultValue = rp.defaultValue
-                paramType = ParamType.REQUEST_PARAM
-            } else if (rb != null) {
-                paramType = ParamType.REQUEST_BODY
-            } else {
-                paramType = ParamType.SERVLET_VARIABLE
-                if (paramClassType != HttpServletRequest::class.java &&
-                    paramClassType != HttpServletResponse::class.java &&
-                    paramClassType != HttpSession::class.java && paramClassType != ServletContext::class.java
-                ) {
-                    throw ServerErrorException(
-                        "(Missing annotation?) Unsupported argument type: $paramClassType at method: $method"
-                    )
+            when {
+                pv != null -> {
+                    name = pv.value
+                    paramType = ParamType.PATH_VARIABLE
+                }
+
+                rp != null -> {
+                    name = rp.value
+                    defaultValue = rp.defaultValue
+                    paramType = ParamType.REQUEST_PARAM
+                }
+
+                rb != null -> {
+                    paramType = ParamType.REQUEST_BODY
+                }
+
+                else -> {
+                    paramType = ParamType.SERVLET_VARIABLE
+                    if (paramClassType != HttpServletRequest::class.java &&
+                        paramClassType != HttpServletResponse::class.java &&
+                        paramClassType != HttpSession::class.java &&
+                        paramClassType != ServletContext::class.java
+                    ) {
+                        throw ServerErrorException(
+                            "(Missing annotation?) Unsupported argument type: $paramClassType at method: $method"
+                        )
+                    }
                 }
             }
         }

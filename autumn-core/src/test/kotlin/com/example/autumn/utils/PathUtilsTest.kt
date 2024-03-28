@@ -1,6 +1,6 @@
 package com.example.autumn.utils
 
-import com.example.autumn.utils.PathUtils.compilePath
+import com.example.autumn.utils.ServletUtils.compilePath
 import jakarta.servlet.ServletException
 import org.junit.jupiter.api.Assertions
 import kotlin.test.Test

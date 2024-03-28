@@ -1,4 +1,4 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import com.example.autumn.annotation.Autowired
 import com.example.autumn.annotation.Bean

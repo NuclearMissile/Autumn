@@ -2,9 +2,9 @@ package com.example.autumn.utils
 
 import com.example.autumn.context.ApplicationContextHolder
 import com.example.autumn.resolver.PropertyResolver
+import com.example.autumn.servlet.DispatcherServlet
+import com.example.autumn.servlet.FilterRegistrationBean
 import com.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
-import com.example.autumn.web.DispatcherServlet
-import com.example.autumn.web.FilterRegistrationBean
 import jakarta.servlet.DispatcherType
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
@@ -15,12 +15,20 @@ import java.util.*
 import java.util.Objects.requireNonNull
 import java.util.regex.Pattern
 
-object WebUtils {
+object ServletUtils {
     private val logger = LoggerFactory.getLogger(javaClass)
     private const val CONFIG_APP_YAML: String = "/application.yml"
     private const val CONFIG_APP_PROP: String = "/application.properties"
 
     const val DEFAULT_PARAM_VALUE = "__DUMMY__"
+
+    fun compilePath(path: String): Pattern {
+        val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
+        if (regPath.find { it == '{' || it == '}' } != null) {
+            throw ServletException("Invalid path: $path")
+        }
+        return Pattern.compile("^$regPath$")
+    }
 
     fun registerDispatcherServlet(servletContext: ServletContext, propertyResolver: PropertyResolver) {
         val dispatcherServlet = DispatcherServlet(ApplicationContextHolder.requiredApplicationContext, propertyResolver)
@@ -73,15 +81,5 @@ object WebUtils {
             }
         }
         return PropertyResolver(props)
-    }
-}
-
-object PathUtils {
-    fun compilePath(path: String): Pattern {
-        val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
-        if (regPath.find { it == '{' || it == '}' } != null) {
-            throw ServletException("Invalid path: $path")
-        }
-        return Pattern.compile("^$regPath$")
     }
 }

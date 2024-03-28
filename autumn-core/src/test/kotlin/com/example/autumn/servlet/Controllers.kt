@@ -1,4 +1,4 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import com.example.autumn.annotation.*
 import com.example.autumn.utils.JsonUtils.toJson
@@ -71,7 +71,7 @@ class RestApiController {
     fun register(@RequestBody signin: SigninObj, resp: HttpServletResponse) {
         resp.contentType = "application/json"
         val pw = resp.writer
-        pw.write("[\"" + signin.name + "\",true,12345]")
+        pw.write("[\"${signin.name}\",true,12345]")
         pw.flush()
     }
 }

@@ -1,12 +1,12 @@
-package com.example.autumn.web
+package com.example.autumn.servlet
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.context.ApplicationContext
 import com.example.autumn.exception.AutumnException
 import com.example.autumn.resolver.PropertyResolver
-import com.example.autumn.utils.WebUtils.createPropertyResolver
-import com.example.autumn.utils.WebUtils.registerDispatcherServlet
-import com.example.autumn.utils.WebUtils.registerFilters
+import com.example.autumn.utils.ServletUtils.createPropertyResolver
+import com.example.autumn.utils.ServletUtils.registerDispatcherServlet
+import com.example.autumn.utils.ServletUtils.registerFilters
 import jakarta.servlet.ServletContextEvent
 import jakarta.servlet.ServletContextListener
 import org.slf4j.Logger
