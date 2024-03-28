@@ -15,7 +15,7 @@ import java.io.*
 
 interface ViewResolver {
     fun init()
-    fun render(viewName: String, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse)
+    fun render(viewName: String, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse)
 }
 
 class FreeMarkerViewResolver(
@@ -40,7 +40,7 @@ class FreeMarkerViewResolver(
 
     override fun render(
         viewName: String,
-        model: Map<String, Any>?,
+        model: Map<String, Any?>?,
         req: HttpServletRequest,
         resp: HttpServletResponse
     ) {

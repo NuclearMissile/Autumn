@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletResponse
 
 class ModelAndView(
     val viewName: String,
+    val model: MutableMap<String, Any?> = mutableMapOf(),
     val status: Int = HttpServletResponse.SC_OK,
-    val model: MutableMap<String, Any> = mutableMapOf(),
 ) {
     fun addModel(map: Map<String, Any>) {
         model += map
