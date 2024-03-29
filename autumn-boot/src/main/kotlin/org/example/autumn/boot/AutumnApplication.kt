@@ -19,8 +19,6 @@ import java.nio.file.Paths
 
 class AutumnApplication {
     companion object {
-        const val CONFIG_APP_YAML: String = "/application.yml"
-        const val CONFIG_APP_PROP: String = "/application.properties"
         fun run(webDir: String, baseDir: String, configClass: Class<*>, vararg args: String) {
             AutumnApplication().start(webDir, baseDir, configClass, *args)
         }

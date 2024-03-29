@@ -40,4 +40,9 @@ class RestApiController {
     fun hello(@PathVariable("name") name: String): String {
         return mapOf("name" to name).toJson()
     }
+
+    @Get("/api/params")
+    fun params(@RequestParam("test") test: String): Map<String, String> {
+        return mapOf("test" to test)
+    }
 }
