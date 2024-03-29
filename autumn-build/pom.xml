@@ -12,6 +12,5 @@
     <modules>
         <module>../autumn-parent</module>
         <module>../autumn-core</module>
-        <module>../autumn-boot</module>
     </modules>
 </project>

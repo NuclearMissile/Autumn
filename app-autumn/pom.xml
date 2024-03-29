@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>org.example.autumn</groupId>
-            <artifactId>autumn-boot</artifactId>
+            <artifactId>autumn-core</artifactId>
             <version>1.0.0</version>
         </dependency>
     </dependencies>

@@ -1,4 +1,4 @@
-package org.example.autumn.boot
+package com.example.autumn.boot
 
 import com.example.autumn.context.AnnotationConfigApplicationContext
 import com.example.autumn.resolver.PropertyResolver

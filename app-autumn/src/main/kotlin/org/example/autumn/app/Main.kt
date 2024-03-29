@@ -1,10 +1,10 @@
 package org.example.autumn.app
 
 import com.example.autumn.annotation.*
+import com.example.autumn.boot.AutumnApplication
 import com.example.autumn.servlet.ModelAndView
 import com.example.autumn.servlet.WebMvcConfiguration
 import com.example.autumn.utils.JsonUtils.toJson
-import org.example.autumn.boot.AutumnApplication
 
 object Main {
     @JvmStatic
