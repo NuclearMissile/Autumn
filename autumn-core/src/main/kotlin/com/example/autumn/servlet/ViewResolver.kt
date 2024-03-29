@@ -65,7 +65,7 @@ class ServletTemplateLoader(private val servletContext: ServletContext, subDirPa
 
     override fun findTemplateSource(name: String): Any? {
         val realPath = servletContext.getRealPath(subDirPath + name)
-        logger.atDebug().log("load template {}: real path: {}", name, realPath)
+        logger.atDebug().log("load template {}, real path: {}", name, realPath)
         if (realPath != null) {
             val file = File(realPath)
             if (file.canRead() && file.isFile) {

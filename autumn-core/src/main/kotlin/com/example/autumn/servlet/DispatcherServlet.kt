@@ -13,7 +13,6 @@ import com.example.autumn.utils.JsonUtils.readJson
 import com.example.autumn.utils.JsonUtils.writeJson
 import com.example.autumn.utils.ServletUtils
 import com.example.autumn.utils.ServletUtils.compilePath
-import com.sun.jdi.InvocationException
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
@@ -21,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.slf4j.LoggerFactory
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
@@ -78,56 +78,56 @@ class DispatcherServlet(
         try {
             for (dispatcher in dispatchers) {
                 val result = dispatcher.process(url, req, resp)
-                if (result.isProcessed) {
-                    val ret = result.ret
-                    if (dispatcher.isRest) {
-                        if (!resp.isCommitted) resp.contentType = "application/json"
-                        if (dispatcher.isResponseBody) {
-                            when (ret) {
-                                is String -> resp.writer.also { it.write(ret) }.flush()
-                                is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
-                                else -> throw ServletException("Unable to process REST @ResponseBody result when handle url: $url")
-                            }
-                        } else if (!dispatcher.isVoid) {
-                            resp.writer.writeJson(ret).flush()
-                        }
-                    } else {
-                        if (!resp.isCommitted) resp.contentType = "text/html"
+                if (!result.isProcessed) continue
+
+                val ret = result.ret
+                if (dispatcher.isRest) {
+                    if (!resp.isCommitted) resp.contentType = "application/json"
+                    if (dispatcher.isResponseBody) {
                         when (ret) {
-                            is String -> {
-                                if (dispatcher.isResponseBody) {
-                                    resp.writer.also { it.write(ret) }.flush()
-                                } else if (ret.startsWith("redirect:")) {
-                                    resp.sendRedirect(ret.substring(9))
-                                } else {
-                                    throw ServletException("Unable to process String result when handle url: $url")
-                                }
+                            is String -> resp.writer.also { it.write(ret) }.flush()
+                            is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
+                            else -> throw ServletException("Unable to process REST @ResponseBody result when handle url: $url")
+                        }
+                    } else if (!dispatcher.isVoid) {
+                        resp.writer.writeJson(ret).flush()
+                    }
+                } else {
+                    if (!resp.isCommitted) resp.contentType = "text/html"
+                    when (ret) {
+                        is String -> {
+                            if (dispatcher.isResponseBody) {
+                                resp.writer.also { it.write(ret) }.flush()
+                            } else if (ret.startsWith("redirect:")) {
+                                resp.sendRedirect(ret.substring(9))
+                            } else {
+                                throw ServletException("Unable to process String result when handle url: $url")
                             }
+                        }
 
-                            is ByteArray -> {
-                                if (dispatcher.isResponseBody) {
-                                    resp.outputStream.also { it.write(ret) }.flush()
-                                } else {
-                                    throw ServletException("Unable to process ByteArray result when handle url: $url")
-                                }
+                        is ByteArray -> {
+                            if (dispatcher.isResponseBody) {
+                                resp.outputStream.also { it.write(ret) }.flush()
+                            } else {
+                                throw ServletException("Unable to process ByteArray result when handle url: $url")
                             }
+                        }
 
-                            is ModelAndView -> {
-                                val viewName = ret.viewName
-                                if (viewName.startsWith("redirect:")) {
-                                    resp.sendRedirect(viewName.substring(9))
-                                } else {
-                                    viewResolver.render(viewName, ret.getModel(), req, resp)
-                                }
+                        is ModelAndView -> {
+                            val viewName = ret.viewName
+                            if (viewName.startsWith("redirect:")) {
+                                resp.sendRedirect(viewName.substring(9))
+                            } else {
+                                viewResolver.render(viewName, ret.getModel(), req, resp)
                             }
+                        }
 
-                            (ret != null && !dispatcher.isVoid) -> {
-                                throw ServletException("Unable to process ${ret.javaClass.name} result when handle url: $url")
-                            }
+                        (ret != null && !dispatcher.isVoid) -> {
+                            throw ServletException("Unable to process ${ret.javaClass.name} result when handle url: $url")
                         }
                     }
-                    return
                 }
+                return
             }
             resp.sendError(404, "Not Found.")
         } catch (e: ErrorResponseException) {
@@ -219,40 +219,40 @@ class DispatcherServlet(
 
         fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Result {
             val matcher = urlPattern.matcher(url)
-            if (matcher.matches()) {
-                val args = methodParams.map { param ->
-                    when (param.paramType) {
-                        ParamType.PATH_VARIABLE -> try {
-                            convertToType(param.paramClassType, matcher.group(param.name))
-                        } catch (e: IllegalArgumentException) {
-                            throw RequestErrorException("Path variable '${param.name}' not found.")
-                        }
+            if (!matcher.matches())
+                return Result(false, null)
 
-                        ParamType.REQUEST_BODY -> req.reader.readJson(param.paramClassType)
+            val args = methodParams.map { param ->
+                when (param.paramType) {
+                    ParamType.PATH_VARIABLE -> try {
+                        convertToType(param.paramClassType, matcher.group(param.name))
+                    } catch (e: IllegalArgumentException) {
+                        throw RequestErrorException("Path variable '${param.name}' not found.")
+                    }
 
-                        ParamType.REQUEST_PARAM -> convertToType(
-                            param.paramClassType, getOrDefault(req, param.name!!, param.defaultValue!!)
-                        )
+                    ParamType.REQUEST_BODY -> req.reader.readJson(param.paramClassType)
 
-                        ParamType.SERVLET_VARIABLE -> when (param.paramClassType) {
-                            HttpServletRequest::class.java -> req
-                            HttpServletResponse::class.java -> resp
-                            HttpSession::class.java -> req.session
-                            ServletContext::class.java -> req.servletContext
-                            else -> throw ServerErrorException("Could not determine argument type: ${param.paramClassType}")
-                        }
+                    ParamType.REQUEST_PARAM -> convertToType(
+                        param.paramClassType, getOrDefault(req, param.name!!, param.defaultValue!!)
+                    )
+
+                    ParamType.SERVLET_VARIABLE -> when (param.paramClassType) {
+                        HttpServletRequest::class.java -> req
+                        HttpServletResponse::class.java -> resp
+                        HttpSession::class.java -> req.session
+                        ServletContext::class.java -> req.servletContext
+                        else -> throw ServerErrorException("Could not determine argument type: ${param.paramClassType}")
                     }
                 }
-                val ret = try {
-                    handlerMethod.invoke(controller, *args.toTypedArray())
-                } catch (e: InvocationException) {
-                    throw e.cause ?: e
-                } catch (e: ReflectiveOperationException) {
-                    throw ServletException(e)
-                }
-                return Result(true, ret)
             }
-            return Result(false, null)
+            val ret = try {
+                handlerMethod.invoke(controller, *args.toTypedArray())
+            } catch (e: InvocationTargetException) {
+                throw ServletException(e.targetException)
+            } catch (e: Exception) {
+                throw ServletException(e)
+            }
+            return Result(true, ret)
         }
 
         private fun convertToType(classType: Class<*>, s: String): Any {
