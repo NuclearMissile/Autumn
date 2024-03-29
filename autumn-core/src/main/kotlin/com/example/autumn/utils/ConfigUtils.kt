@@ -10,14 +10,20 @@ import org.yaml.snakeyaml.resolver.Resolver
 import java.util.*
 
 object ConfigUtils {
-    fun loadProperties(path: String): Map<String, Any> {
+    fun loadProperties(path: String): Map<String, String> {
         // try load *.properties:
         return readInputStream(path) { input ->
-            Properties().apply { load(input) }.toMap() as Map<String, Any>
+            Properties().apply { load(input) }.toMap() as Map<String, String>
         }
     }
 
-    fun loadYaml(path: String): Map<String, Any> {
+    fun loadYamlAsPlainMap(path: String): Map<String, Any> {
+        val result = mutableMapOf<String, Any>()
+        flatten(loadYaml(path), "", result)
+        return result
+    }
+
+    private fun loadYaml(path: String): Map<String, Any> {
         val loaderOptions = LoaderOptions()
         val dumperOptions = DumperOptions()
         val representer = Representer(dumperOptions)
@@ -29,17 +35,11 @@ object ConfigUtils {
         return readInputStream(path) { input -> yaml.load(input) as Map<String, Any> }
     }
 
-    fun loadYamlAsPlainMap(path: String): Map<String, Any> {
-        val result = mutableMapOf<String, Any>()
-        flatten(loadYaml(path), "", result)
-        return result
-    }
-
-    private fun flatten(source: Map<String, Any?>, prefix: String, plain: MutableMap<String, Any>) {
+    private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, Any>) {
         for (key in source.keys) {
             when (val value = source[key]) {
                 is Map<*, *> -> {
-                    flatten(value as Map<String, Any>, "$prefix$key.", plain)
+                    flatten(value as Map<String, String>, "$prefix$key.", plain)
                 }
 
                 is List<*> -> {
