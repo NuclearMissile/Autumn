@@ -78,10 +78,10 @@ class ContextLoaderInitializer(
 ) : ServletContainerInitializer {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    override fun onStartup(c: Set<Class<*>?>?, ctx: ServletContext) {
+    override fun onStartup(c: Set<Class<*>>, ctx: ServletContext) {
         logger.info("Servlet container start. ServletContext = {}", ctx)
 
-        val encoding = propertyResolver.getProperty("\${summer.web.character-encoding:UTF-8}")
+        val encoding = propertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")
         ctx.requestCharacterEncoding = encoding
         ctx.responseCharacterEncoding = encoding
 
