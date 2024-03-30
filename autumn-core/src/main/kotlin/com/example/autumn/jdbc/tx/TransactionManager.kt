@@ -21,7 +21,9 @@ class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transact
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
-        val transactionStatus = ThreadLocal<TransactionStatus?>()
+        private val transactionStatus = ThreadLocal<TransactionStatus?>()
+        val transactionConn: Connection?
+            get() = transactionStatus.get()?.conn
     }
 
     val logger: Logger = LoggerFactory.getLogger(javaClass)

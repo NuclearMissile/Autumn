@@ -5,7 +5,11 @@ import com.example.autumn.context.ApplicationContextHolder
 import com.example.autumn.context.BeanPostProcessor
 import com.example.autumn.context.ConfigurableApplicationContext
 import com.example.autumn.exception.AopConfigException
-import com.example.autumn.utils.AopProxyUtils
+import net.bytebuddy.ByteBuddy
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy
+import net.bytebuddy.implementation.InvocationHandlerAdapter
+import net.bytebuddy.matcher.ElementMatchers
+import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.ParameterizedType
 
@@ -15,6 +19,23 @@ import java.lang.reflect.ParameterizedType
 class AroundProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Around>()
 
 abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProcessor {
+    companion object {
+        private val logger = LoggerFactory.getLogger(Companion::class.java)
+        private val byteBuddy = ByteBuddy()
+
+        @OptIn(ExperimentalStdlibApi::class)
+        fun <T> createProxy(bean: T, handler: InvocationHandler): T {
+            val targetClass = bean!!.javaClass
+            logger.atDebug().log("create proxy for bean {} @{}", targetClass.name, bean.hashCode().toHexString())
+            val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
+                .method(ElementMatchers.isPublic())
+                .intercept(InvocationHandlerAdapter.of { _, method, args ->
+                    handler.invoke(bean, method, args)
+                }).make().load(targetClass.classLoader).loaded
+            return proxyClass.getConstructor().newInstance() as T
+        }
+    }
+
     private val originBeans = mutableMapOf<String, Any>()
     private val annotationClass = run {
         val type = javaClass.genericSuperclass
@@ -40,7 +61,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         )
         val handlerBean = info.instance ?: ctx.createEarlySingleton(info)
         val proxy = if (handlerBean is InvocationHandler)
-            AopProxyUtils.createProxy(bean, handlerBean)
+            createProxy(bean, handlerBean)
         else throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' is not type of ${InvocationHandler::class.java.name}.",
         )

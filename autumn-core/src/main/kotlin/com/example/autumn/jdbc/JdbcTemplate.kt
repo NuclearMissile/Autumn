@@ -1,17 +1,15 @@
 package com.example.autumn.jdbc
 
 import com.example.autumn.exception.DataAccessException
-import com.example.autumn.utils.TransactionUtils
+import com.example.autumn.jdbc.tx.DataSourceTransactionManager
 import java.sql.*
 import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
     fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
-        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
-            ps.executeQuery().use { rs ->
-                return@PreparedStatementCallback rse.extractData(rs)
-            }
-        })
+        return execute(preparedStatementCreator(sql, *args)) { ps ->
+            ps.executeQuery().use { rs -> rse.extractData(rs) }
+        }
     }
 
     fun update(sql: String, vararg args: Any?): Int {
@@ -49,8 +47,10 @@ class JdbcTemplate(private val dataSource: DataSource) {
             clazz == String::class.java -> queryRequiredObject(sql, StringRowMapper.instance, *args) as T
             clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType ->
                 queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
+
             Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive ->
                 queryRequiredObject(sql, NumberRowMapper.instance, *args) as T
+
             else -> queryRequiredObject(sql, BeanRowMapper(clazz), *args)
         }
     }
@@ -97,7 +97,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> execute(callback: ConnectionCallback<T>): T? {
-        val txConn = TransactionUtils.currentTransaction
+        val txConn = DataSourceTransactionManager.transactionConn
         return try {
             if (txConn != null)
                 callback.doInConnection(txConn)
