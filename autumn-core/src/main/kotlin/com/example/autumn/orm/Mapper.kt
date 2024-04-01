@@ -128,11 +128,11 @@ class Mapper<T>(private val entityClass: Class<T>) {
 
     val resultSetExtractor = { rs: ResultSet ->
         rs.use {
-            val colNames = (0 until properties.count()).map { rs.metaData.getColumnLabel(it + 1) }
+            val colNames = properties.indices.map { rs.metaData.getColumnLabel(it + 1) }
             buildList(rs.metaData.columnCount) {
                 while (rs.next()) {
                     val entity = entityClass.getConstructor().newInstance()
-                    for (i in 0 until properties.count()) {
+                    for (i in properties.indices) {
                         propertiesMap[colNames[i]]!![entity as Any] = rs.getObject(i + 1)
                     }
                     add(entity)

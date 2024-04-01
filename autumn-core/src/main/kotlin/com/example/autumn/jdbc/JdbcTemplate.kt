@@ -1,7 +1,6 @@
 package com.example.autumn.jdbc
 
 import com.example.autumn.exception.DataAccessException
-import com.example.autumn.jdbc.tx.DataSourceTransactionManager
 import java.sql.*
 import javax.sql.DataSource
 

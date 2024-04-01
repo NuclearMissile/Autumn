@@ -4,9 +4,6 @@ import com.example.autumn.annotation.Autowired
 import com.example.autumn.annotation.Bean
 import com.example.autumn.annotation.Configuration
 import com.example.autumn.annotation.Value
-import com.example.autumn.jdbc.tx.DataSourceTransactionManager
-import com.example.autumn.jdbc.tx.TransactionManager
-import com.example.autumn.jdbc.tx.TransactionalBeanPostProcessor
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource
