@@ -23,8 +23,8 @@ class HelloConfiguration
 @Controller
 class MvcController {
     @Get("/")
-    fun index(): String {
-        return "redirect:/hello"
+    fun index(): ModelAndView {
+        return ModelAndView("/index.html")
     }
 
     @Get("/hello")
