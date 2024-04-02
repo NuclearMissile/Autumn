@@ -4,11 +4,7 @@ import com.example.autumn.exception.DataAccessException
 import org.slf4j.LoggerFactory
 import java.sql.ResultSet
 
-fun interface RowMapper<T> {
-    fun mapRow(rs: ResultSet, rowNum: Int): T?
-}
-
-class BeanRowMapper<T>(private val clazz: Class<T>) : RowMapper<T> {
+class BeanRowMapper<T>(private val clazz: Class<T>) : ResultSetExtractor<T> {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val fields = clazz.fields.associateBy {
         logger.atDebug().log("Add row mapping for {}", it.name)
@@ -31,7 +27,7 @@ class BeanRowMapper<T>(private val clazz: Class<T>) : RowMapper<T> {
         )
     }
 
-    override fun mapRow(rs: ResultSet, rowNum: Int): T {
+    override fun extractData(rs: ResultSet): T? {
         return ctor.newInstance().also { bean ->
             try {
                 val meta = rs.metaData
@@ -52,32 +48,32 @@ class BeanRowMapper<T>(private val clazz: Class<T>) : RowMapper<T> {
     }
 }
 
-class StringRowMapper : RowMapper<String> {
-    override fun mapRow(rs: ResultSet, rowNum: Int): String? {
-        return rs.getString(1)
-    }
-
+class StringRowMapper : ResultSetExtractor<String> {
     companion object {
         val instance = StringRowMapper()
     }
+
+    override fun extractData(rs: ResultSet): String? {
+        return rs.getString(1)
+    }
 }
 
-class BooleanRowMapper : RowMapper<Boolean> {
-    override fun mapRow(rs: ResultSet, rowNum: Int): Boolean {
-        return rs.getBoolean(1)
-    }
-
+class BooleanRowMapper : ResultSetExtractor<Boolean> {
     companion object {
         val instance = BooleanRowMapper()
     }
+
+    override fun extractData(rs: ResultSet): Boolean {
+        return rs.getBoolean(1)
+    }
 }
 
-class NumberRowMapper : RowMapper<Number> {
-    override fun mapRow(rs: ResultSet, rowNum: Int): Number? {
-        return rs.getObject(1) as? Number
-    }
-
+class NumberRowMapper : ResultSetExtractor<Number> {
     companion object {
         val instance = NumberRowMapper()
+    }
+
+    override fun extractData(rs: ResultSet): Number? {
+        return rs.getObject(1) as? Number
     }
 }

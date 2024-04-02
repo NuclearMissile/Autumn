@@ -54,13 +54,13 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }
     }
 
-    fun <T> queryRequiredObject(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): T {
+    fun <T> queryRequiredObject(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): T {
         return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
             var t: T? = null
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
                     if (t == null) {
-                        t = rowMapper.mapRow(rs, rs.row)
+                        t = rowMapper.extractData(rs)
                     } else {
                         throw DataAccessException("Multiple rows found.")
                     }
@@ -77,12 +77,12 @@ class JdbcTemplate(private val dataSource: DataSource) {
         return queryList(sql, BeanRowMapper(clazz), *args)
     }
 
-    fun <T> queryList(sql: String, rowMapper: RowMapper<T>, vararg args: Any?): List<T> {
+    fun <T> queryList(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): List<T> {
         return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
             val list = mutableListOf<T>()
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
-                    list.add(rowMapper.mapRow(rs, rs.row)!!)
+                    list.add(rowMapper.extractData(rs)!!)
                 }
             }
             return@PreparedStatementCallback list
