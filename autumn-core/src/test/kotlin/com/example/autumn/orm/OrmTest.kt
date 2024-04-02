@@ -7,6 +7,7 @@ import com.example.autumn.orm.entity.PasswordAuthEntity
 import com.example.autumn.orm.entity.UserEntity
 import com.example.autumn.resolver.PropertyResolver
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.*
@@ -125,6 +126,54 @@ class OrmTest {
         }
     }
 
+    @Test
+    fun testUpdate() {
+        AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
+            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val timestamp = System.currentTimeMillis()
+            val user = UserEntity(-1, 1, timestamp)
+            dbTemplate.insert(UserEntity::class.java, user)
+            assertNotEquals(-1, user.id)
+            val timestamp2 = System.currentTimeMillis()
+            user.createdAt = timestamp2
+            assertThrows<IllegalArgumentException> { dbTemplate.update(UserEntity::class.java, user) }
+
+            val pae = PasswordAuthEntity(999, "-1", "foo")
+            dbTemplate.insert(PasswordAuthEntity::class.java, pae)
+            pae.passwd = "bar"
+            dbTemplate.update(PasswordAuthEntity::class.java, pae)
+            assertEquals("bar", dbTemplate.selectById<PasswordAuthEntity>(999)!!.passwd)
+        }
+    }
+
+    @Test
+    fun testDelete() {
+        AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
+            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val timestamp = System.currentTimeMillis()
+            val user = UserEntity(-1, 1, timestamp)
+            dbTemplate.insert(UserEntity::class.java, user)
+            assertNotEquals(-1, user.id)
+            assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
+            dbTemplate.delete(UserEntity::class.java, user)
+            assertNull(dbTemplate.selectById<UserEntity>(user.id))
+        }
+    }
+
+
+    @Test
+    fun testDeleteById() {
+        AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
+            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val timestamp = System.currentTimeMillis()
+            val user = UserEntity(-1, 1, timestamp)
+            dbTemplate.insert(UserEntity::class.java, user)
+            assertNotEquals(-1, user.id)
+            assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
+            dbTemplate.deleteById(UserEntity::class.java, user.id)
+            assertNull(dbTemplate.selectById<UserEntity>(user.id))
+        }
+    }
 
     private val propertyResolver: PropertyResolver
         get() = PropertyResolver(
