@@ -31,6 +31,11 @@ class MvcController {
     fun hello(): ModelAndView {
         return ModelAndView("/hello.html")
     }
+
+    @Get("/error/{errorCode}")
+    fun error(@PathVariable("errorCode") errorCode: Int): ModelAndView {
+        return ModelAndView("/hello.html", emptyMap(), errorCode)
+    }
 }
 
 @RestController

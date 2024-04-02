@@ -1,4 +1,4 @@
-package com.example.autumn.aop.around;
+package com.example.autumn.aop.around
 
 import com.example.autumn.annotation.*
 import com.example.autumn.aop.AroundProxyBeanPostProcessor

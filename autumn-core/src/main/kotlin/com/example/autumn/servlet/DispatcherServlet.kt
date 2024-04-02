@@ -115,7 +115,9 @@ class DispatcherServlet(
 
                         is ModelAndView -> {
                             val viewName = ret.viewName
-                            if (viewName.startsWith("redirect:")) {
+                            if (ret.status >= 400) {
+                                resp.sendError(ret.status)
+                            } else if (viewName.startsWith("redirect:")) {
                                 resp.sendRedirect(viewName.substring(9))
                             } else {
                                 viewResolver.render(viewName, ret.getModel(), req, resp)
@@ -129,7 +131,7 @@ class DispatcherServlet(
                 }
                 return
             }
-            resp.sendError(404, "Not Found.")
+            resp.sendError(404)
         } catch (e: ErrorResponseException) {
             logger.warn("process request failed with status: ${e.statusCode}, $url", e)
             if (!resp.isCommitted) {
@@ -170,7 +172,7 @@ class DispatcherServlet(
             m.isAccessible = true
         }
 
-        clazz.declaredMethods.forEach { m ->
+        clazz.declaredMethods.sortedBy { it.name }.forEach { m ->
             val getAnno = m.getAnnotation(Get::class.java)
             val postAnno = m.getAnnotation(Post::class.java)
             if (getAnno != null) {
@@ -212,7 +214,7 @@ class DispatcherServlet(
             )
             if (logger.isDebugEnabled) {
                 for (p in methodParams) {
-                    logger.debug("> parameter: {}", p)
+                    logger.debug("parameter: {}", p)
                 }
             }
         }

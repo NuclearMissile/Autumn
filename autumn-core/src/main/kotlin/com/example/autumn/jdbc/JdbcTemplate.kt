@@ -18,6 +18,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     fun updateWithGeneratedKey(sql: String, vararg args: Any?): Number {
         return execute( // PreparedStatementCreator
             PreparedStatementCreator { con: Connection ->
+                @Suppress("SqlSourceToSinkFlow")
                 val ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
                 for (i in args.indices)
                     ps.setObject(i + 1, args[i])

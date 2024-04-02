@@ -72,7 +72,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
     }
 
     /**
-     * Get unique result of the query. Exception will throw if no result found or more than 1 results found.
+     * Get unique result of the query. Exception will throw if no result found or more than one results found.
      *
      * @return T modelInstance
      * @throws NoResultException        If result set is empty.

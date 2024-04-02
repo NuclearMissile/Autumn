@@ -239,6 +239,7 @@ class AnnotationConfigApplicationContext private constructor(
         }
         val accessibleName = field?.name ?: method!!.name
         val accessibleType = field?.type ?: method!!.parameterTypes.first()
+        @Suppress("KotlinConstantConditions")
         when {
             valueAnno != null -> {
                 val propValue = propertyResolver.getRequiredProperty(valueAnno.value, accessibleType)

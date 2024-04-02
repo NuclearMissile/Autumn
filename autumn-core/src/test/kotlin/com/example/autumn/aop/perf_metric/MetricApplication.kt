@@ -1,6 +1,5 @@
 package com.example.autumn.aop.perf_metric
 
-import com.example.autumn.annotation.Around
 import com.example.autumn.annotation.Component
 import com.example.autumn.annotation.ComponentScan
 import com.example.autumn.annotation.Configuration

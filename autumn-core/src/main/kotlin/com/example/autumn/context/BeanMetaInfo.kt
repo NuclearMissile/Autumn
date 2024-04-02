@@ -5,7 +5,6 @@ import com.example.autumn.exception.BeanCreationException
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
-import java.util.*
 
 class BeanMetaInfo private constructor(
     val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean
