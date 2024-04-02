@@ -45,9 +45,9 @@ class AutumnApplication {
 
         // started info:
         val endTime = System.currentTimeMillis()
-        val appTime = String.format("%.3f", (endTime - startTime) / 1000.0)
-        val jvmTime = String.format("%.3f", ManagementFactory.getRuntimeMXBean().uptime / 1000.0)
-        logger.info("Started {} in {} seconds (process running for {})", configClass.simpleName, appTime, jvmTime)
+        val appTime = "%.3f".format((endTime - startTime) / 1000.0)
+        val jvmTime = "%.3f".format(ManagementFactory.getRuntimeMXBean().uptime / 1000.0)
+        logger.info("Started {} in {} s (process running for {} s)", configClass.simpleName, appTime, jvmTime)
 
         server.await()
     }
@@ -66,7 +66,7 @@ class AutumnApplication {
         ctx.resources = resources
         ctx.addServletContainerInitializer(ContextLoaderInitializer(configClass, propertyResolver), setOf<Class<*>>())
         tomcat.start()
-        logger.info("Tomcat started at port {}...", port)
+        logger.info("Tomcat started at http://localhost:{}", port)
         return tomcat.server
     }
 }

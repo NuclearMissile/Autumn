@@ -50,9 +50,7 @@ object ServletUtils {
             }
             logger.info(
                 "register filter '{}' {} for URLs: {}",
-                filterRegBean.name,
-                filter.javaClass.name,
-                urlPatterns.joinToString()
+                filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
             )
             val filterReg = servletContext.addFilter(filterRegBean.name, filter)
             filterReg.addMappingForUrlPatterns(
