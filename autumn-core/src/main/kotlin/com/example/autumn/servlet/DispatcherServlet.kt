@@ -225,29 +225,29 @@ class DispatcherServlet(
                 return Result(false, null)
 
             val args = methodParams.map { param ->
-                when (param.paramType) {
-                    ParamType.PATH_VARIABLE -> try {
-                        convertToType(param.paramClassType, matcher.group(param.name))
+                when (param.paramAnno) {
+                    is PathVariable -> try {
+                        convertToType(param.paramType, matcher.group(param.name))
                     } catch (e: IllegalArgumentException) {
                         throw RequestErrorException("Path variable '${param.name}' not found.")
                     }
 
-                    ParamType.REQUEST_BODY -> req.reader.readJson(param.paramClassType)
+                    is RequestBody -> req.reader.readJson(param.paramType)
 
-                    ParamType.REQUEST_PARAM -> convertToType(
-                        param.paramClassType, getReqParam(req, param.name!!, param.defaultValue!!)
+                    is RequestParam -> convertToType(
+                        param.paramType, getReqParam(req, param.name!!, param.defaultValue!!)
                     )
 
-                    ParamType.HEADERS -> req.getHeaders(param.name).toList()
+                    is Headers -> req.getHeaders(param.name).toList()
 
-                    ParamType.HEADER -> req.getHeader(param.name)
+                    is Header -> req.getHeader(param.name)
 
-                    ParamType.SERVLET_VARIABLE -> when (param.paramClassType) {
+                    else -> when (param.paramType) {
                         HttpServletRequest::class.java -> req
                         HttpServletResponse::class.java -> resp
                         HttpSession::class.java -> req.session
                         ServletContext::class.java -> req.servletContext
-                        else -> throw ServerErrorException("Could not determine argument type: ${param.paramClassType}")
+                        else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                     }
                 }
             }
@@ -287,70 +287,58 @@ class DispatcherServlet(
         }
     }
 
-    enum class ParamType {
-        PATH_VARIABLE, REQUEST_PARAM, REQUEST_BODY, SERVLET_VARIABLE, HEADERS, HEADER
-    }
-
     class Param(method: Method, param: Parameter, annos: List<Annotation>) {
         var name: String? = null
-        var paramType: ParamType
+        val paramAnno: Annotation?
         var defaultValue: String? = null
-        val paramClassType: Class<*> = param.type
+        val paramType: Class<*> = param.type
 
         init {
-            val pv = findAnnotation(annos, PathVariable::class.java)
-            val rp = findAnnotation(annos, RequestParam::class.java)
-            val rb = findAnnotation(annos, RequestBody::class.java)
-            val hs = findAnnotation(annos, Headers::class.java)
-            val hd = findAnnotation(annos, Header::class.java)
+            val anno = listOf(
+                PathVariable::class.java, RequestParam::class.java, RequestBody::class.java,
+                Headers::class.java, Header::class.java
+            ).mapNotNull { findAnnotation(annos, it) }
+
             // should only have 1 annotation:
-            if ((if (pv == null) 0 else 1) + (if (rp == null) 0 else 1) + (if (rb == null) 0 else 1) +
-                (if (hs == null) 0 else 1) + (if (hd == null) 0 else 1) > 1
-            ) {
+            if (anno.count() > 1) {
                 throw ServletException(
                     "Annotation @PathVariable, @RequestParam, @RequestBody, @Headers and @Header cannot be combined at method: $method"
                 )
             }
 
-            when {
-                pv != null -> {
-                    name = pv.value
-                    paramType = ParamType.PATH_VARIABLE
+            paramAnno = anno.singleOrNull()
+            when (paramAnno){
+                is PathVariable -> {
+                    name = paramAnno.value
                 }
 
-                rp != null -> {
-                    name = rp.value
-                    defaultValue = rp.defaultValue
-                    paramType = ParamType.REQUEST_PARAM
+                is RequestParam -> {
+                    name = paramAnno.value
+                    defaultValue = paramAnno.defaultValue
                 }
 
-                rb != null -> {
-                    paramType = ParamType.REQUEST_BODY
+                is RequestBody -> {}
+
+                is Headers -> {
+                    if (!paramType.isAssignableFrom(List::class.java))
+                        throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Headers parameter must be List type.")
+                    name = paramAnno.value
                 }
 
-                hs != null -> {
-                    if (!paramClassType.isAssignableFrom(List::class.java))
-                        throw ServerErrorException("Unsupported argument type: $paramClassType, at method: $method, @Headers parameter must be List type.")
-                    paramType = ParamType.HEADERS
-                    name = hs.value
-                }
-
-                hd != null -> {
-                    if (!paramClassType.isAssignableFrom(String::class.java))
-                        throw ServerErrorException("Unsupported argument type: $paramClassType, at method: $method, @Header parameter must be String? type.")
-                    paramType = ParamType.HEADER
-                    name = hd.value
+                is Header -> {
+                    if (!paramType.isAssignableFrom(String::class.java))
+                        throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Header parameter must be String? type.")
+                    name = paramAnno.value
                 }
 
                 else -> {
-                    paramType = ParamType.SERVLET_VARIABLE
-                    if (paramClassType != HttpServletRequest::class.java &&
-                        paramClassType != HttpServletResponse::class.java &&
-                        paramClassType != HttpSession::class.java &&
-                        paramClassType != ServletContext::class.java
+                    if (paramType != HttpServletRequest::class.java &&
+                        paramType != HttpServletResponse::class.java &&
+                        paramType != HttpSession::class.java &&
+                        paramType != ServletContext::class.java
                     ) {
                         throw ServerErrorException(
-                            "(Missing annotation?) Unsupported argument type: $paramClassType at method: $method"
+                            "(Missing annotation?) Unsupported argument type: $paramType at method: $method"
                         )
                     }
                 }
@@ -358,7 +346,7 @@ class DispatcherServlet(
         }
 
         override fun toString(): String {
-            return "Param(name=$name, paramType=$paramType, defaultValue=$defaultValue, paramClassType=$paramClassType)"
+            return "Param(name=$name, paramAnno=$paramAnno, defaultValue=$defaultValue, paramClassType=$paramType)"
         }
     }
 
