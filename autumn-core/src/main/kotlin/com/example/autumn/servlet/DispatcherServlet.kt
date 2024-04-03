@@ -330,14 +330,14 @@ class DispatcherServlet(
 
                 hs != null -> {
                     if (!paramClassType.isAssignableFrom(List::class.java))
-                        throw ServerErrorException("@Headers parameter must be List type.")
+                        throw ServerErrorException("Unsupported argument type: $paramClassType, at method: $method, @Headers parameter must be List type.")
                     paramType = ParamType.HEADERS
                     name = hs.value
                 }
 
                 hd != null -> {
                     if (!paramClassType.isAssignableFrom(String::class.java))
-                        throw ServerErrorException("@Header parameter must be String type.")
+                        throw ServerErrorException("Unsupported argument type: $paramClassType, at method: $method, @Header parameter must be String? type.")
                     paramType = ParamType.HEADER
                     name = hd.value
                 }
