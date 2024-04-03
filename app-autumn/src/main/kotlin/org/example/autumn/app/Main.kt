@@ -23,7 +23,7 @@ class HelloConfiguration
 @Controller
 class MvcController {
     @Get("/")
-    fun index(): ModelAndView {
+    fun index(@Header("Cookie") a: String?): ModelAndView {
         return ModelAndView("/index.html")
     }
 

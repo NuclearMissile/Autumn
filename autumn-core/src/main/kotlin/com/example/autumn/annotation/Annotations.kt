@@ -196,6 +196,16 @@ annotation class RequestBody
 @MustBeDocumented
 annotation class RequestParam(val value: String, val defaultValue: String = ServletUtils.DEFAULT_PARAM_VALUE)
 
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Headers(val value: String)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Header(val value: String)
+
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented

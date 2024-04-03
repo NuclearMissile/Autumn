@@ -235,8 +235,12 @@ class DispatcherServlet(
                     ParamType.REQUEST_BODY -> req.reader.readJson(param.paramClassType)
 
                     ParamType.REQUEST_PARAM -> convertToType(
-                        param.paramClassType, getOrDefault(req, param.name!!, param.defaultValue!!)
+                        param.paramClassType, getReqParam(req, param.name!!, param.defaultValue!!)
                     )
+
+                    ParamType.HEADERS -> req.getHeaders(param.name).toList()
+
+                    ParamType.HEADER -> req.getHeader(param.name)
 
                     ParamType.SERVLET_VARIABLE -> when (param.paramClassType) {
                         HttpServletRequest::class.java -> req
@@ -271,7 +275,7 @@ class DispatcherServlet(
             }
         }
 
-        private fun getOrDefault(req: HttpServletRequest, name: String, defaultValue: String): String {
+        private fun getReqParam(req: HttpServletRequest, name: String, defaultValue: String): String {
             val s = req.getParameter(name)
             if (s == null) {
                 if (ServletUtils.DEFAULT_PARAM_VALUE == defaultValue) {
@@ -284,7 +288,7 @@ class DispatcherServlet(
     }
 
     enum class ParamType {
-        PATH_VARIABLE, REQUEST_PARAM, REQUEST_BODY, SERVLET_VARIABLE
+        PATH_VARIABLE, REQUEST_PARAM, REQUEST_BODY, SERVLET_VARIABLE, HEADERS, HEADER
     }
 
     class Param(method: Method, param: Parameter, annos: List<Annotation>) {
@@ -297,10 +301,14 @@ class DispatcherServlet(
             val pv = findAnnotation(annos, PathVariable::class.java)
             val rp = findAnnotation(annos, RequestParam::class.java)
             val rb = findAnnotation(annos, RequestBody::class.java)
+            val hs = findAnnotation(annos, Headers::class.java)
+            val hd = findAnnotation(annos, Header::class.java)
             // should only have 1 annotation:
-            if ((if (pv == null) 0 else 1) + (if (rp == null) 0 else 1) + (if (rb == null) 0 else 1) > 1) {
+            if ((if (pv == null) 0 else 1) + (if (rp == null) 0 else 1) + (if (rb == null) 0 else 1) +
+                (if (hs == null) 0 else 1) + (if (hd == null) 0 else 1) > 1
+            ) {
                 throw ServletException(
-                    "Annotation @PathVariable, @RequestParam and @RequestBody cannot be combined at method: $method"
+                    "Annotation @PathVariable, @RequestParam, @RequestBody, @Headers and @Header cannot be combined at method: $method"
                 )
             }
 
@@ -318,6 +326,20 @@ class DispatcherServlet(
 
                 rb != null -> {
                     paramType = ParamType.REQUEST_BODY
+                }
+
+                hs != null -> {
+                    if (!paramClassType.isAssignableFrom(List::class.java))
+                        throw ServerErrorException("@Headers parameter must be List type.")
+                    paramType = ParamType.HEADERS
+                    name = hs.value
+                }
+
+                hd != null -> {
+                    if (!paramClassType.isAssignableFrom(String::class.java))
+                        throw ServerErrorException("@Header parameter must be String type.")
+                    paramType = ParamType.HEADER
+                    name = hd.value
                 }
 
                 else -> {
