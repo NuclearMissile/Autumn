@@ -11,7 +11,7 @@ import com.example.autumn.resolver.PropertyResolver
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import com.example.autumn.utils.JsonUtils.readJson
 import com.example.autumn.utils.JsonUtils.writeJson
-import com.example.autumn.utils.ServletUtils
+import com.example.autumn.utils.ServletUtils.DUMMY_VALUE
 import com.example.autumn.utils.ServletUtils.compilePath
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
@@ -236,7 +236,7 @@ class DispatcherServlet(
 
                     is RequestParam -> {
                         val value = req.getParameter(param.name!!) ?: param.defaultValue ?: return@map null
-                        if (value == ServletUtils.DUMMY_PARAM_VALUE) {
+                        if (value == DUMMY_VALUE) {
                             throw RequestErrorException("Request parameter '${param.name!!}' not found.")
                         }
                         convertToType(param.paramType, value)

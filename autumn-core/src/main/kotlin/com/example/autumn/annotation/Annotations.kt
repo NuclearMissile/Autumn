@@ -1,6 +1,6 @@
 package com.example.autumn.annotation
 
-import com.example.autumn.utils.ServletUtils
+import com.example.autumn.utils.ServletUtils.DUMMY_VALUE
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -184,7 +184,7 @@ annotation class Post(
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class PathVariable(val value: String)
+annotation class PathVariable(val value: String = DUMMY_VALUE, val required: Boolean = true)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
@@ -194,12 +194,16 @@ annotation class RequestBody
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class RequestParam(val value: String, val defaultValue: String = ServletUtils.DUMMY_PARAM_VALUE)
+annotation class RequestParam(
+    val value: String = DUMMY_VALUE,
+    val required: Boolean = true,
+    val defaultValue: String = DUMMY_VALUE
+)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class Header(val value: String)
+annotation class Header(val value: String = DUMMY_VALUE)
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

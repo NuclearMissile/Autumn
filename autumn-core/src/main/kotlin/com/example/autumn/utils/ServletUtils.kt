@@ -20,7 +20,7 @@ object ServletUtils {
     private const val CONFIG_APP_YAML: String = "/application.yml"
     private const val CONFIG_APP_PROP: String = "/application.properties"
 
-    const val DUMMY_PARAM_VALUE = "__DUMMY_PARAM_VALUE__"
+    const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
 
     fun compilePath(path: String): Pattern {
         val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
