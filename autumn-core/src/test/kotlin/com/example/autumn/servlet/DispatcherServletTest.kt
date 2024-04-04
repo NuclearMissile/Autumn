@@ -29,6 +29,16 @@ class DispatcherServletTest {
     }
 
     @Test
+    fun getStaticResource() {
+        val req = createMockRequest("GET", "/static/autumn.png", null, null)
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(200, resp.status)
+        assertEquals("image/png", resp.contentType)
+    }
+
+
+    @Test
     fun getApiHello() {
         val req = createMockRequest("GET", "/api/hello/Bob", null, null)
         val resp = createMockResponse()
