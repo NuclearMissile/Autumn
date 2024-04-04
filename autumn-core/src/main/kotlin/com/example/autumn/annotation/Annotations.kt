@@ -194,12 +194,7 @@ annotation class RequestBody
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class RequestParam(val value: String, val defaultValue: String = ServletUtils.DEFAULT_PARAM_VALUE)
-
-@Target(AnnotationTarget.VALUE_PARAMETER)
-@Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class Headers(val value: String)
+annotation class RequestParam(val value: String, val defaultValue: String = ServletUtils.DUMMY_PARAM_VALUE)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

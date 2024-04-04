@@ -234,11 +234,13 @@ class DispatcherServlet(
 
                     is RequestBody -> req.reader.readJson(param.paramType)
 
-                    is RequestParam -> convertToType(
-                        param.paramType, getReqParam(req, param.name!!, param.defaultValue!!)
-                    )
-
-                    is Headers -> req.getHeaders(param.name).toList()
+                    is RequestParam -> {
+                        val value = req.getParameter(param.name!!) ?: param.defaultValue ?: return@map null
+                        if (value == ServletUtils.DUMMY_PARAM_VALUE) {
+                            throw RequestErrorException("Request parameter '${param.name!!}' not found.")
+                        }
+                        convertToType(param.paramType, value)
+                    }
 
                     is Header -> req.getHeader(param.name)
 
@@ -274,17 +276,6 @@ class DispatcherServlet(
                 else -> throw ServerErrorException("Could not determine argument type: $classType")
             }
         }
-
-        private fun getReqParam(req: HttpServletRequest, name: String, defaultValue: String): String {
-            val s = req.getParameter(name)
-            if (s == null) {
-                if (ServletUtils.DEFAULT_PARAM_VALUE == defaultValue) {
-                    throw RequestErrorException("Request parameter '$name' not found.")
-                }
-                return defaultValue
-            }
-            return s
-        }
     }
 
     class Param(method: Method, param: Parameter, annos: List<Annotation>) {
@@ -295,8 +286,7 @@ class DispatcherServlet(
 
         init {
             val anno = listOf(
-                PathVariable::class.java, RequestParam::class.java, RequestBody::class.java,
-                Headers::class.java, Header::class.java
+                PathVariable::class.java, RequestParam::class.java, RequestBody::class.java, Header::class.java
             ).mapNotNull { findAnnotation(annos, it) }
 
             // should only have 1 annotation:
@@ -307,7 +297,7 @@ class DispatcherServlet(
             }
 
             paramAnno = anno.singleOrNull()
-            when (paramAnno){
+            when (paramAnno) {
                 is PathVariable -> {
                     name = paramAnno.value
                 }
@@ -318,12 +308,6 @@ class DispatcherServlet(
                 }
 
                 is RequestBody -> {}
-
-                is Headers -> {
-                    if (!paramType.isAssignableFrom(List::class.java))
-                        throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Headers parameter must be List type.")
-                    name = paramAnno.value
-                }
 
                 is Header -> {
                     if (!paramType.isAssignableFrom(String::class.java))
