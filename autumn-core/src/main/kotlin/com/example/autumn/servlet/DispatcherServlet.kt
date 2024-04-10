@@ -346,7 +346,7 @@ class DispatcherServlet(
         }
 
         override fun toString(): String {
-            return "Param(name=$name, paramAnno=$paramAnno, defaultValue=$defaultValue, paramClassType=$paramType)"
+            return "Param(name=$name, paramAnno=$paramAnno, paramClassType=$paramType)"
         }
     }
 
