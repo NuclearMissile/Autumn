@@ -37,7 +37,6 @@ class DispatcherServletTest {
         assertEquals("image/png", resp.contentType)
     }
 
-
     @Test
     fun getApiHello() {
         val req = createMockRequest("GET", "/api/hello/Bob", null, null)
@@ -94,6 +93,23 @@ class DispatcherServletTest {
                 "md5" to "aee9e38cb4d40ec2794542567539b4c8"
             )
         )
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(200, resp.status)
+        assertArrayEquals("AAAAAAAA".toByteArray(), resp.contentAsByteArray)
+    }
+
+    @Test
+    fun getDownload2() {
+        val req = createMockRequest(
+            "GET", "/download2/server.jar", null, mapOf(
+                "hasChecksum" to "true",
+                "length" to "8",
+                "time" to "123.4",
+                "md5" to "aee9e38cb4d40ec2794542567539b4c8"
+            )
+        )
+        req.addHeader("header1", "test_header1")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)

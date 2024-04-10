@@ -184,7 +184,7 @@ annotation class Post(
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class PathVariable(val value: String = "", val required: Boolean = true)
+annotation class PathVariable(val value: String = "")
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
@@ -203,7 +203,7 @@ annotation class RequestParam(
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class Header(val value: String = "")
+annotation class Header(val value: String = "", val required: Boolean = true, val defaultValue: String = DUMMY_VALUE)
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

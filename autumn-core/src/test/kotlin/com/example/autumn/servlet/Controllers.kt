@@ -107,6 +107,27 @@ class MvcController {
         return "A".repeat(length).toByteArray(StandardCharsets.UTF_8)
     }
 
+    @Get("/download2/{file}")
+    @ResponseBody
+    fun download2(
+        @PathVariable("file") file: String,
+        @RequestParam(defaultValue = "10") downloadTime: Float,
+        @RequestParam("md5") md5: String,
+        @RequestParam("length") length: Int,
+        @RequestParam(required = false) checksum: Boolean?,
+        @Header header1: String?,
+        @Header(defaultValue = "test_header2") header2: String,
+        @Header(required = false) header3: String?
+    ): ByteArray {
+        assert(checksum == null)
+        assert(downloadTime == 10f)
+        assert(header1 == "test_header1")
+        assert(header2 == "test_header2")
+        assert(header3 == null)
+        return "A".repeat(length).toByteArray(StandardCharsets.UTF_8)
+    }
+
+
     @Get("/download-part")
     fun downloadPart(req: HttpServletRequest, resp: HttpServletResponse) {
         resp.status = 206

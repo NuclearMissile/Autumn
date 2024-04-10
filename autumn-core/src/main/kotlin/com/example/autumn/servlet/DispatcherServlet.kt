@@ -229,20 +229,32 @@ class DispatcherServlet(
                     is PathVariable -> try {
                         convertToType(param.paramType, matcher.group(param.name))
                     } catch (e: IllegalArgumentException) {
-                        throw RequestErrorException("Path variable '${param.name}' not found.")
+                        throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
 
                     is RequestBody -> req.reader.readJson(param.paramType)
 
                     is RequestParam -> {
-                        val value = req.getParameter(param.name!!) ?: param.defaultValue ?: return@map null
+                        val value = req.getParameter(param.name) ?: param.defaultValue!!
                         if (value == DUMMY_VALUE) {
-                            throw RequestErrorException("Request parameter '${param.name!!}' not found.")
+                            if (param.required!!)
+                                throw RequestErrorException("Request parameter '${param.name!!}' is required.")
+                            else
+                                return@map null
                         }
                         convertToType(param.paramType, value)
                     }
 
-                    is Header -> req.getHeader(param.name)
+                    is Header -> {
+                        val value = req.getHeader(param.name) ?: param.defaultValue!!
+                        if (value == DUMMY_VALUE) {
+                            if (param.required!!)
+                                throw RequestErrorException("Header '${param.name!!}' is required.")
+                            else
+                                return@map null
+                        }
+                        value
+                    }
 
                     else -> when (param.paramType) {
                         HttpServletRequest::class.java -> req
@@ -282,6 +294,7 @@ class DispatcherServlet(
         var name: String? = null
         val paramAnno: Annotation?
         var defaultValue: String? = null
+        var required: Boolean? = null
         val paramType: Class<*> = param.type
 
         init {
@@ -299,11 +312,12 @@ class DispatcherServlet(
             paramAnno = anno.singleOrNull()
             when (paramAnno) {
                 is PathVariable -> {
-                    name = paramAnno.value
+                    name = paramAnno.value.ifEmpty { param.name }
                 }
 
                 is RequestParam -> {
-                    name = paramAnno.value
+                    name = paramAnno.value.ifEmpty { param.name }
+                    required = paramAnno.required
                     defaultValue = paramAnno.defaultValue
                 }
 
@@ -312,7 +326,9 @@ class DispatcherServlet(
                 is Header -> {
                     if (!paramType.isAssignableFrom(String::class.java))
                         throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Header parameter must be String? type.")
-                    name = paramAnno.value
+                    name = paramAnno.value.ifEmpty { param.name }
+                    required = paramAnno.required
+                    defaultValue = paramAnno.defaultValue
                 }
 
                 else -> {

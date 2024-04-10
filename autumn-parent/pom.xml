@@ -182,6 +182,7 @@
                 <configuration>
                     <args>
                         <arg>-Xjvm-default=all</arg>
+                        <arg>-java-parameters</arg>
                     </args>
                     <compilerPlugins>
                         <plugin>all-open</plugin>
