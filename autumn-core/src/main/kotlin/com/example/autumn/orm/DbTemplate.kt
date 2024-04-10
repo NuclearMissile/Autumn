@@ -1,5 +1,9 @@
 package com.example.autumn.orm
 
+import com.example.autumn.annotation.Autowired
+import com.example.autumn.annotation.Bean
+import com.example.autumn.annotation.Configuration
+import com.example.autumn.annotation.Value
 import com.example.autumn.jdbc.JdbcTemplate
 import com.example.autumn.utils.ClassUtils.findAnnotation
 import com.example.autumn.utils.ClassUtils.scanClassNames
@@ -27,6 +31,17 @@ interface EntityMixin {
         const val VAR_CHAR_200 = 200
         const val VAR_CHAR_1000 = 1000
         const val VAR_CHAR_10000 = 10000
+    }
+}
+
+@Configuration
+class DbTemplateConfiguration {
+    @Bean
+    fun dbTemplate(
+        @Autowired jdbcTemplate: JdbcTemplate,
+        @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
+    ): DbTemplate {
+        return DbTemplate(jdbcTemplate, entityPackagePath)
     }
 }
 

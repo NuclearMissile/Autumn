@@ -3,9 +3,9 @@ package com.example.autumn.utils
 import com.example.autumn.annotation.Bean
 import com.example.autumn.annotation.Component
 import com.example.autumn.exception.BeanDefinitionException
-import com.example.autumn.resolver.InputStreamCallback
 import com.example.autumn.resolver.ResourceResolver
 import java.io.FileNotFoundException
+import java.io.InputStream
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 
@@ -43,7 +43,7 @@ object ClassUtils {
         }
         return res
     }
-    
+
     fun <A : Annotation> findAnnotation(annos: List<Annotation>, annoClass: Class<A>): A? {
         for (anno in annos) {
             if (annoClass.isInstance(anno)) {
@@ -147,11 +147,11 @@ object ClassUtils {
 }
 
 object ClassPathUtils {
-    fun <T> readInputStream(path: String, inputStreamCallback: InputStreamCallback<T>): T {
+    fun <T> readInputStream(path: String, inputStreamCallback: (stream: InputStream) -> T): T {
         val _path = path.removePrefix("/")
         contextClassLoader.getResourceAsStream(_path).use { input ->
             input ?: throw FileNotFoundException("File not found in classpath: $_path")
-            return inputStreamCallback.processInputStream(input)
+            return inputStreamCallback.invoke(input)
         }
     }
 
