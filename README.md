@@ -10,7 +10,7 @@ Yet another toy web application framework imitating Spring.
 - [x] Web MVC framework
 - [x] JdbcTemplate and simple ORM
 - [x] Support .war standard 
-- [] Self-bootable .war
-- [] Demo webapp
-- [] Homemade http server to replace Tomcat
+- [ ] Self-bootable .war
+- [ ] Demo webapp
+- [ ] Homemade http server to replace Tomcat
 
