@@ -2,6 +2,7 @@
 
 # Autumn 
 Yet another toy web application framework imitating Spring in Kotlin.
+![](screenshot.png)
 
 ## Functions
 - [x] IOC context
