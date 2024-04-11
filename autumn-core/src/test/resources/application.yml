@@ -11,8 +11,7 @@ autumn:
     auto-commit: ${AUTO_COMMIT:false}
     driver-class-name: org.sqlite.JDBC
   db-template:
-    entity-package-path-list:
-      - com.example.autumn.orm.entity
+    entity-package-path: org.example.autumn.orm.entity
 
 # test data types:
 other:

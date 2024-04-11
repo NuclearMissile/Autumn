@@ -31,6 +31,7 @@
         <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
         <jackson.version>2.17.0</jackson.version>
         <spring.version>6.1.5</spring.version>
+        <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -184,8 +185,8 @@
                         <plugin>jpa</plugin>
                     </compilerPlugins>
                     <pluginOptions>
-                        <!--<option>no-arg:annotation=com.example.autumn.annotation.NoArg</option>-->
-                        <option>all-open:annotation=com.example.autumn.annotation.AllOpen</option>
+                        <!--<option>no-arg:annotation=org.example.autumn.annotation.NoArg</option>-->
+                        <option>all-open:annotation=org.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
                 <dependencies>
@@ -200,6 +201,11 @@
                         <version>${kotlin.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${maven-war-plugin.version}</version>
             </plugin>
         </plugins>
     </build>

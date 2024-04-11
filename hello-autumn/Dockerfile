@@ -1,0 +1,3 @@
+FROM tomcat
+
+COPY target/hello-autumn-1.0.0.war /usr/local/tomcat/webapps/
