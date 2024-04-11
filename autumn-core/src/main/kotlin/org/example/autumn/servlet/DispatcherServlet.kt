@@ -62,7 +62,7 @@ class DispatcherServlet(
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI
+        val url = req.requestURI.removePrefix(req.contextPath)
         if (url == faviconPath || url.startsWith(resourcePath))
             resource(req, resp)
         else
@@ -74,7 +74,7 @@ class DispatcherServlet(
     }
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse, dispatchers: List<Dispatcher>) {
-        val url = req.requestURI
+        val url = req.requestURI.removePrefix(req.contextPath)
         try {
             for (dispatcher in dispatchers) {
                 val result = dispatcher.process(url, req, resp)
@@ -145,7 +145,7 @@ class DispatcherServlet(
     }
 
     private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI
+        val url = req.requestURI.removePrefix(req.contextPath)
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
