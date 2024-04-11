@@ -1,13 +1,13 @@
 package org.example.autumn.utils
 
+import jakarta.servlet.DispatcherType
+import jakarta.servlet.ServletContext
+import jakarta.servlet.ServletException
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.servlet.DispatcherServlet
 import org.example.autumn.servlet.FilterRegistrationBean
 import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
-import jakarta.servlet.DispatcherType
-import jakarta.servlet.ServletContext
-import jakarta.servlet.ServletException
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.UncheckedIOException
@@ -33,9 +33,10 @@ object ServletUtils {
     fun registerDispatcherServlet(servletContext: ServletContext, propertyResolver: PropertyResolver) {
         val dispatcherServlet = DispatcherServlet(ApplicationContextHolder.requiredApplicationContext, propertyResolver)
         logger.info("register servlet {} for URL '/'", dispatcherServlet.javaClass.name)
-        val dispatcherReg = servletContext.addServlet("dispatcherServlet", dispatcherServlet)
-        dispatcherReg.addMapping("/")
-        dispatcherReg.setLoadOnStartup(0)
+        servletContext.addServlet("dispatcherServlet", dispatcherServlet)!!.apply {
+            addMapping("/")
+            setLoadOnStartup(0)
+        }
     }
 
     fun registerFilters(servletContext: ServletContext) {
@@ -52,8 +53,7 @@ object ServletUtils {
                 "register filter '{}' {} for URLs: {}",
                 filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
             )
-            val filterReg = servletContext.addFilter(filterRegBean.name, filter)
-            filterReg.addMappingForUrlPatterns(
+            servletContext.addFilter(filterRegBean.name, filter)!!.addMappingForUrlPatterns(
                 EnumSet.of(DispatcherType.REQUEST), true, *urlPatterns.toTypedArray()
             )
         }
