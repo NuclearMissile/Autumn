@@ -1,5 +1,8 @@
 package org.example.autumn.hello
 
+import jakarta.servlet.*
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
 import org.example.autumn.boot.AutumnApplication
 import org.example.autumn.servlet.FilterRegistrationBean
@@ -7,20 +10,13 @@ import org.example.autumn.servlet.ModelAndView
 import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.JsonUtils.toJson
 import org.example.autumn.utils.JsonUtils.writeJson
-import jakarta.servlet.Filter
-import jakarta.servlet.FilterChain
-import jakarta.servlet.ServletException
-import jakarta.servlet.ServletRequest
-import jakarta.servlet.ServletResponse
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         AutumnApplication.run(
-            "src/main/webapp", "target/classes", HelloConfiguration::class.java, *args
+            "src/main/webapp", "target/classes", "", HelloConfiguration::class.java, *args
         )
     }
 }

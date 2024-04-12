@@ -1,5 +1,11 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.ServletContext
+import jakarta.servlet.ServletException
+import jakarta.servlet.http.HttpServlet
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ConfigurableApplicationContext
@@ -13,12 +19,6 @@ import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.example.autumn.utils.ServletUtils.DUMMY_VALUE
 import org.example.autumn.utils.ServletUtils.compilePath
-import jakarta.servlet.ServletContext
-import jakarta.servlet.ServletException
-import jakarta.servlet.http.HttpServlet
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
-import jakarta.servlet.http.HttpSession
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -99,7 +99,7 @@ class DispatcherServlet(
                             if (dispatcher.isResponseBody) {
                                 resp.writer.also { it.write(ret) }.flush()
                             } else if (ret.startsWith("redirect:")) {
-                                resp.sendRedirect(ret.substring(9))
+                                resp.sendRedirect(req.contextPath + ret.substring(9))
                             } else {
                                 throw ServletException("Unable to process String result when handle url: $url")
                             }
@@ -118,7 +118,7 @@ class DispatcherServlet(
                             if (ret.status >= 400) {
                                 resp.sendError(ret.status)
                             } else if (viewName.startsWith("redirect:")) {
-                                resp.sendRedirect(viewName.substring(9))
+                                resp.sendRedirect(req.contextPath + viewName.substring(9))
                             } else {
                                 viewResolver.render(viewName, ret.getModel(), req, resp)
                             }

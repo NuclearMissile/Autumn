@@ -10,7 +10,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         AutumnApplication.run(
-            "src/main/webapp", "target/classes", HelloConfiguration::class.java, *args
+            "src/main/webapp", "target/classes", "", HelloConfiguration::class.java, *args
         )
     }
 }
