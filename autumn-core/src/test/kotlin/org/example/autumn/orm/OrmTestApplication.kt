@@ -36,7 +36,7 @@ class OrmTestApplication {
         return JdbcTemplate(dataSource)
     }
 
-    @Bean("testDbTemplate")
+    @Bean
     fun dbTemplate(
         @Autowired jdbcTemplate: JdbcTemplate,
         @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,

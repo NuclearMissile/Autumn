@@ -32,7 +32,7 @@ object ServletUtils {
 
     fun registerDispatcherServlet(servletContext: ServletContext, propertyResolver: PropertyResolver) {
         val dispatcherServlet = DispatcherServlet(ApplicationContextHolder.requiredApplicationContext, propertyResolver)
-        logger.info("register servlet {} for URL '/'", dispatcherServlet.javaClass.name)
+        logger.info("register servlet {} for ROOT", dispatcherServlet.javaClass.name)
         servletContext.addServlet("dispatcherServlet", dispatcherServlet)!!.apply {
             addMapping("/")
             setLoadOnStartup(0)

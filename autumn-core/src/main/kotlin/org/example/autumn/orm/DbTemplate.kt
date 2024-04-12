@@ -1,13 +1,9 @@
 package org.example.autumn.orm
 
-import org.example.autumn.annotation.Autowired
-import org.example.autumn.annotation.Bean
-import org.example.autumn.annotation.Configuration
-import org.example.autumn.annotation.Value
+import jakarta.persistence.Entity
 import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.example.autumn.utils.ClassUtils.scanClassNames
-import jakarta.persistence.Entity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
@@ -31,17 +27,6 @@ interface EntityMixin {
         const val VAR_CHAR_200 = 200
         const val VAR_CHAR_1000 = 1000
         const val VAR_CHAR_10000 = 10000
-    }
-}
-
-@Configuration
-class DbTemplateConfiguration {
-    @Bean
-    fun dbTemplate(
-        @Autowired jdbcTemplate: JdbcTemplate,
-        @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
-    ): DbTemplate {
-        return DbTemplate(jdbcTemplate, entityPackagePath)
     }
 }
 

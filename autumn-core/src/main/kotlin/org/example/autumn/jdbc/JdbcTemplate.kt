@@ -7,6 +7,7 @@ import org.example.autumn.annotation.Value
 import org.example.autumn.exception.DataAccessException
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.example.autumn.orm.DbTemplate
 import java.sql.*
 import javax.sql.DataSource
 
@@ -20,7 +21,7 @@ class JdbcConfiguration {
         @Value("\${autumn.datasource.driver-class-name:}") driver: String,
         @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
         @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
-        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int
+        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int,
     ): DataSource {
         return HikariDataSource(HikariConfig().also { config ->
             config.isAutoCommit = false
@@ -37,6 +38,14 @@ class JdbcConfiguration {
     @Bean
     fun jdbcTemplate(@Autowired dataSource: DataSource): JdbcTemplate {
         return JdbcTemplate(dataSource)
+    }
+
+    @Bean
+    fun dbTemplate(
+        @Autowired jdbcTemplate: JdbcTemplate,
+        @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
+    ): DbTemplate {
+        return DbTemplate(jdbcTemplate, entityPackagePath)
     }
 
     @Bean

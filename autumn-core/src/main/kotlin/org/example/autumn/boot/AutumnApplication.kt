@@ -54,7 +54,6 @@ class AutumnApplication {
         ctx.addServletContainerInitializer(ContextLoaderInitializer(configClass, propertyResolver), setOf())
         tomcat.start()
         logger.info("Tomcat started at http://localhost:{}", port)
-        val server = tomcat.server
 
         // started info:
         val endTime = System.currentTimeMillis()
@@ -62,9 +61,8 @@ class AutumnApplication {
         val jvmTime = "%.3f".format(ManagementFactory.getRuntimeMXBean().uptime / 1000.0)
         logger.info("Started {} in {} s (process running for {} s)", configClass.simpleName, appTime, jvmTime)
 
-        server.await()
+        tomcat.server.await()
     }
-
 }
 
 class ContextLoaderInitializer(
