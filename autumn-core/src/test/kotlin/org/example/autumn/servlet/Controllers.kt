@@ -1,11 +1,12 @@
 package org.example.autumn.servlet
 
-import org.example.autumn.annotation.*
-import org.example.autumn.utils.JsonUtils.toJson
-import org.example.autumn.utils.JsonUtils.writeJson
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
+import org.example.autumn.annotation.*
+import org.example.autumn.exception.AbnormalResponseException
+import org.example.autumn.utils.JsonUtils.toJson
+import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 
@@ -30,6 +31,11 @@ class SigninObj(
 @RestController
 class RestApiController {
     private val logger = LoggerFactory.getLogger(javaClass)
+
+    @Get("/api/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw AbnormalResponseException(errorCode, "test", errorResp)
+    }
 
     @Get("/api/hello/{name}")
     @ResponseBody

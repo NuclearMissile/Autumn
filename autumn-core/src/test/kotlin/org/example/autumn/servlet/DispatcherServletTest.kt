@@ -117,6 +117,16 @@ class DispatcherServletTest {
     }
 
     @Test
+    fun getApiError() {
+        val req = createMockRequest("GET", "/api/error/402/test_402_error", null, null)
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(402, resp.status)
+        assertEquals("text/plain", resp.contentType)
+        assertTrue(resp.contentAsString == "test_402_error")
+    }
+
+    @Test
     fun getApiDownload() {
         val req = createMockRequest(
             "GET", "/api/download/server.jar", null, mapOf(

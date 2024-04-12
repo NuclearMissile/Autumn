@@ -8,9 +8,10 @@ open class BeanDefinitionException(override val message: String, override val ca
 open class BeanCreationException(override val message: String, override val cause: Throwable? = null) :
     AutumnException(message, cause)
 
-open class ErrorResponseException(
+open class AbnormalResponseException(
     val statusCode: Int,
     override val message: String,
+    val responseBody: String? = null,
     override val cause: Throwable? = null
 ) : AutumnException(message, cause)
 
@@ -28,8 +29,16 @@ class DataAccessException(override val message: String, override val cause: Thro
 class TransactionException(override val message: String, override val cause: Throwable? = null) :
     AutumnException(message, cause)
 
-class ServerErrorException(override val message: String, override val cause: Throwable? = null) :
-    ErrorResponseException(500, message, cause)
+class NotFoundException(override val message: String) : AbnormalResponseException(404, message, null, null)
 
-class RequestErrorException(override val message: String, override val cause: Throwable? = null) :
-    ErrorResponseException(400, message, cause)
+class ServerErrorException(
+    override val message: String,
+    responseBody: String? = null,
+    override val cause: Throwable? = null
+) : AbnormalResponseException(500, message, responseBody, cause)
+
+class RequestErrorException(
+    override val message: String,
+    responseBody: String? = null,
+    override val cause: Throwable? = null
+) : AbnormalResponseException(400, message, responseBody, cause)

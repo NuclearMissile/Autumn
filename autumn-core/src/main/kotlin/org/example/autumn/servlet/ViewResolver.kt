@@ -1,6 +1,5 @@
 package org.example.autumn.servlet
 
-import org.example.autumn.exception.ServerErrorException
 import freemarker.cache.TemplateLoader
 import freemarker.core.HTMLOutputFormat
 import freemarker.template.Configuration
@@ -10,6 +9,8 @@ import freemarker.template.TemplateExceptionHandler
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.example.autumn.exception.NotFoundException
+import org.example.autumn.exception.ServerErrorException
 import org.slf4j.LoggerFactory
 import java.io.*
 
@@ -47,13 +48,13 @@ class FreeMarkerViewResolver(
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
         } catch (e: Exception) {
-            throw ServerErrorException("Exception thrown while getting template.", e)
+            throw NotFoundException("Exception thrown while getting template.")
         }
         val pw = resp.writer
         try {
             template.process(model, pw)
         } catch (e: TemplateException) {
-            throw ServerErrorException("Exception thrown while rendering template.", e)
+            throw ServerErrorException("Exception thrown while rendering template.", null, e)
         }
         pw.flush()
     }

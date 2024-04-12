@@ -1,6 +1,7 @@
 package org.example.autumn.app.controller
 
 import org.example.autumn.annotation.*
+import org.example.autumn.exception.AbnormalResponseException
 import org.example.autumn.servlet.ModelAndView
 import org.example.autumn.utils.JsonUtils.toJson
 
@@ -16,9 +17,9 @@ class MvcController {
         return ModelAndView("/hello.html")
     }
 
-    @Get("/error/{errorCode}")
-    fun error(@PathVariable("errorCode") errorCode: Int): ModelAndView {
-        return ModelAndView("/hello.html", emptyMap(), errorCode)
+    @Get("/hello/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw AbnormalResponseException(errorCode, "test", errorResp)
     }
 }
 
@@ -33,5 +34,10 @@ class RestApiController {
     @Get("/api/params")
     fun params(@RequestParam("test") test: String): Map<String, String> {
         return mapOf("test" to test)
+    }
+
+    @Get("/api/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw AbnormalResponseException(errorCode, "test", errorResp)
     }
 }

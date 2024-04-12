@@ -9,8 +9,7 @@ import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ConfigurableApplicationContext
-import org.example.autumn.exception.AutumnException
-import org.example.autumn.exception.ErrorResponseException
+import org.example.autumn.exception.AbnormalResponseException
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.resolver.PropertyResolver
@@ -87,7 +86,7 @@ class DispatcherServlet(
                         when (ret) {
                             is String -> resp.writer.also { it.write(ret) }.flush()
                             is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
-                            else -> throw ServletException("Unable to process REST @ResponseBody result when handle url: $url")
+                            else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
                         }
                     } else if (!dispatcher.isVoid) {
                         resp.writer.writeJson(ret).flush()
@@ -101,7 +100,7 @@ class DispatcherServlet(
                             } else if (ret.startsWith("redirect:")) {
                                 resp.sendRedirect(req.contextPath + ret.substring(9))
                             } else {
-                                throw ServletException("Unable to process String result when handle url: $url")
+                                throw ServerErrorException("Unable to process String result when handle url: $url")
                             }
                         }
 
@@ -109,13 +108,14 @@ class DispatcherServlet(
                             if (dispatcher.isResponseBody) {
                                 resp.outputStream.also { it.write(ret) }.flush()
                             } else {
-                                throw ServletException("Unable to process ByteArray result when handle url: $url")
+                                throw ServerErrorException("Unable to process ByteArray result when handle url: $url")
                             }
                         }
 
                         is ModelAndView -> {
                             val viewName = ret.viewName
                             if (ret.status >= 400) {
+                                // TODO serve error templates
                                 resp.sendError(ret.status)
                             } else if (viewName.startsWith("redirect:")) {
                                 resp.sendRedirect(req.contextPath + viewName.substring(9))
@@ -125,22 +125,29 @@ class DispatcherServlet(
                         }
 
                         (ret != null && !dispatcher.isVoid) -> {
-                            throw ServletException("Unable to process ${ret.javaClass.name} result when handle url: $url")
+                            throw ServerErrorException("Unable to process ${ret.javaClass.name} result when handle url: $url")
                         }
                     }
                 }
                 return
             }
             resp.sendError(404)
-        } catch (e: ErrorResponseException) {
+        } catch (e: AbnormalResponseException) {
             logger.warn("process request failed with status: ${e.statusCode}, $url", e)
             if (!resp.isCommitted) {
                 resp.resetBuffer()
-                resp.sendError(e.statusCode)
+                if (e.responseBody != null) {
+                    resp.status = e.statusCode
+                    resp.contentType = "text/plain"
+                    resp.writer.write(e.responseBody)
+                    resp.writer.flush()
+                } else {
+                    resp.sendError(e.statusCode)
+                }
             }
         } catch (e: Exception) {
-            logger.warn("process request failed: $url with unknown exception.", e)
-            throw AutumnException("process request failed: $url with unknown exception.", e)
+            logger.warn("process request failed: $url with internal exception.", e)
+            throw ServerErrorException("process request failed: $url with internal exception.", null, e)
         }
     }
 
@@ -268,9 +275,7 @@ class DispatcherServlet(
             val ret = try {
                 handlerMethod.invoke(controller, *args.toTypedArray())
             } catch (e: InvocationTargetException) {
-                throw ServletException(e.targetException)
-            } catch (e: Exception) {
-                throw ServletException(e)
+                throw e.targetException
             }
             return Result(true, ret)
         }

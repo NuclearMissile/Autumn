@@ -26,7 +26,7 @@ object Main {
 @Import(WebMvcConfiguration::class)
 class HelloConfiguration
 
-@Order(200)
+@Order(100)
 @Component
 class LogFilterRegistrationBean : FilterRegistrationBean() {
     override val urlPatterns: List<String>
