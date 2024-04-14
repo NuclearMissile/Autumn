@@ -73,6 +73,22 @@ class DispatcherServlet(
         serve(req, resp, postDispatchers)
     }
 
+    private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
+        val url = req.requestURI.removePrefix(req.contextPath)
+        val ctx = req.servletContext
+        ctx.getResourceAsStream(url).use { input ->
+            if (input == null) {
+                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
+            } else {
+                val filePath = url.removeSuffix("/")
+                resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
+                val output = resp.outputStream
+                input.transferTo(output)
+                output.flush()
+            }
+        }
+    }
+
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse, dispatchers: List<Dispatcher>) {
         val url = req.requestURI.removePrefix(req.contextPath)
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
@@ -162,22 +178,6 @@ class DispatcherServlet(
         }
     }
 
-    private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI.removePrefix(req.contextPath)
-        val ctx = req.servletContext
-        ctx.getResourceAsStream(url).use { input ->
-            if (input == null) {
-                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
-            } else {
-                val filePath = url.removeSuffix("/")
-                resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
-                val output = resp.outputStream
-                input.transferTo(output)
-                output.flush()
-            }
-        }
-    }
-
     private fun addController(name: String, instance: Any, isRest: Boolean) {
         logger.info("add {} controller '{}': {}", if (isRest) "REST" else "MVC", name, instance.javaClass.name)
         addMethods(name, instance, instance.javaClass, isRest)
@@ -208,7 +208,7 @@ class DispatcherServlet(
         }
     }
 
-    inner class Dispatcher(
+    private inner class Dispatcher(
         private val controller: Any,
         private val handlerMethod: Method,
         urlPattern: String,
@@ -242,14 +242,13 @@ class DispatcherServlet(
         }
 
         fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
-            require(match(url)) {
-                throw ServerErrorException("process request failed: $url not supported by this dispatcher.", null)
-            }
-
             val args = methodParams.map { param ->
                 when (param.paramAnno) {
                     is PathVariable -> try {
-                        convertToType(param.paramType, urlPattern.matcher(url).group(param.name))
+                        urlPattern.matcher(url).let {
+                            it.matches()
+                            convertToType(param.paramType, it.group(param.name))
+                        }
                     } catch (e: IllegalArgumentException) {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }

@@ -24,7 +24,7 @@ class MvcController {
 
     @Get("/hello/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw AbnormalResponseException(errorCode, "test", errorResp)
+        throw AbnormalResponseException(errorCode, "test", errorResp, Error("test"))
     }
 }
 
