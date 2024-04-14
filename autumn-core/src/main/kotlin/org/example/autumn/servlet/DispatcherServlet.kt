@@ -9,9 +9,9 @@ import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ConfigurableApplicationContext
-import org.example.autumn.exception.AbnormalResponseException
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
+import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils.findAnnotation
@@ -93,14 +93,12 @@ class DispatcherServlet(
         val url = req.requestURI.removePrefix(req.contextPath)
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
-            if (dispatcher == null) {
-                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
-            } else if (dispatcher.isRest) {
-                serveRest(url, dispatcher, req, resp)
-            } else {
-                serveNormal(url, dispatcher, req, resp)
+            when {
+                dispatcher == null -> serveError(url, NotFoundException("Resource not found: $url"), req, resp)
+                dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
+                else -> serveNormal(url, dispatcher, req, resp)
             }
-        } catch (e: AbnormalResponseException) {
+        } catch (e: ResponseErrorException) {
             serveError(url, e, req, resp)
         } catch (e: Exception) {
             logger.warn("process request failed: $url with internal exception.", e)
@@ -147,11 +145,11 @@ class DispatcherServlet(
             is ModelAndView -> {
                 val viewName = ret.viewName
                 if (ret.status >= 400) {
-                    viewResolver.renderError(ret.status, ret.getModel(), req, resp)
+                    viewResolver.renderError(ret.getModel(), ret.status, req, resp)
                 } else if (viewName.startsWith("redirect:")) {
                     resp.sendRedirect(req.contextPath + viewName.substring(9))
                 } else {
-                    viewResolver.render(viewName, ret.getModel(), req, resp)
+                    viewResolver.render(viewName, ret.getModel(), ret.status, req, resp)
                 }
             }
 
@@ -162,7 +160,7 @@ class DispatcherServlet(
     }
 
     private fun serveError(
-        url: String, e: AbnormalResponseException, req: HttpServletRequest, resp: HttpServletResponse
+        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         logger.warn("process request failed with status: ${e.statusCode}, $url", e)
         if (!resp.isCommitted) {
@@ -173,7 +171,7 @@ class DispatcherServlet(
                 resp.writer.write(e.responseBody)
                 resp.writer.flush()
             } else {
-                viewResolver.renderError(e.statusCode, null, req, resp)
+                viewResolver.renderError(null, e.statusCode, req, resp)
             }
         }
     }

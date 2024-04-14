@@ -2,43 +2,35 @@ package org.example.autumn.exception
 
 open class AutumnException(message: String?, cause: Throwable?) : Throwable(message, cause)
 
-open class BeanDefinitionException(override val message: String, override val cause: Throwable? = null) :
+open class BeanDefinitionException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-open class BeanCreationException(override val message: String, override val cause: Throwable? = null) :
+open class BeanCreationException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-open class AbnormalResponseException(
-    val statusCode: Int,
-    override val message: String,
-    val responseBody: String? = null,
-    override val cause: Throwable? = null
+open class ResponseErrorException(
+    val statusCode: Int, message: String, val responseBody: String? = null, cause: Throwable? = null
 ) : AutumnException(message, cause)
 
-class BeanTypeException(override val message: String) : BeanDefinitionException(message)
-class NoSuchBeanException(override val message: String) : BeanDefinitionException(message)
-class NoUniqueBeanException(override val message: String) : BeanDefinitionException(message)
-class DependencyException(override val message: String) : BeanCreationException(message)
+class BeanTypeException(message: String) : BeanDefinitionException(message)
+class NoSuchBeanException(message: String) : BeanDefinitionException(message)
+class NoUniqueBeanException(message: String) : BeanDefinitionException(message)
+class DependencyException(message: String) : BeanCreationException(message)
 
-class AopConfigException(override val message: String, override val cause: Throwable? = null) :
+class AopConfigException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-class DataAccessException(override val message: String, override val cause: Throwable? = null) :
+class DataAccessException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-class TransactionException(override val message: String, override val cause: Throwable? = null) :
+class TransactionException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-class NotFoundException(override val message: String) : AbnormalResponseException(404, message, null, null)
+class NotFoundException(message: String, responseBody: String? = null, cause: Throwable? = null) :
+    ResponseErrorException(404, message, responseBody, cause)
 
-class ServerErrorException(
-    override val message: String,
-    responseBody: String? = null,
-    override val cause: Throwable? = null
-) : AbnormalResponseException(500, message, responseBody, cause)
+class ServerErrorException(message: String, responseBody: String? = null, cause: Throwable? = null) :
+    ResponseErrorException(500, message, responseBody, cause)
 
-class RequestErrorException(
-    override val message: String,
-    responseBody: String? = null,
-    override val cause: Throwable? = null
-) : AbnormalResponseException(400, message, responseBody, cause)
+class RequestErrorException(message: String, responseBody: String? = null, cause: Throwable? = null) :
+    ResponseErrorException(400, message, responseBody, cause)

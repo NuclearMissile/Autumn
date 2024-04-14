@@ -1,5 +1,7 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.ServletContextEvent
+import jakarta.servlet.ServletContextListener
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.exception.AutumnException
@@ -7,8 +9,6 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ServletUtils.createPropertyResolver
 import org.example.autumn.utils.ServletUtils.registerDispatcherServlet
 import org.example.autumn.utils.ServletUtils.registerFilters
-import jakarta.servlet.ServletContextEvent
-import jakarta.servlet.ServletContextListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -34,7 +34,10 @@ class ContextLoaderListener : ServletContextListener {
         registerDispatcherServlet(servletContext, propertyResolver)
     }
 
-    private fun createApplicationContext(configClassName: String, propertyResolver: PropertyResolver): ApplicationContext {
+    private fun createApplicationContext(
+        configClassName: String,
+        propertyResolver: PropertyResolver
+    ): ApplicationContext {
         logger.info("init ApplicationContext by configuration: {}", configClassName)
         if (configClassName.isEmpty()) {
             throw AutumnException("Cannot init ApplicationContext for missing init param name: configuration", null)

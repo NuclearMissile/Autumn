@@ -1,13 +1,15 @@
 ![](autumn.png)
 
-# Autumn 
+# Autumn
+
 Yet another toy web application framework imitating Spring in Kotlin.
 ![](screenshot.png)
 
 ## Functions
+
 - [x] IOC context
 - [x] AOP injection
-- [x] Jakarta EE servlet 
+- [x] Jakarta EE servlet
 - [x] Web MVC framework
 - [x] JdbcTemplate and naive ORM
 - [x] Package to standard .war

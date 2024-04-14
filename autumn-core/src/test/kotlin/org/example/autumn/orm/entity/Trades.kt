@@ -1,12 +1,12 @@
 package org.example.autumn.orm.entity
 
+import jakarta.persistence.*
 import org.example.autumn.orm.EntityMixin
 import org.example.autumn.orm.EntityMixin.Companion.PRECISION
 import org.example.autumn.orm.EntityMixin.Companion.SCALE
 import org.example.autumn.orm.EntityMixin.Companion.VAR_CHAR_10000
 import org.example.autumn.orm.EntityMixin.Companion.VAR_CHAR_50
 import org.example.autumn.orm.EntityMixin.Companion.VAR_ENUM
-import jakarta.persistence.*
 import java.math.BigDecimal
 
 @Entity

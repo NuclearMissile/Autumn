@@ -1,7 +1,7 @@
 package org.example.autumn.utils
 
-import org.example.autumn.utils.ServletUtils.compilePath
 import jakarta.servlet.ServletException
+import org.example.autumn.utils.ServletUtils.compilePath
 import org.junit.jupiter.api.Assertions
 import kotlin.test.Test
 import kotlin.test.assertEquals

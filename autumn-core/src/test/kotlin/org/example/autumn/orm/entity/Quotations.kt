@@ -1,10 +1,9 @@
 package org.example.autumn.orm.entity
 
+import jakarta.persistence.*
 import org.example.autumn.orm.EntityMixin
 import org.example.autumn.orm.EntityMixin.Companion.PRECISION
 import org.example.autumn.orm.EntityMixin.Companion.SCALE
-import jakarta.persistence.*
-
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.ZoneId

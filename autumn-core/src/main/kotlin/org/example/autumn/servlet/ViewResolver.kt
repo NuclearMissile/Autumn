@@ -16,16 +16,19 @@ import java.io.*
 
 interface ViewResolver {
     fun init()
-    fun render(viewName: String, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse)
+    fun render(
+        viewName: String, model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+    )
+
     fun renderError(
-        statusCode: Int, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
+        model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     )
 }
 
 class FreeMarkerViewResolver(
     private val servletContext: ServletContext,
     private val templatePath: String,
-    private val errorPath: String,
+    private val errorTemplatePath: String,
     private val templateEncoding: String,
 ) : ViewResolver {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -44,19 +47,23 @@ class FreeMarkerViewResolver(
                 objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_32).also { it.isExposeFields = true }
             }
         }
-        logger.info("init {}, set template path: {}", javaClass.simpleName, templatePath)
+        logger.info(
+            "init {}, set template path: {}, error template path: {}",
+            javaClass.simpleName, templatePath, errorTemplatePath
+        )
         freeMarkerConfig = createConfig(templatePath)
-        freeMarkerErrorConfig = createConfig(errorPath)
+        freeMarkerErrorConfig = createConfig(errorTemplatePath)
     }
 
     override fun render(
-        viewName: String, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
+        viewName: String, model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
         } catch (e: Exception) {
             throw NotFoundException("Template '$viewName' not found.")
         }
+        resp.status = statusCode
         resp.writer.also {
             try {
                 template.process(model, it)
@@ -68,7 +75,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun renderError(
-        statusCode: Int, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
+        model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
@@ -105,9 +112,7 @@ class ServletTemplateLoader(private val servletContext: ServletContext, subDirPa
     }
 
     override fun getLastModified(templateSource: Any?): Long {
-        return if (templateSource is File)
-            templateSource.lastModified()
-        else 0
+        return if (templateSource is File) templateSource.lastModified() else 0
     }
 
     override fun getReader(templateSource: Any?, encoding: String): Reader {

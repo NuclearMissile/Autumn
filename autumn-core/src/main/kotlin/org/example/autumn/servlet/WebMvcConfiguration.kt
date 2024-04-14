@@ -16,10 +16,10 @@ class WebMvcConfiguration {
     fun viewResolver(
         @Autowired servletContext: ServletContext,
         @Value("\${autumn.web.freemarker.template-path:/WEB-INF/templates}") templatePath: String,
-        @Value("\${autumn.web.freemarker.error-path:/WEB-INF/errors}") errorPath: String,
+        @Value("\${autumn.web.freemarker.error-path:/WEB-INF/errors}") errorTemplatePath: String,
         @Value("\${autumn.web.freemarker.template-encoding:UTF-8}") templateEncoding: String
     ): ViewResolver {
-        return FreeMarkerViewResolver(servletContext, templatePath, errorPath, templateEncoding)
+        return FreeMarkerViewResolver(servletContext, templatePath, errorTemplatePath, templateEncoding)
     }
 
     @Bean

@@ -1,9 +1,9 @@
 package org.example.autumn.jdbc.no_tx
 
-import org.example.autumn.annotation.*
-import org.example.autumn.jdbc.JdbcTemplate
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.example.autumn.annotation.*
+import org.example.autumn.jdbc.JdbcTemplate
 import javax.sql.DataSource
 
 @ComponentScan

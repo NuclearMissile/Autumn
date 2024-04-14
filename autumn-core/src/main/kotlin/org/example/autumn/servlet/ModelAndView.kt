@@ -14,7 +14,7 @@ class ModelAndView(
         return this
     }
 
-    fun addModel(key: String, value: Any):ModelAndView {
+    fun addModel(key: String, value: Any): ModelAndView {
         model[key] = value
         return this
     }

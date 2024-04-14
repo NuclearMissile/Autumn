@@ -1,12 +1,12 @@
 package org.example.autumn.jdbc
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.annotation.Value
 import org.example.autumn.exception.DataAccessException
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.orm.DbTemplate
 import java.sql.*
 import javax.sql.DataSource

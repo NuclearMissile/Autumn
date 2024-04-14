@@ -85,7 +85,7 @@ class BeanMetaInfo private constructor(
 
     override fun toString(): String {
         return "BeanMetaInfo(beanName='$beanName', beanClass=$beanClass, order=$order, isPrimary=$isPrimary, " +
-            "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
-            "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
+                "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
+                "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
     }
 }
