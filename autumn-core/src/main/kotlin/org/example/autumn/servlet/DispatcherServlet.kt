@@ -10,6 +10,7 @@ import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ConfigurableApplicationContext
 import org.example.autumn.exception.AbnormalResponseException
+import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.resolver.PropertyResolver
@@ -74,80 +75,90 @@ class DispatcherServlet(
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse, dispatchers: List<Dispatcher>) {
         val url = req.requestURI.removePrefix(req.contextPath)
+        val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
-            for (dispatcher in dispatchers) {
-                val result = dispatcher.process(url, req, resp)
-                if (!result.isProcessed) continue
-
-                val ret = result.ret
-                if (dispatcher.isRest) {
-                    if (!resp.isCommitted) resp.contentType = "application/json"
-                    if (dispatcher.isResponseBody) {
-                        when (ret) {
-                            is String -> resp.writer.also { it.write(ret) }.flush()
-                            is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
-                            else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
-                        }
-                    } else if (!dispatcher.isVoid) {
-                        resp.writer.writeJson(ret).flush()
-                    }
-                } else {
-                    if (!resp.isCommitted) resp.contentType = "text/html"
-                    when (ret) {
-                        is String -> {
-                            if (dispatcher.isResponseBody) {
-                                resp.writer.also { it.write(ret) }.flush()
-                            } else if (ret.startsWith("redirect:")) {
-                                resp.sendRedirect(req.contextPath + ret.substring(9))
-                            } else {
-                                throw ServerErrorException("Unable to process String result when handle url: $url")
-                            }
-                        }
-
-                        is ByteArray -> {
-                            if (dispatcher.isResponseBody) {
-                                resp.outputStream.also { it.write(ret) }.flush()
-                            } else {
-                                throw ServerErrorException("Unable to process ByteArray result when handle url: $url")
-                            }
-                        }
-
-                        is ModelAndView -> {
-                            val viewName = ret.viewName
-                            if (ret.status >= 400) {
-                                // TODO serve error templates
-                                resp.sendError(ret.status)
-                            } else if (viewName.startsWith("redirect:")) {
-                                resp.sendRedirect(req.contextPath + viewName.substring(9))
-                            } else {
-                                viewResolver.render(viewName, ret.getModel(), req, resp)
-                            }
-                        }
-
-                        (ret != null && !dispatcher.isVoid) -> {
-                            throw ServerErrorException("Unable to process ${ret.javaClass.name} result when handle url: $url")
-                        }
-                    }
-                }
-                return
+            if (dispatcher == null) {
+                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
+            } else if (dispatcher.isRest) {
+                serveRest(url, dispatcher, req, resp)
+            } else {
+                serveNormal(url, dispatcher, req, resp)
             }
-            resp.sendError(404)
         } catch (e: AbnormalResponseException) {
-            logger.warn("process request failed with status: ${e.statusCode}, $url", e)
-            if (!resp.isCommitted) {
-                resp.resetBuffer()
-                if (e.responseBody != null) {
-                    resp.status = e.statusCode
-                    resp.contentType = "text/plain"
-                    resp.writer.write(e.responseBody)
-                    resp.writer.flush()
-                } else {
-                    resp.sendError(e.statusCode)
-                }
-            }
+            serveError(url, e, req, resp)
         } catch (e: Exception) {
             logger.warn("process request failed: $url with internal exception.", e)
             throw ServerErrorException("process request failed: $url with internal exception.", null, e)
+        }
+    }
+
+    private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
+        val ret = dispatcher.process(url, req, resp)
+        if (!resp.isCommitted) resp.contentType = "application/json"
+        if (dispatcher.isResponseBody) {
+            when (ret) {
+                is String -> resp.writer.also { it.write(ret) }.flush()
+                is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
+                else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
+            }
+        } else if (!dispatcher.isVoid) {
+            resp.writer.writeJson(ret).flush()
+        }
+    }
+
+    private fun serveNormal(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
+        val ret = dispatcher.process(url, req, resp)
+        if (!resp.isCommitted) resp.contentType = "text/html"
+        when (ret) {
+            is String -> {
+                if (dispatcher.isResponseBody) {
+                    resp.writer.also { it.write(ret) }.flush()
+                } else if (ret.startsWith("redirect:")) {
+                    resp.sendRedirect(req.contextPath + ret.substring(9))
+                } else {
+                    throw ServerErrorException("Unable to process String result when handle url: $url")
+                }
+            }
+
+            is ByteArray -> {
+                if (dispatcher.isResponseBody) {
+                    resp.outputStream.also { it.write(ret) }.flush()
+                } else {
+                    throw ServerErrorException("Unable to process ByteArray result when handle url: $url")
+                }
+            }
+
+            is ModelAndView -> {
+                val viewName = ret.viewName
+                if (ret.status >= 400) {
+                    viewResolver.renderError(ret.status, ret.getModel(), req, resp)
+                } else if (viewName.startsWith("redirect:")) {
+                    resp.sendRedirect(req.contextPath + viewName.substring(9))
+                } else {
+                    viewResolver.render(viewName, ret.getModel(), req, resp)
+                }
+            }
+
+            (ret != null && !dispatcher.isVoid) -> {
+                throw ServerErrorException("Unable to process ${ret.javaClass.name} result when handle url: $url")
+            }
+        }
+    }
+
+    private fun serveError(
+        url: String, e: AbnormalResponseException, req: HttpServletRequest, resp: HttpServletResponse
+    ) {
+        logger.warn("process request failed with status: ${e.statusCode}, $url", e)
+        if (!resp.isCommitted) {
+            resp.resetBuffer()
+            if (e.responseBody != null) {
+                resp.status = e.statusCode
+                resp.contentType = "text/plain"
+                resp.writer.write(e.responseBody)
+                resp.writer.flush()
+            } else {
+                viewResolver.renderError(e.statusCode, null, req, resp)
+            }
         }
     }
 
@@ -156,7 +167,7 @@ class DispatcherServlet(
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                resp.sendError(404, "Not Found.")
+                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -226,15 +237,19 @@ class DispatcherServlet(
             }
         }
 
-        fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Result {
-            val matcher = urlPattern.matcher(url)
-            if (!matcher.matches())
-                return Result(false, null)
+        fun match(url: String): Boolean {
+            return urlPattern.matcher(url).matches()
+        }
+
+        fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
+            require(match(url)) {
+                throw ServerErrorException("process request failed: $url not supported by this dispatcher.", null)
+            }
 
             val args = methodParams.map { param ->
                 when (param.paramAnno) {
                     is PathVariable -> try {
-                        convertToType(param.paramType, matcher.group(param.name))
+                        convertToType(param.paramType, urlPattern.matcher(url).group(param.name))
                     } catch (e: IllegalArgumentException) {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
@@ -272,12 +287,11 @@ class DispatcherServlet(
                     }
                 }
             }
-            val ret = try {
+            return try {
                 handlerMethod.invoke(controller, *args.toTypedArray())
             } catch (e: InvocationTargetException) {
                 throw e.targetException
             }
-            return Result(true, ret)
         }
 
         private fun convertToType(classType: Class<*>, s: String): Any {
@@ -354,6 +368,4 @@ class DispatcherServlet(
             return "Param(name=$name, paramAnno=$paramAnno, paramClassType=$paramType)"
         }
     }
-
-    data class Result(val isProcessed: Boolean, val ret: Any?)
 }

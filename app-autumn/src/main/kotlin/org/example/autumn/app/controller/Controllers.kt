@@ -17,6 +17,11 @@ class MvcController {
         return ModelAndView("/hello.html")
     }
 
+    @Get("/hello/error")
+    fun error(): ModelAndView {
+        return ModelAndView("/index.html", mapOf(), 400)
+    }
+
     @Get("/hello/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw AbnormalResponseException(errorCode, "test", errorResp)

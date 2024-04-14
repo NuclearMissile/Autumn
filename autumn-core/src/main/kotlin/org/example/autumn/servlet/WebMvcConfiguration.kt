@@ -1,10 +1,10 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.ServletContext
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.annotation.Value
-import jakarta.servlet.ServletContext
 
 @Configuration
 class WebMvcConfiguration {
@@ -16,9 +16,10 @@ class WebMvcConfiguration {
     fun viewResolver(
         @Autowired servletContext: ServletContext,
         @Value("\${autumn.web.freemarker.template-path:/WEB-INF/templates}") templatePath: String,
+        @Value("\${autumn.web.freemarker.error-path:/WEB-INF/errors}") errorPath: String,
         @Value("\${autumn.web.freemarker.template-encoding:UTF-8}") templateEncoding: String
     ): ViewResolver {
-        return FreeMarkerViewResolver(servletContext, templatePath, templateEncoding)
+        return FreeMarkerViewResolver(servletContext, templatePath, errorPath, templateEncoding)
     }
 
     @Bean

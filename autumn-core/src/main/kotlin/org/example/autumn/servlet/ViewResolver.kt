@@ -17,46 +17,74 @@ import java.io.*
 interface ViewResolver {
     fun init()
     fun render(viewName: String, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse)
+    fun renderError(
+        statusCode: Int, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
+    )
 }
 
 class FreeMarkerViewResolver(
     private val servletContext: ServletContext,
     private val templatePath: String,
+    private val errorPath: String,
     private val templateEncoding: String,
 ) : ViewResolver {
     private val logger = LoggerFactory.getLogger(javaClass)
     private lateinit var freeMarkerConfig: Configuration
+    private lateinit var freeMarkerErrorConfig: Configuration
+
     override fun init() {
-        logger.info("init {}, set template path: {}", javaClass.simpleName, templatePath)
-        freeMarkerConfig = Configuration(Configuration.VERSION_2_3_32).also { cfg ->
-            cfg.outputFormat = HTMLOutputFormat.INSTANCE
-            cfg.defaultEncoding = templateEncoding
-            cfg.templateLoader = ServletTemplateLoader(servletContext, templatePath)
-            cfg.templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
-            cfg.autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
-            cfg.localizedLookup = false
-            cfg.objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_32).also { it.isExposeFields = true }
+        fun createConfig(templatePath: String): Configuration {
+            return Configuration(Configuration.VERSION_2_3_32).apply {
+                outputFormat = HTMLOutputFormat.INSTANCE
+                defaultEncoding = templateEncoding
+                templateLoader = ServletTemplateLoader(servletContext, templatePath)
+                templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
+                autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
+                localizedLookup = false
+                objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_32).also { it.isExposeFields = true }
+            }
         }
+        logger.info("init {}, set template path: {}", javaClass.simpleName, templatePath)
+        freeMarkerConfig = createConfig(templatePath)
+        freeMarkerErrorConfig = createConfig(errorPath)
     }
 
     override fun render(
-        viewName: String,
-        model: Map<String, Any?>?,
-        req: HttpServletRequest,
-        resp: HttpServletResponse
+        viewName: String, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
         } catch (e: Exception) {
-            throw NotFoundException("Exception thrown while getting template.")
+            throw NotFoundException("Template '$viewName' not found.")
         }
-        val pw = resp.writer
-        try {
-            template.process(model, pw)
-        } catch (e: TemplateException) {
-            throw ServerErrorException("Exception thrown while rendering template.", null, e)
+        resp.writer.also {
+            try {
+                template.process(model, it)
+            } catch (e: TemplateException) {
+                throw ServerErrorException("Exception thrown while rendering template.", null, e)
+            }
+            it.flush()
         }
-        pw.flush()
+    }
+
+    override fun renderError(
+        statusCode: Int, model: Map<String, Any?>?, req: HttpServletRequest, resp: HttpServletResponse
+    ) {
+        val template = try {
+            freeMarkerErrorConfig.getTemplate("$statusCode.html")
+        } catch (e: Exception) {
+            resp.sendError(statusCode)
+            return
+        }
+        resp.status = statusCode
+        resp.writer.also {
+            try {
+                template.process(model, it)
+            } catch (e: TemplateException) {
+                throw ServerErrorException("Exception thrown while rendering template.", null, e)
+            }
+            it.flush()
+        }
     }
 }
 
@@ -66,7 +94,7 @@ class ServletTemplateLoader(private val servletContext: ServletContext, subDirPa
 
     override fun findTemplateSource(name: String): Any? {
         val realPath = servletContext.getRealPath(subDirPath + name)
-        logger.atDebug().log("load template {}, real path: {}", name, realPath)
+        logger.atDebug().log("try to load template {}, real path: {}", name, realPath)
         if (realPath != null) {
             val file = File(realPath)
             if (file.canRead() && file.isFile) {
