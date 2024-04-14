@@ -20,7 +20,7 @@ class DispatcherServletTest {
 
     @Test
     fun getHello() {
-        val req = createMockRequest("GET", "/hello/Alice", null, null)
+        val req = createMockRequest("GET", "/hello/Alice")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -30,7 +30,7 @@ class DispatcherServletTest {
 
     @Test
     fun getStaticResource() {
-        val req = createMockRequest("GET", "/static/autumn.png", null, null)
+        val req = createMockRequest("GET", "/static/autumn.png")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -39,7 +39,7 @@ class DispatcherServletTest {
 
     @Test
     fun getApiHello() {
-        val req = createMockRequest("GET", "/api/hello/Bob", null, null)
+        val req = createMockRequest("GET", "/api/hello/Bob")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -68,7 +68,7 @@ class DispatcherServletTest {
 
     @Test
     fun getGreeting2() {
-        val req = createMockRequest("GET", "/greeting", null, java.util.Map.of("action", "Morning", "name", "Bob"))
+        val req = createMockRequest("GET", "/greeting", null, mapOf("action" to "Morning", "name" to "Bob"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -77,7 +77,7 @@ class DispatcherServletTest {
 
     @Test
     fun getGreeting3() {
-        val req = createMockRequest("GET", "/greeting", null, java.util.Map.of("action", "Morning"))
+        val req = createMockRequest("GET", "/greeting", null, mapOf("action" to "Morning"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(400, resp.status)
@@ -118,12 +118,25 @@ class DispatcherServletTest {
 
     @Test
     fun getApiError() {
-        val req = createMockRequest("GET", "/api/error/402/test_402_error", null, null)
+        val req = createMockRequest("GET", "/api/error/402/test_402_error")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(402, resp.status)
-        assertEquals("text/plain", resp.contentType)
+        assertEquals("text/html", resp.contentType)
         assertTrue(resp.contentAsString == "test_402_error")
+
+        val req2 = createMockRequest("GET", "/api/error/400")
+        val resp2 = createMockResponse()
+        dispatcherServlet.service(req2, resp2)
+        assertEquals(400, resp2.status)
+        assertEquals("text/html", resp2.contentType)
+        assertTrue(resp2.contentAsString.contains("400 Error!"))
+
+        val req3 = createMockRequest("GET", "/api/error")
+        val resp3 = createMockResponse()
+        dispatcherServlet.service(req3, resp3)
+        assertEquals(500, resp3.status)
+        assertEquals("text/html", resp3.contentType)
     }
 
     @Test
@@ -147,7 +160,7 @@ class DispatcherServletTest {
 
     @Test
     fun getDownloadPart() {
-        val req = createMockRequest("GET", "/download-part", null, null)
+        val req = createMockRequest("GET", "/download-part")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(206, resp.status)
@@ -177,7 +190,7 @@ class DispatcherServletTest {
 
     @Test
     fun getLogin() {
-        val req = createMockRequest("GET", "/login", null, null)
+        val req = createMockRequest("GET", "/login")
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(302, resp.status)
@@ -186,7 +199,7 @@ class DispatcherServletTest {
 
     @Test
     fun getProduct() {
-        val req = createMockRequest("GET", "/product/123", null, java.util.Map.of("name", "Bob"))
+        val req = createMockRequest("GET", "/product/123", null, mapOf("name" to "Bob"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -196,7 +209,7 @@ class DispatcherServletTest {
 
     @Test
     fun postSignin() {
-        val req = createMockRequest("POST", "/signin", null, java.util.Map.of("name", "Bob", "password", "hello123"))
+        val req = createMockRequest("POST", "/signin", null, mapOf("name" to "Bob", "password" to "hello123"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(302, resp.status)
@@ -205,7 +218,7 @@ class DispatcherServletTest {
 
     @Test
     fun postRegister() {
-        val req = createMockRequest("POST", "/register", null, java.util.Map.of("name", "Bob", "password", "hello123"))
+        val req = createMockRequest("POST", "/register", null, mapOf("name" to "Bob", "password" to "hello123"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -230,7 +243,7 @@ class DispatcherServletTest {
         val signin = SigninObj()
         signin.name = "Bob"
         signin.password = "hello123"
-        val req = createMockRequest("POST", "/api/register", signin, null)
+        val req = createMockRequest("POST", "/api/register", signin)
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(200, resp.status)
@@ -240,7 +253,7 @@ class DispatcherServletTest {
 
     @Test
     fun postSignout() {
-        val req = createMockRequest("POST", "/signout", null, java.util.Map.of("name", "Bob"))
+        val req = createMockRequest("POST", "/signout", null, mapOf("name" to "Bob"))
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(302, resp.status)
@@ -272,7 +285,7 @@ class DispatcherServletTest {
     }
 
     private fun createMockRequest(
-        method: String, path: String, body: Any?, params: Map<String, String>?
+        method: String, path: String, body: Any? = null, params: Map<String, String>? = null
     ): MockHttpServletRequest {
         val req = MockHttpServletRequest(ctx, method, path)
         if (method == "GET" && params != null) {

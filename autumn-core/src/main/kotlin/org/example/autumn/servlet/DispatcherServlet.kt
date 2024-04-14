@@ -94,15 +94,16 @@ class DispatcherServlet(
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
-                dispatcher == null -> serveError(url, NotFoundException("Resource not found: $url"), req, resp)
+                dispatcher == null -> serveError(url, NotFoundException("Not found: $url"), req, resp)
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
                 else -> serveNormal(url, dispatcher, req, resp)
             }
         } catch (e: ResponseErrorException) {
             serveError(url, e, req, resp)
         } catch (e: Exception) {
-            logger.warn("process request failed: $url with internal exception.", e)
-            throw ServerErrorException("process request failed: $url with internal exception.", null, e)
+            serveError(
+                url, ServerErrorException("Serve request failed: $url with an internal exception.", null, e), req, resp
+            )
         }
     }
 
@@ -163,16 +164,14 @@ class DispatcherServlet(
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         logger.warn("process request failed with status: ${e.statusCode}, $url", e)
-        if (!resp.isCommitted) {
-            resp.resetBuffer()
-            if (e.responseBody != null) {
-                resp.status = e.statusCode
-                resp.contentType = "text/plain"
-                resp.writer.write(e.responseBody)
-                resp.writer.flush()
-            } else {
-                viewResolver.renderError(null, e.statusCode, req, resp)
-            }
+        resp.reset()
+        resp.contentType = "text/html"
+        if (e.responseBody != null) {
+            resp.status = e.statusCode
+            resp.writer.write(e.responseBody)
+            resp.writer.flush()
+        } else {
+            viewResolver.renderError(null, e.statusCode, req, resp)
         }
     }
 

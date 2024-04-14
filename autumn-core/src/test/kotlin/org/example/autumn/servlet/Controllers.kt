@@ -37,6 +37,16 @@ class RestApiController {
         throw ResponseErrorException(errorCode, "test", errorResp)
     }
 
+    @Get("/api/error/{errorCode}")
+    fun error(@PathVariable errorCode: Int) {
+        throw ResponseErrorException(errorCode, "test")
+    }
+
+    @Get("/api/error")
+    fun error() {
+        throw Exception("test")
+    }
+
     @Get("/api/hello/{name}")
     @ResponseBody
     fun hello(@PathVariable("name") name: String): String {
