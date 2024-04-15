@@ -18,19 +18,19 @@
         <kotlin.compiler.apiVersion>2.0</kotlin.compiler.apiVersion>
         <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
 
-        <kotlin.version>2.0.0-Beta5</kotlin.version>
-        <logback.version>1.5.3</logback.version>
-        <slf4j.version>2.0.12</slf4j.version>
+        <kotlin.version>2.0.0-RC1</kotlin.version>
+        <logback.version>1.5.5</logback.version>
+        <slf4j.version>2.0.13</slf4j.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <bytebuddy.version>1.14.13</bytebuddy.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <sqlite.version>3.45.2.0</sqlite.version>
-        <jakarta.persistenc-api.verion>3.1.0</jakarta.persistenc-api.verion>
+        <jakarta.persistence-api.verion>3.1.0</jakarta.persistence-api.verion>
         <tomcat.version>10.1.20</tomcat.version>
         <freemarker.version>2.3.32</freemarker.version>
         <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
         <jackson.version>2.17.0</jackson.version>
-        <spring.version>6.1.5</spring.version>
+        <spring.version>6.1.6</spring.version>
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
     </properties>
 
@@ -55,7 +55,7 @@
             <dependency>
                 <groupId>jakarta.persistence</groupId>
                 <artifactId>jakarta.persistence-api</artifactId>
-                <version>${jakarta.persistenc-api.verion}</version>
+                <version>${jakarta.persistence-api.verion}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.servlet</groupId>
@@ -185,7 +185,6 @@
                         <plugin>jpa</plugin>
                     </compilerPlugins>
                     <pluginOptions>
-                        <!--<option>no-arg:annotation=org.example.autumn.annotation.NoArg</option>-->
                         <option>all-open:annotation=org.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
