@@ -1,12 +1,11 @@
 package org.example.autumn.orm.entity
 
 import jakarta.persistence.*
-import org.example.autumn.orm.EntityMixin
-import org.example.autumn.orm.EntityMixin.Companion.PRECISION
-import org.example.autumn.orm.EntityMixin.Companion.SCALE
-import org.example.autumn.orm.EntityMixin.Companion.VAR_CHAR_10000
-import org.example.autumn.orm.EntityMixin.Companion.VAR_CHAR_50
-import org.example.autumn.orm.EntityMixin.Companion.VAR_ENUM
+import org.example.autumn.orm.entity.EntityMixin.Companion.PRECISION
+import org.example.autumn.orm.entity.EntityMixin.Companion.SCALE
+import org.example.autumn.orm.entity.EntityMixin.Companion.VAR_CHAR_10000
+import org.example.autumn.orm.entity.EntityMixin.Companion.VAR_CHAR_50
+import org.example.autumn.orm.entity.EntityMixin.Companion.VAR_ENUM
 import java.math.BigDecimal
 
 @Entity
@@ -171,8 +170,8 @@ class OrderEntity(
 
     override fun toString(): String {
         return "OrderEntity(id=$id, sequenceId=$sequenceId, userId=$userId, price=$price, quantity=$quantity, " +
-                "createdAt=$createdAt, updatedAt=$updatedAt, unfilledQuantity=$unfilledQuantity, " +
-                "direction=$direction, status=$status)"
+            "createdAt=$createdAt, updatedAt=$updatedAt, unfilledQuantity=$unfilledQuantity, " +
+            "direction=$direction, status=$status)"
     }
 }
 
@@ -216,9 +215,9 @@ class ClearingEntity(
 ) : EntityMixin {
     override fun toString(): String {
         return "ClearingEntity(id=$id, sequenceId=$sequenceId, orderId=$orderId, counterOrderId=$counterOrderId, " +
-                "userId=$userId, counterUserId=$counterUserId, direction=$direction, clearingType=$clearingType, " +
-                "matchPrice=$matchPrice, matchQuantity=$matchQuantity, orderStatusAfterClearing=$orderStatusAfterClearing, " +
-                "orderUnfilledQuantityAfterClearing=$orderUnfilledQuantityAfterClearing, createdAt=$createdAt)"
+            "userId=$userId, counterUserId=$counterUserId, direction=$direction, clearingType=$clearingType, " +
+            "matchPrice=$matchPrice, matchQuantity=$matchQuantity, orderStatusAfterClearing=$orderStatusAfterClearing, " +
+            "orderUnfilledQuantityAfterClearing=$orderUnfilledQuantityAfterClearing, createdAt=$createdAt)"
     }
 }
 
