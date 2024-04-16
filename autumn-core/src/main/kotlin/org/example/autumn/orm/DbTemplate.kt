@@ -71,7 +71,15 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
         val mapper = mapperOf(clazz)
         val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
         logger.atDebug().log("batch insert SQL: {}, count: {}", sql, entities.size)
-        entities.forEach { insert(clazz, it, ignore, false) }
+        entities.forEach { entity ->
+            val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
+            if (mapper.id.isGeneratedId) {
+                val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
+                mapper.id[entity as Any] = if (key is BigInteger) key.longValueExact() else key
+            } else {
+                jdbcTemplate.update(sql, *args)
+            }
+        }
 
 //        val mapper = mapperOf(clazz)
 //        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
