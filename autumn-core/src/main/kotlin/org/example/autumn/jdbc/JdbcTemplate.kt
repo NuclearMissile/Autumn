@@ -70,31 +70,47 @@ class JdbcTemplate(private val dataSource: DataSource) {
         return execute(preparedStatementCreator(sql, *args), PreparedStatement::executeUpdate)!!
     }
 
-    fun updateWithGeneratedKey(sql: String, vararg args: Any?): Number {
-        return execute( // PreparedStatementCreator
-            PreparedStatementCreator { con: Connection ->
-                @Suppress("SqlSourceToSinkFlow")
-                val ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-                for (i in args.indices)
-                    ps.setObject(i + 1, args[i])
-                return@PreparedStatementCreator ps
-            },  // PreparedStatementCallback
-            PreparedStatementCallback { ps: PreparedStatement ->
-                val n = ps.executeUpdate()
-                if (n == 0) {
-                    throw DataAccessException("0 rows inserted.")
+    fun batchInsert(sql: String, batchSize: Int, vararg args: Any?): List<Number> {
+        return execute({ conn ->
+            conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
+                val batchCount = args.size / batchSize
+                for (i in args.indices) {
+                    val refIndex = i % batchCount
+                    if (refIndex == 0 && i != 0) {
+                        addBatch()
+                    }
+                    setObject(refIndex + 1, args[i])
                 }
-                if (n > 1) {
-                    throw DataAccessException("Multiple rows inserted.")
-                }
+                addBatch()
+            }
+        }) { ps ->
+            ps.executeBatch()
+            buildList {
                 ps.generatedKeys.use { keys ->
                     while (keys.next()) {
-                        return@PreparedStatementCallback keys.getObject(1) as Number
+                        add(keys.getObject(1) as Number)
                     }
                 }
-                throw DataAccessException("Should not reach here.")
             }
-        )!!
+        }!!
+    }
+
+    fun updateWithGeneratedKey(sql: String, vararg args: Any?): Number {
+        return execute(preparedStatementCreator(sql, *args)) { ps: PreparedStatement ->
+            val n = ps.executeUpdate()
+            if (n == 0) {
+                throw DataAccessException("0 rows inserted.")
+            }
+            if (n > 1) {
+                throw DataAccessException("Multiple rows inserted.")
+            }
+            ps.generatedKeys.use { keys ->
+                while (keys.next()) {
+                    return@execute keys.getObject(1) as Number
+                }
+            }
+            throw DataAccessException("Should not reach here.")
+        }!!
     }
 
     fun <T> queryRequiredObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
@@ -111,22 +127,22 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> queryRequiredObject(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): T {
-        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
-            var t: T? = null
+        return execute(preparedStatementCreator(sql, *args)) { ps ->
+            var ret: T? = null
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
-                    if (t == null) {
-                        t = rowMapper.extractData(rs)
+                    if (ret == null) {
+                        ret = rowMapper.extractData(rs)
                     } else {
                         throw DataAccessException("Multiple rows found.")
                     }
                 }
             }
-            if (t == null) {
+            if (ret == null) {
                 throw DataAccessException("Empty result set.")
             }
-            return@PreparedStatementCallback t!!
-        })!!
+            return@execute ret
+        }!!
     }
 
     fun <T> queryList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
@@ -134,15 +150,15 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> queryList(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): List<T> {
-        return execute(preparedStatementCreator(sql, *args), PreparedStatementCallback { ps ->
-            val list = mutableListOf<T>()
-            ps.executeQuery().use { rs ->
-                while (rs.next()) {
-                    list.add(rowMapper.extractData(rs)!!)
+        return execute(preparedStatementCreator(sql, *args)) { ps ->
+            buildList {
+                ps.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        add(rowMapper.extractData(rs)!!)
+                    }
                 }
             }
-            return@PreparedStatementCallback list
-        })!!
+        }!!
     }
 
     fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
@@ -170,10 +186,10 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     private fun preparedStatementCreator(sql: String, vararg args: Any?): PreparedStatementCreator {
         return PreparedStatementCreator { conn ->
-            val ps = conn.prepareStatement(sql)
-            for (i in args.indices)
-                ps.setObject(i + 1, args[i])
-            ps
+            conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
+                for (i in args.indices)
+                    setObject(i + 1, args[i])
+            }
         }
     }
 }

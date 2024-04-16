@@ -68,15 +68,31 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
 
 
     fun <T> batchInsert(clazz: Class<T>, entities: List<T>, ignore: Boolean = false) {
-        entities.forEach { insert(clazz, it, ignore) }
+        val mapper = mapperOf(clazz)
+        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
+        logger.atDebug().log("batch insert SQL: {}, count: {}", sql, entities.size)
+        entities.forEach { insert(clazz, it, ignore, false) }
+
+//        val mapper = mapperOf(clazz)
+//        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
+//        val args = entities.flatMap { entity -> mapper.insertableProperties.map { it[entity as Any] } }.toTypedArray()
+//        logger.atDebug().log("batch insert SQL: {}, count: {}", sql, entities.size)
+//
+//        val keys = jdbcTemplate.batchInsert(sql, entities.size, *args)
+//        if (mapper.id.isGeneratedId) {
+//            keys.forEachIndexed { index, key ->
+//                mapper.id[entities[index] as Any] = if (key is BigInteger) key.longValueExact() else key
+//            }
+//        }
     }
 
-    fun <T> insert(clazz: Class<T>, entity: T, ignore: Boolean = false) {
+    fun <T> insert(clazz: Class<T>, entity: T, ignore: Boolean = false, logging: Boolean = true) {
         val mapper = mapperOf(clazz)
         val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
         val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
-        if (logger.isDebugEnabled) {
-            logger.debug("insert SQL: {}, args: {}", sql, args)
+
+        if (logging) {
+            logger.atDebug().log("insert SQL: {}, args: {}", sql, args)
         }
         if (mapper.id.isGeneratedId) {
             val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
