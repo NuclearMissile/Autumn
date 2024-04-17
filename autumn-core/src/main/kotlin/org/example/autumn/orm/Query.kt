@@ -16,7 +16,7 @@ interface Query<T> {
  * @param <T> Entity type.
  */
 class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper<T>) : Query<T> {
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = LoggerFactory.getLogger(javaClass)
     val joinParams = mutableListOf<Any>()
     val whereParams = mutableListOf<Any>()
     val joinClauses = mutableListOf<String>()

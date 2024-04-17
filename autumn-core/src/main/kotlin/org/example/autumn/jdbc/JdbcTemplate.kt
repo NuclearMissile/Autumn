@@ -70,10 +70,10 @@ class JdbcTemplate(private val dataSource: DataSource) {
         return execute(preparedStatementCreator(sql, *args), PreparedStatement::executeUpdate)!!
     }
 
-    fun batchInsert(sql: String, batchSize: Int, vararg args: Any?): List<Number> {
+    fun batchInsert(sql: String, count: Int, vararg args: Any?): List<Number> {
         return execute({ conn ->
             conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
-                val batchCount = args.size / batchSize
+                val batchCount = args.size / count
                 for (i in args.indices) {
                     val refIndex = i % batchCount
                     if (refIndex == 0 && i != 0) {
@@ -162,12 +162,12 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
-        return execute { conn ->
+        return executeWithTx { conn ->
             psc.createPreparedStatement(conn).use { ps -> callback.doInPreparedStatement(ps) }
         }
     }
 
-    fun <T> execute(callback: ConnectionCallback<T>): T? {
+    fun <T> executeWithTx(callback: ConnectionCallback<T>): T? {
         val txConn = DataSourceTransactionManager.transactionConn
         return try {
             if (txConn != null)

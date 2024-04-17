@@ -94,14 +94,11 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
 //        }
     }
 
-    fun <T> insert(clazz: Class<T>, entity: T, ignore: Boolean = false, logging: Boolean = true) {
+    fun <T> insert(clazz: Class<T>, entity: T, ignore: Boolean = false) {
         val mapper = mapperOf(clazz)
         val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
         val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
-
-        if (logging) {
-            logger.atDebug().log("insert SQL: {}, args: {}", sql, args)
-        }
+        logger.atDebug().log("insert SQL: {}, args: {}", sql, args)
         if (mapper.id.isGeneratedId) {
             val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
             mapper.id[entity as Any] = if (key is BigInteger) key.longValueExact() else key
