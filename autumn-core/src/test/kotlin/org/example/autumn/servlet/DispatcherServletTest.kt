@@ -1,10 +1,13 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.ServletException
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertThrows
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.mock.web.MockHttpSession
@@ -12,11 +15,38 @@ import org.springframework.mock.web.MockServletContext
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DispatcherServletTest {
     private lateinit var dispatcherServlet: DispatcherServlet
     private lateinit var ctx: MockServletContext
+
+    @Test
+    fun testValidPath() {
+        val p0 = compilePath("/user/{userId}/{orderId}")
+        val m0 = p0.matcher("/user/0/11")
+        assertTrue(m0.matches())
+        assertEquals("0", m0.group("userId"))
+        assertEquals("11", m0.group(2))
+
+        val m00 = p0.matcher("/user/123/a/456")
+        assertFalse(m00.matches())
+
+        val p1 = compilePath("/test/{a123dsdas}")
+        val m1 = p1.matcher("/test/aaabbbccc")
+        assertTrue(m1.matches())
+        assertEquals("aaabbbccc", m1.group("a123dsdas"))
+    }
+
+    @Test
+    fun testInvalidPath() {
+        assertThrows<ServletException> { compilePath("/empty/{}") }
+        assertThrows<ServletException> { compilePath("/start-with-digit/{123}") }
+        assertThrows<ServletException> { compilePath("/invalid-name/{abc-def}") }
+        assertThrows<ServletException> { compilePath("/missing-left/a}") }
+        assertThrows<ServletException> { compilePath("/missing-right/a}") }
+    }
 
     @Test
     fun getHello() {

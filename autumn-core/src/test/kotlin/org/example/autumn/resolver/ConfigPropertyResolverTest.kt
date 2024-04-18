@@ -1,6 +1,6 @@
 package org.example.autumn.resolver
 
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class ConfigPropertyResolverTest {
     @Test
     fun propertyValue() {
-        val pr = ConfigPropertyResolver(
+        val cpr = ConfigPropertyResolver(
             mapOf(
                 "app.title" to "Autumn Framework",
                 "app.version" to "v1.0",
@@ -31,34 +31,37 @@ class ConfigPropertyResolverTest {
                 "scheduler.cleanup" to "P2DT8H21M",
             ).toProperties()
         )
-        assertEquals("Autumn Framework", pr.getProperty("app.title"))
-        assertEquals("v1.0", pr.getProperty("app.version"))
-        assertEquals("v1.0", pr.getProperty("app.version", "unknown"))
-        assertNull(pr.getProperty("app.author"))
-        assertEquals("Michael Liao", pr.getProperty("app.author", "Michael Liao"))
+        assertEquals("Autumn Framework", cpr.getProperty("app.title"))
+        assertEquals("v1.0", cpr.getProperty("app.version"))
+        assertEquals("v1.0", cpr.getProperty("app.version", "unknown"))
 
-        assertEquals(true, pr.getProperty("jdbc.auto-commit", Boolean::class.java))
-        assertTrue(pr.getProperty("jdbc.auto-commit", Boolean::class.java)!!)
-        assertTrue(pr.getProperty("jdbc.detect-leak", true, Boolean::class.java))
+        assertNull(cpr.getProperty("dummy"))
+        assertEquals("test_dummy", cpr.getProperty("dummy", "test_dummy"))
+        cpr.setProperty("dummy", "test_dummy_2")
+        assertEquals("test_dummy_2", cpr.getRequiredProperty("dummy"))
 
-        assertEquals(20, pr.getProperty("jdbc.pool-size", Int::class.java))
-        assertEquals(20, pr.getProperty("jdbc.pool-size", 999, Int::class.java))
-        assertEquals(5, pr.getProperty("jdbc.idle", 5, Int::class.java))
+        assertEquals(true, cpr.getProperty("jdbc.auto-commit", Boolean::class.java))
+        assertTrue(cpr.getProperty("jdbc.auto-commit", Boolean::class.java)!!)
+        assertTrue(cpr.getProperty("jdbc.detect-leak", true, Boolean::class.java))
+
+        assertEquals(20, cpr.getProperty("jdbc.pool-size", Int::class.java))
+        assertEquals(20, cpr.getProperty("jdbc.pool-size", 999, Int::class.java))
+        assertEquals(5, cpr.getProperty("jdbc.idle", 5, Int::class.java))
 
         assertEquals(
             LocalDateTime.parse("2023-03-29T21:45:01"),
-            pr.getProperty("scheduler.started-at", LocalDateTime::class.java)
+            cpr.getProperty("scheduler.started-at", LocalDateTime::class.java)
         )
         assertEquals(
-            LocalTime.parse("03:05:10"), pr.getProperty("scheduler.backup-at", LocalTime::class.java)
+            LocalTime.parse("03:05:10"), cpr.getProperty("scheduler.backup-at", LocalTime::class.java)
         )
         assertEquals(
             LocalTime.parse("23:59:59"),
-            pr.getProperty("scheduler.restart-at", LocalTime.parse("23:59:59"), LocalTime::class.java)
+            cpr.getProperty("scheduler.restart-at", LocalTime.parse("23:59:59"), LocalTime::class.java)
         )
         assertEquals(
             Duration.ofMinutes(((2 * 24 + 8) * 60 + 21).toLong()),
-            pr.getProperty("scheduler.cleanup", Duration::class.java)
+            cpr.getProperty("scheduler.cleanup", Duration::class.java)
         )
     }
 
@@ -68,9 +71,9 @@ class ConfigPropertyResolverTest {
         props.setProperty("app.title", "Autumn Framework")
         props.setProperty("app.version", "v1.0")
 
-        val pr = ConfigPropertyResolver(props)
-        assertThrows(NullPointerException::class.java) {
-            pr.getRequiredProperty("not.exist")
+        val cpr = ConfigPropertyResolver(props)
+        assertThrows<IllegalArgumentException> {
+            cpr.getRequiredProperty("not.exist")
         }
     }
 
@@ -83,20 +86,20 @@ class ConfigPropertyResolverTest {
         val props = Properties()
         props.setProperty("app.title", "Autumn Framework")
 
-        val pr = ConfigPropertyResolver(props)
-        assertEquals("Autumn Framework", pr.getProperty("\${app.title}"))
-        assertThrows(NullPointerException::class.java) {
-            pr.getProperty("\${app.version}")
+        val cpr = ConfigPropertyResolver(props)
+        assertEquals("Autumn Framework", cpr.getProperty("\${app.title}"))
+        assertThrows<IllegalArgumentException> {
+            cpr.getProperty("\${app.version}")
         }
-        assertEquals("v1.0", pr.getProperty("\${app.version:v1.0}"))
-        assertEquals(1, pr.getProperty("\${app.version:1}", Int::class.java))
-        assertThrows(NumberFormatException::class.java) {
-            pr.getProperty("\${app.version:x}", Int::class.java)
+        assertEquals("v1.0", cpr.getProperty("\${app.version:v1.0}"))
+        assertEquals(1, cpr.getProperty("\${app.version:1}", Int::class.java))
+        assertThrows<IllegalArgumentException> {
+            cpr.getProperty("\${app.version:x}", Int::class.java)
         }
 
-        assertEquals(home, pr.getProperty("\${app.path:\${HOME}}"))
-        assertEquals(home, pr.getProperty("\${app.path:\${app.home:\${HOME}}}"))
-        assertEquals("/not-exist", pr.getProperty("\${app.path:\${app.home:\${ENV_NOT_EXIST:/not-exist}}}"))
+        assertEquals(home, cpr.getProperty("\${app.path:\${HOME}}"))
+        assertEquals(home, cpr.getProperty("\${app.path:\${app.home:\${HOME}}}"))
+        assertEquals("/not-exist", cpr.getProperty("\${app.path:\${app.home:\${ENV_NOT_EXIST:/not-exist}}}"))
     }
 
     @Test
@@ -104,7 +107,7 @@ class ConfigPropertyResolverTest {
     fun propertyHolderOnWin() {
         val os = System.getenv("OS")
         println("env OS=$os")
-        val pr = ConfigPropertyResolver(Properties())
-        assertEquals("Windows_NT", pr.getProperty("\${app.os:\${OS}}"))
+        val cpr = ConfigPropertyResolver(Properties())
+        assertEquals("Windows_NT", cpr.getProperty("\${app.os:\${OS}}"))
     }
 }

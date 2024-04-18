@@ -13,6 +13,8 @@ data class PropertyExpr(val key: String, val defaultValue: String?)
 
 interface PropertyResolver {
     fun contains(key: String): Boolean
+    fun setProperty(key: String, value: String)
+    fun addProperties(map: Map<String, String>)
     fun getProperty(key: String): String?
     fun getProperty(key: String, defaultValue: String): String
     fun <T> getProperty(key: String, clazz: Class<T>): T?
@@ -82,12 +84,20 @@ class ConfigPropertyResolver(props: Properties) : PropertyResolver {
         properties += props.toMap() as Map<String, String>
         if (logger.isDebugEnabled) {
             properties.toSortedMap().forEach { (key, value) ->
-                logger.debug("PropertyResolver: $key = $value")
+                logger.debug("$key = $value")
             }
         }
     }
 
     override fun contains(key: String) = properties.containsKey(key)
+
+    override fun setProperty(key: String, value: String) {
+        properties[key] = value
+    }
+
+    override fun addProperties(map: Map<String, String>) {
+        properties += map
+    }
 
     override fun getProperty(key: String): String? {
         val keyExpr = parsePropertyExpr(key)
@@ -116,10 +126,10 @@ class ConfigPropertyResolver(props: Properties) : PropertyResolver {
     }
 
     override fun getRequiredProperty(key: String) =
-        getProperty(key) ?: throw NullPointerException("key: $key not found")
+        getProperty(key) ?: throw IllegalArgumentException("key: $key not found")
 
     override fun <T> getRequiredProperty(key: String, clazz: Class<T>) =
-        getProperty(key, clazz) ?: throw NullPointerException("key: $key not found")
+        getProperty(key, clazz) ?: throw IllegalArgumentException("key: $key not found")
 
     private fun <T> getConverter(clazz: Class<T>): (String) -> T {
         @Suppress("UNCHECKED_CAST")

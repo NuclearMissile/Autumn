@@ -4,10 +4,7 @@ import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
 import org.example.autumn.resolver.ResourceResolver
-import java.io.FileNotFoundException
-import java.io.InputStream
 import java.lang.reflect.Method
-import java.nio.charset.StandardCharsets
 
 object ClassUtils {
     /**
@@ -144,22 +141,4 @@ object ClassUtils {
             }
         }.toSet()
     }
-}
-
-object ClassPathUtils {
-    fun <T> readInputStream(path: String, inputStreamCallback: (stream: InputStream) -> T): T {
-        val _path = path.removePrefix("/")
-        contextClassLoader.getResourceAsStream(_path).use { input ->
-            input ?: throw FileNotFoundException("File not found in classpath: $_path")
-            return inputStreamCallback.invoke(input)
-        }
-    }
-
-    fun readString(path: String): String {
-        return readInputStream(path) { input -> String(input.readAllBytes(), StandardCharsets.UTF_8) }
-    }
-
-    private val contextClassLoader: ClassLoader
-        get() = Thread.currentThread().contextClassLoader ?: ClassPathUtils::class.java.classLoader
-
 }

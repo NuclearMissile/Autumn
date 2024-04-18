@@ -4,7 +4,7 @@ import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.exception.DataAccessException
 import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.jdbc.JdbcTestBase
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -46,7 +46,7 @@ class JdbcNoTxTest : JdbcTestBase() {
             val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 1)
             assertEquals("Bob Jones", bob.name)
             assertEquals(18, bob.age)
-            assertThrows(DataAccessException::class.java) {
+            assertThrows<DataAccessException> {
                 // alice was deleted:
                 jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 2)
             }
