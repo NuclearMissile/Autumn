@@ -26,7 +26,7 @@ class AutumnApplication {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     fun start(webDir: String, baseDir: String, contextPath: String, configClass: Class<*>, vararg args: String) {
-        println(ClassPathUtils.readString("/banner.txt"))
+        logger.info(ClassPathUtils.readString("/banner.txt"))
 
         // start info:
         val startTime = System.currentTimeMillis()
