@@ -1,14 +1,16 @@
 package org.example.autumn.aop.perf_metric
 
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import java.util.*
 import kotlin.test.*
 
 class MetricProxyTest {
     @Test
     fun testMetricProxy() {
-        AnnotationConfigApplicationContext(MetricApplication::class.java, PropertyResolver(Properties())).use { ctx ->
+        AnnotationConfigApplicationContext(
+            MetricApplication::class.java, ConfigPropertyResolver(Properties())
+        ).use { ctx ->
             val worker = ctx.getBean(HashWorker::class.java)
             // proxy class, not origin class:
             assertNotSame(HashWorker::class.java, worker.javaClass)

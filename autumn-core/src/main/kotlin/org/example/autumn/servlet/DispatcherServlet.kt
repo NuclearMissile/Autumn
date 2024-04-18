@@ -1,5 +1,6 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.DispatcherType
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
@@ -7,29 +8,72 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
-import org.example.autumn.context.ApplicationContext
+import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.ConfigurableApplicationContext
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
-import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
-import org.example.autumn.utils.ServletUtils.DUMMY_VALUE
-import org.example.autumn.utils.ServletUtils.compilePath
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
+import java.util.*
+import java.util.Objects.requireNonNull
+import java.util.regex.Pattern
 
-class DispatcherServlet(
-    private val applicationContext: ApplicationContext,
-    propertyResolver: PropertyResolver,
-) : HttpServlet() {
+class DispatcherServlet : HttpServlet() {
+    companion object {
+        private val logger = LoggerFactory.getLogger(Companion::class.java)
+
+        const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
+
+        fun compilePath(path: String): Pattern {
+            val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
+            if (regPath.find { it == '{' || it == '}' } != null) {
+                throw ServletException("Invalid path: $path")
+            }
+            return Pattern.compile("^$regPath$")
+        }
+
+        fun registerDispatcherServlet(servletContext: ServletContext) {
+            val dispatcherServlet = DispatcherServlet()
+            logger.info("register servlet {} for ROOT", dispatcherServlet.javaClass.name)
+            servletContext.addServlet("dispatcherServlet", dispatcherServlet)!!.apply {
+                addMapping("/")
+                setLoadOnStartup(0)
+            }
+        }
+
+        fun registerFilters(servletContext: ServletContext) {
+            val applicationContext = ApplicationContextHolder.requiredApplicationContext
+            for (filterRegBean in applicationContext.getBeans(FilterRegistrationBean::class.java)) {
+                val urlPatterns = filterRegBean.urlPatterns
+                require(urlPatterns.isNotEmpty()) {
+                    "No url patterns for ${filterRegBean.javaClass.name}"
+                }
+                val filter = requireNonNull(filterRegBean.filter) {
+                    "FilterRegistrationBean.filter must not return null."
+                }
+                logger.info(
+                    "register filter '{}' {} for URLs: {}",
+                    filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
+                )
+                servletContext.addFilter(filterRegBean.name, filter)!!.addMappingForUrlPatterns(
+                    EnumSet.of(DispatcherType.REQUEST), true, *urlPatterns.toTypedArray()
+                )
+            }
+        }
+    }
+
     private val logger = LoggerFactory.getLogger(javaClass)
+    private val applicationContext =
+        ApplicationContextHolder.requiredApplicationContext as ConfigurableApplicationContext
+    private val propertyResolver = applicationContext.getPropertyResolver()
     private val viewResolver = applicationContext.getBean(ViewResolver::class.java)
     private val resourcePath = propertyResolver
         .getProperty("\${autumn.web.static-path:/static/}")!!.removeSuffix("/") + "/"
@@ -40,7 +84,7 @@ class DispatcherServlet(
     override fun init() {
         logger.info("init {}.", javaClass.name)
         // scan @Controller and @RestController:
-        for (info in (applicationContext as ConfigurableApplicationContext).findBeanMetaInfos(Any::class.java)) {
+        for (info in applicationContext.findBeanMetaInfos(Any::class.java)) {
             val beanClass = info.beanClass
             val bean = info.getRequiredInstance()
             val controllerAnno = beanClass.getAnnotation(Controller::class.java)
@@ -163,7 +207,7 @@ class DispatcherServlet(
     private fun serveError(
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse
     ) {
-        logger.warn("process request failed with status: ${e.statusCode}, $url", e)
+        logger.warn("process request failed with status: ${e.statusCode}, $url (${e.message})")
         resp.reset()
         resp.contentType = "text/html"
         if (e.responseBody != null) {

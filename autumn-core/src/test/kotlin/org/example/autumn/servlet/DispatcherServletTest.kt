@@ -1,7 +1,7 @@
 package org.example.autumn.servlet
 
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.BeforeEach
@@ -231,10 +231,8 @@ class DispatcherServletTest {
         ctx = createMockServletContext()
         WebMvcConfiguration.servletContext = ctx
         val propertyResolver = createPropertyResolver()
-        val applicationContext = AnnotationConfigApplicationContext(
-            ControllerConfiguration::class.java, propertyResolver
-        )
-        dispatcherServlet = DispatcherServlet(applicationContext, propertyResolver)
+        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, propertyResolver)
+        dispatcherServlet = DispatcherServlet()
         dispatcherServlet.init()
     }
 
@@ -261,8 +259,8 @@ class DispatcherServletTest {
         assertEquals(true, req.session!!.getAttribute("signout"))
     }
 
-    private fun createPropertyResolver(): PropertyResolver {
-        return PropertyResolver(
+    private fun createPropertyResolver(): ConfigPropertyResolver {
+        return ConfigPropertyResolver(
             mapOf(
                 "app.title" to "Scan App",
                 "app.version" to "v1.0",

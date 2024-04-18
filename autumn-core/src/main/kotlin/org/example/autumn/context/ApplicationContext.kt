@@ -2,6 +2,7 @@ package org.example.autumn.context
 
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
+import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils
 import org.example.autumn.utils.ClassUtils.findAnnotationMethod
@@ -17,15 +18,15 @@ object ApplicationContextHolder {
         get() = requireNotNull(applicationContext) { "ApplicationContext is not set." }
 }
 
-class AnnotationConfigApplicationContext private constructor(
-    private val propertyResolver: PropertyResolver
+class AnnotationConfigApplicationContext(
+    configClass: Class<*>, private val configPropertyResolver: ConfigPropertyResolver
 ) : ConfigurableApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val infos = mutableMapOf<String, BeanMetaInfo>()
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
-    constructor(configClass: Class<*>, propertyResolver: PropertyResolver) : this(propertyResolver) {
+    init {
         ApplicationContextHolder.applicationContext = this
         val classNameSet = scanClassNamesOnConfigClass(configClass)
         infos += createBeanMetaInfos(classNameSet)
@@ -242,7 +243,7 @@ class AnnotationConfigApplicationContext private constructor(
         @Suppress("KotlinConstantConditions")
         when {
             valueAnno != null -> {
-                val propValue = propertyResolver.getRequiredProperty(valueAnno.value, accessibleType)
+                val propValue = configPropertyResolver.getRequiredProperty(valueAnno.value, accessibleType)
                 if (field != null) {
                     logger.atDebug()
                         .log("Field injection: {}.{} = {}", info.beanClass.name, accessibleName, propValue)
@@ -262,7 +263,7 @@ class AnnotationConfigApplicationContext private constructor(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -282,7 +283,7 @@ class AnnotationConfigApplicationContext private constructor(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                        "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }
@@ -389,7 +390,7 @@ class AnnotationConfigApplicationContext private constructor(
             val type = param.type
             when {
                 paramValueAnno != null -> {
-                    args[i] = propertyResolver.getRequiredProperty(paramValueAnno.value, type)
+                    args[i] = configPropertyResolver.getRequiredProperty(paramValueAnno.value, type)
                 }
 
                 paramAutowiredAnno != null -> {
@@ -442,6 +443,10 @@ class AnnotationConfigApplicationContext private constructor(
             }
         }
         return info.instance!!
+    }
+
+    override fun getPropertyResolver(): PropertyResolver {
+        return configPropertyResolver
     }
 
     override fun contains(name: String): Boolean {
@@ -560,4 +565,6 @@ interface ConfigurableApplicationContext : ApplicationContext {
     fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo?
 
     fun createEarlySingleton(info: BeanMetaInfo): Any
+
+    fun getPropertyResolver(): PropertyResolver
 }

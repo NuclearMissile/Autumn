@@ -1,7 +1,7 @@
 package org.example.autumn.aop.around
 
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import kotlin.test.*
 
 class AroundProxyTest {
@@ -9,7 +9,7 @@ class AroundProxyTest {
     fun testAroundProxy() {
         AnnotationConfigApplicationContext(
             AroundApplication::class.java,
-            PropertyResolver(mapOf("customer.name" to "Bob").toProperties())
+            ConfigPropertyResolver(mapOf("customer.name" to "Bob").toProperties())
         ).use { ctx ->
             val proxy = ctx.getBean(OriginBean::class.java)
             // OriginBean$ByteBuddy$8NoD1FcQ

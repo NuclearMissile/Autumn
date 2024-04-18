@@ -1,6 +1,6 @@
 package org.example.autumn.context
 
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.imported.LocalDateConfiguration
 import org.example.imported.ZonedDateConfiguration
 import org.example.scan.*
@@ -13,7 +13,7 @@ import kotlin.test.*
 class AnnotationConfigApplicationContextTest {
     @Test
     fun testCustomAnnotation() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             assertNotNull(ctx.getBean(CustomAnnotationBean::class.java))
             assertNotNull(ctx.getBean("customAnnotation"))
         }
@@ -21,7 +21,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testInitMethod() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             // test @PostConstruct:
             val bean1 = ctx.getBean(AnnotationInitBean::class.java)
             val bean2 = ctx.getBean(SpecifyInitBean::class.java)
@@ -32,7 +32,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testImport() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             assertNotNull(ctx.getBean(LocalDateConfiguration::class.java))
             assertNotNull(ctx.getBean("startLocalDate"))
             assertNotNull(ctx.getBean("startLocalDateTime"))
@@ -45,7 +45,7 @@ class AnnotationConfigApplicationContextTest {
     fun testDestroyMethod() {
         var bean1: AnnotationDestroyBean
         var bean2: SpecifyDestroyBean
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             // test @PreDestroy:
             bean1 = ctx.getBean(AnnotationDestroyBean::class.java)
             bean2 = ctx.getBean(SpecifyDestroyBean::class.java)
@@ -58,7 +58,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testConverter() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             val bean = ctx.getBean(ValueConverterBean::class.java)
             assertNotNull(bean.injectedBoolean)
             assertTrue(bean.injectedBooleanPrimitive)
@@ -102,7 +102,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testNested() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             ctx.getBean(OuterBean::class.java)
             ctx.getBean(OuterBean.NestedBean::class.java)
         }
@@ -110,7 +110,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testPrimary() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             val person = ctx.getBean(PersonBean::class.java)
             assertEquals<Class<*>>(TeacherBean::class.java, person.javaClass)
             val dog = ctx.getBean(DogBean::class.java)
@@ -120,7 +120,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testProxy() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             // test proxy:
             val proxy = ctx.getBean(OriginBean::class.java)
             assertSame<Class<*>>(SecondProxyBean::class.java, proxy.javaClass)
@@ -144,36 +144,33 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testSub() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, createPropertyResolver()).use { ctx ->
+        AnnotationConfigApplicationContext(ScanApplication::class.java, propertyResolver).use { ctx ->
             ctx.getBean(Sub1Bean::class.java)
             ctx.getBean(Sub2Bean::class.java)
             ctx.getBean(Sub3Bean::class.java)
         }
     }
 
-
-    private fun createPropertyResolver(): PropertyResolver {
-        return PropertyResolver(
-            mapOf(
-                "app.title" to "Scan App",
-                "app.version" to "v1.0",
-                "jdbc.url" to "jdbc:hsqldb:file:testdb.tmp",
-                "jdbc.username" to "sa",
-                "jdbc.password" to "",
-                "convert.boolean" to "true",
-                "convert.byte" to "123",
-                "convert.short" to "12345",
-                "convert.integer" to "1234567",
-                "convert.long" to "123456789000",
-                "convert.float" to "12345.6789",
-                "convert.double" to "123456789.87654321",
-                "convert.localdate" to "2023-03-29",
-                "convert.localtime" to "20:45:01",
-                "convert.localdatetime" to "2023-03-29T20:45:01",
-                "convert.zoneddatetime" to "2023-03-29T20:45:01+08:00[Asia/Shanghai]",
-                "convert.duration" to "P2DT3H4M",
-                "convert.zoneid" to "Asia/Shanghai",
-            ).toProperties()
-        )
-    }
+    val propertyResolver = ConfigPropertyResolver(
+        mapOf(
+            "app.title" to "Scan App",
+            "app.version" to "v1.0",
+            "jdbc.url" to "jdbc:hsqldb:file:testdb.tmp",
+            "jdbc.username" to "sa",
+            "jdbc.password" to "",
+            "convert.boolean" to "true",
+            "convert.byte" to "123",
+            "convert.short" to "12345",
+            "convert.integer" to "1234567",
+            "convert.long" to "123456789000",
+            "convert.float" to "12345.6789",
+            "convert.double" to "123456789.87654321",
+            "convert.localdate" to "2023-03-29",
+            "convert.localtime" to "20:45:01",
+            "convert.localdatetime" to "2023-03-29T20:45:01",
+            "convert.zoneddatetime" to "2023-03-29T20:45:01+08:00[Asia/Shanghai]",
+            "convert.duration" to "P2DT3H4M",
+            "convert.zoneid" to "Asia/Shanghai",
+        ).toProperties()
+    )
 }

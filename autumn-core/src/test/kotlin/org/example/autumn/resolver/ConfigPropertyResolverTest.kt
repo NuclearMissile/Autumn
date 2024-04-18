@@ -14,10 +14,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 
-class PropertyResolverTest {
+class ConfigPropertyResolverTest {
     @Test
     fun propertyValue() {
-        val pr = PropertyResolver(
+        val pr = ConfigPropertyResolver(
             mapOf(
                 "app.title" to "Autumn Framework",
                 "app.version" to "v1.0",
@@ -68,7 +68,7 @@ class PropertyResolverTest {
         props.setProperty("app.title", "Autumn Framework")
         props.setProperty("app.version", "v1.0")
 
-        val pr = PropertyResolver(props)
+        val pr = ConfigPropertyResolver(props)
         assertThrows(NullPointerException::class.java) {
             pr.getRequiredProperty("not.exist")
         }
@@ -83,7 +83,7 @@ class PropertyResolverTest {
         val props = Properties()
         props.setProperty("app.title", "Autumn Framework")
 
-        val pr = PropertyResolver(props)
+        val pr = ConfigPropertyResolver(props)
         assertEquals("Autumn Framework", pr.getProperty("\${app.title}"))
         assertThrows(NullPointerException::class.java) {
             pr.getProperty("\${app.version}")
@@ -104,7 +104,7 @@ class PropertyResolverTest {
     fun propertyHolderOnWin() {
         val os = System.getenv("OS")
         println("env OS=$os")
-        val pr = PropertyResolver(Properties())
+        val pr = ConfigPropertyResolver(Properties())
         assertEquals("Windows_NT", pr.getProperty("\${app.os:\${OS}}"))
     }
 }

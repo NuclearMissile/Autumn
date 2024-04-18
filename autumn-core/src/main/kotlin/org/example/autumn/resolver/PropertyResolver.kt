@@ -1,13 +1,55 @@
 package org.example.autumn.resolver
 
+import org.example.autumn.utils.ClassPathUtils
+import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.FileNotFoundException
+import java.io.UncheckedIOException
 import java.time.*
 import java.util.*
 
 data class PropertyExpr(val key: String, val defaultValue: String?)
 
-class PropertyResolver(props: Properties) {
+interface PropertyResolver {
+    fun contains(key: String): Boolean
+    fun getProperty(key: String): String?
+    fun getProperty(key: String, defaultValue: String): String
+    fun <T> getProperty(key: String, clazz: Class<T>): T?
+    fun <T> getProperty(key: String, default: T, clazz: Class<T>): T
+    fun getRequiredProperty(key: String): String
+    fun <T> getRequiredProperty(key: String, clazz: Class<T>): T
+}
+
+class ConfigPropertyResolver(props: Properties) : PropertyResolver {
+    companion object {
+        private val logger = LoggerFactory.getLogger(Companion::class.java)
+        private const val CONFIG_APP_YAML: String = "/application.yml"
+        private const val CONFIG_APP_PROP: String = "/application.properties"
+
+        /**
+         * Try load property resolver from /application.yml or /application.properties.
+         */
+        fun load(): ConfigPropertyResolver {
+            var props = Properties()
+            // try load application.yml:
+            try {
+                val yamlMap = loadYamlAsPlainMap(CONFIG_APP_YAML).filter { it.value is String } as Map<String, String>
+                logger.info("load config: {}", CONFIG_APP_YAML)
+                props = yamlMap.toProperties()
+            } catch (e: UncheckedIOException) {
+                if (e.cause is FileNotFoundException) {
+                    // try load application.properties:
+                    ClassPathUtils.readInputStream(CONFIG_APP_PROP) { input ->
+                        logger.info("load config: {}", CONFIG_APP_PROP)
+                        props.load(input)
+                    }
+                }
+            }
+            return ConfigPropertyResolver(props)
+        }
+    }
+
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
     private val properties: MutableMap<String, String> = mutableMapOf()
     private val converters: MutableMap<Class<*>, (String) -> Any> = mutableMapOf(
@@ -45,9 +87,9 @@ class PropertyResolver(props: Properties) {
         }
     }
 
-    fun contains(key: String) = properties.containsKey(key)
+    override fun contains(key: String) = properties.containsKey(key)
 
-    fun getProperty(key: String): String? {
+    override fun getProperty(key: String): String? {
         val keyExpr = parsePropertyExpr(key)
         if (keyExpr != null) {
             return if (keyExpr.defaultValue != null) {
@@ -60,23 +102,23 @@ class PropertyResolver(props: Properties) {
         return if (value != null) parseValue(value) else null
     }
 
-    fun getProperty(key: String, defaultValue: String): String {
+    override fun getProperty(key: String, defaultValue: String): String {
         return getProperty(key) ?: parseValue(defaultValue)
     }
 
-    fun <T> getProperty(key: String, clazz: Class<T>): T? {
+    override fun <T> getProperty(key: String, clazz: Class<T>): T? {
         val value = getProperty(key) ?: return null
         return getConverter(clazz).invoke(value)
     }
 
-    fun <T> getProperty(key: String, default: T, clazz: Class<T>): T {
+    override fun <T> getProperty(key: String, default: T, clazz: Class<T>): T {
         return getProperty(key, clazz) ?: default
     }
 
-    fun getRequiredProperty(key: String) =
+    override fun getRequiredProperty(key: String) =
         getProperty(key) ?: throw NullPointerException("key: $key not found")
 
-    fun <T> getRequiredProperty(key: String, clazz: Class<T>) =
+    override fun <T> getRequiredProperty(key: String, clazz: Class<T>) =
         getProperty(key, clazz) ?: throw NullPointerException("key: $key not found")
 
     private fun <T> getConverter(clazz: Class<T>): (String) -> T {

@@ -6,10 +6,10 @@ import org.apache.catalina.startup.Tomcat
 import org.apache.catalina.webresources.DirResourceSet
 import org.apache.catalina.webresources.StandardRoot
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.servlet.DispatcherServlet
 import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.ClassPathUtils
-import org.example.autumn.utils.ServletUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -39,8 +39,8 @@ class AutumnApplication {
             configClass.simpleName, javaVersion, pid, user, pwd
         )
 
-        val propertyResolver = ServletUtils.createPropertyResolver()
-        val port = propertyResolver.getProperty("\${server.port:8080}", Int::class.java)!!
+        val configPropertyResolver = ConfigPropertyResolver.load()
+        val port = configPropertyResolver.getProperty("\${server.port:8080}", Int::class.java)!!
         logger.info("starting Tomcat at port {}...", port)
 
         // config Tomcat
@@ -51,7 +51,7 @@ class AutumnApplication {
         val resources = StandardRoot(ctx)
         resources.addPreResources(DirResourceSet(resources, "/WEB-INF/classes", File(baseDir).absolutePath, "/"))
         ctx.resources = resources
-        ctx.addServletContainerInitializer(ContextLoaderInitializer(configClass, propertyResolver), setOf())
+        ctx.addServletContainerInitializer(ContextLoaderInitializer(configClass, configPropertyResolver), setOf())
         tomcat.start()
         logger.info("Tomcat started at http://localhost:{}", port)
 
@@ -66,24 +66,22 @@ class AutumnApplication {
 }
 
 class ContextLoaderInitializer(
-    private val configClass: Class<*>, private val propertyResolver: PropertyResolver
+    private val configClass: Class<*>, private val configPropertyResolver: ConfigPropertyResolver
 ) : ServletContainerInitializer {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    override fun onStartup(c: Set<Class<*>>, ctx: ServletContext) {
-        logger.info("Servlet container start. ServletContext = {}", ctx)
+    override fun onStartup(c: Set<Class<*>>, servletContext: ServletContext) {
+        logger.info("Servlet container start. ServletContext = {}", servletContext)
 
-        val encoding = propertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")
-        ctx.requestCharacterEncoding = encoding
-        ctx.responseCharacterEncoding = encoding
+        val encoding = configPropertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")
+        servletContext.requestCharacterEncoding = encoding
+        servletContext.responseCharacterEncoding = encoding
 
-        WebMvcConfiguration.servletContext = ctx
-        val applicationContext = AnnotationConfigApplicationContext(this.configClass, this.propertyResolver)
+        WebMvcConfiguration.servletContext = servletContext
+        val applicationContext = AnnotationConfigApplicationContext(configClass, configPropertyResolver)
         logger.info("Application context created: {}", applicationContext)
 
-        // register filters:
-        ServletUtils.registerFilters(ctx)
-        // register DispatcherServlet:
-        ServletUtils.registerDispatcherServlet(ctx, this.propertyResolver)
+        DispatcherServlet.registerFilters(servletContext)
+        DispatcherServlet.registerDispatcherServlet(servletContext)
     }
 }

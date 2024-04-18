@@ -6,6 +6,7 @@ app:
   version: 1.0
 
 autumn:
+  config-class-path: org.example.autumn.hello.HelloConfiguration
   datasource:
     url: jdbc:sqlite:test.db
     driver-class-name: org.sqlite.JDBC

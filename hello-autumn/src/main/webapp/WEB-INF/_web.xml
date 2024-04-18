@@ -5,7 +5,7 @@
     <display-name>Hello Webapp</display-name>
 
     <context-param>
-        <param-name>configuration</param-name>
+        <param-name>configClassPath</param-name>
         <param-value>org.example.autumn.hello.HelloConfiguration</param-value>
     </context-param>
 

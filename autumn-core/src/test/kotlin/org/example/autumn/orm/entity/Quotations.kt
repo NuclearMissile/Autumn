@@ -67,7 +67,7 @@ abstract class BarEntity(
         val zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), zoneId)
         val time = FORMATTERS.getValue(javaClass.name).format(zdt)
         return "BarEntity(startTime=$time, openPrice=$openPrice, highPrice=$highPrice, lowPrice=$lowPrice, " +
-                "closePrice=$closePrice, quantity=$quantity)"
+            "closePrice=$closePrice, quantity=$quantity)"
     }
 
     override fun toString(): String {

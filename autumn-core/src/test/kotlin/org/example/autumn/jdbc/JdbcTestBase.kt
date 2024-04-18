@@ -1,6 +1,6 @@
 package org.example.autumn.jdbc
 
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -27,18 +27,17 @@ open class JdbcTestBase {
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"
     }
 
+    val propertyResolver = ConfigPropertyResolver(
+        mapOf(
+            "autumn.datasource.url" to "jdbc:sqlite:test_jdbc.db",
+            "autumn.datasource.username" to "sa",
+            "autumn.datasource.password" to "",
+            "autumn.datasource.driver-class-name" to "org.sqlite.JDBC"
+        ).toProperties()
+    )
+
     @BeforeEach
     fun beforeEach() {
         Files.deleteIfExists(Path("test_jdbc.db"))
     }
-
-    val propertyResolver: PropertyResolver
-        get() = PropertyResolver(
-            mapOf(
-                "autumn.datasource.url" to "jdbc:sqlite:test_jdbc.db",
-                "autumn.datasource.username" to "sa",
-                "autumn.datasource.password" to "",
-                "autumn.datasource.driver-class-name" to "org.sqlite.JDBC"
-            ).toProperties()
-        )
 }

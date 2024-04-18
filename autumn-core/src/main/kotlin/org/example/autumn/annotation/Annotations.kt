@@ -1,6 +1,6 @@
 package org.example.autumn.annotation
 
-import org.example.autumn.utils.ServletUtils.DUMMY_VALUE
+import org.example.autumn.servlet.DispatcherServlet.Companion.DUMMY_VALUE
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 

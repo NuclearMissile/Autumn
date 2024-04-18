@@ -5,7 +5,7 @@ import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.orm.entity.EventEntity
 import org.example.autumn.orm.entity.PasswordAuthEntity
 import org.example.autumn.orm.entity.UserEntity
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.ConfigPropertyResolver
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
@@ -21,6 +21,16 @@ class OrmTest {
         const val CREATE_PASSWORD_AUTHS =
             "CREATE TABLE password_auths (userId INTEGER PRIMARY KEY AUTOINCREMENT, random TEXT NOT NULL, passwd TEXT NOT NULL);"
     }
+
+    val propertyResolver = ConfigPropertyResolver(
+        mapOf(
+            "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
+            "autumn.datasource.username" to "sa",
+            "autumn.datasource.password" to "",
+            "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
+            "autumn.db-template.entity-package-path" to "org.example.autumn.orm.entity",
+        ).toProperties()
+    )
 
     @BeforeEach
     fun setUp() {
@@ -174,15 +184,4 @@ class OrmTest {
             assertNull(dbTemplate.selectById<UserEntity>(user.id))
         }
     }
-
-    private val propertyResolver: PropertyResolver
-        get() = PropertyResolver(
-            mapOf(
-                "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
-                "autumn.datasource.username" to "sa",
-                "autumn.datasource.password" to "",
-                "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
-                "autumn.db-template.entity-package-path" to "org.example.autumn.orm.entity",
-            ).toProperties()
-        )
 }
