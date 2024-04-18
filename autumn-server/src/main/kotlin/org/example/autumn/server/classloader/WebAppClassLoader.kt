@@ -12,11 +12,11 @@ import kotlin.io.path.extension
 
 data class Resource(val path: Path, val name: String)
 
-class WebAppClassLoader(classPath: Path, libPath: Path?) :
-    URLClassLoader("WebAppClassLoader", createUrls(classPath, libPath), ClassLoader.getSystemClassLoader()) {
+class WebAppClassLoader(classesPath: Path, libPath: Path?) :
+    URLClassLoader("WebAppClassLoader", createUrls(classesPath, libPath), ClassLoader.getSystemClassLoader()) {
     companion object {
         private fun Path.absPath(): String {
-            return this.toAbsolutePath().normalize().toString().replace("\\", "/")
+            return "/" + this.toAbsolutePath().normalize().toString().replace("\\", "/").removePrefix("/")
         }
 
         private fun Path.dirUrl(): URL {
@@ -44,29 +44,29 @@ class WebAppClassLoader(classPath: Path, libPath: Path?) :
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val classPath = classPath.toAbsolutePath().normalize()
+    private val classesPath = classesPath.toAbsolutePath().normalize()
     private val libPaths = libPath?.scanJars() ?: emptyList()
 
     init {
-        logger.info("set class path: ${this.classPath}")
-        libPaths.forEach { logger.info("set jar path: $it") }
+        logger.info("set class path: ${this.classesPath.absPath()}")
+        libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
     }
 
-    fun scanLibPaths(handler: (Resource) -> Unit) {
+    fun walkLibPaths(visitor: (Resource) -> Unit) {
         fun scanJar(handler: (Resource) -> Unit, jarPath: Path) {
             JarFile(jarPath.toFile()).stream().filter { !it.isDirectory }.forEach {
                 handler.invoke(Resource(jarPath, it.name))
             }
         }
-        libPaths.forEach { scanJar(handler, it) }
+        libPaths.forEach { scanJar(visitor, it) }
     }
 
-    fun scanClassPath(handler: (Resource) -> Unit, basePath: Path = classPath, path: Path = classPath) {
+    fun walkClassesPath(visitor: (Resource) -> Unit, basePath: Path = classesPath, path: Path = classesPath) {
         Files.list(path).sorted().forEach { p ->
             if (Files.isDirectory(p)) {
-                scanClassPath(handler, basePath, p)
+                walkClassesPath(visitor, basePath, p)
             } else if (Files.isRegularFile(p)) {
-                handler.invoke(Resource(p, basePath.relativize(p).toString().replace("\\", "/")))
+                visitor.invoke(Resource(p, basePath.relativize(p).toString().replace("\\", "/")))
             }
         }
     }
