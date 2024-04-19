@@ -16,6 +16,15 @@ import kotlin.test.assertTrue
 
 class ConfigPropertyResolverTest {
     @Test
+    fun testConfigLoad() {
+        val cpr = ConfigPropertyResolver.load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
+        assertEquals("Autumn Webapp", cpr.getRequiredProperty("server.web-app.name"))
+
+        cpr.setProperty("server.web-app.name", "dummy")
+        assertEquals("dummy", cpr.getRequiredProperty("server.web-app.name"))
+    }
+
+    @Test
     fun propertyValue() {
         val cpr = ConfigPropertyResolver(
             mapOf(

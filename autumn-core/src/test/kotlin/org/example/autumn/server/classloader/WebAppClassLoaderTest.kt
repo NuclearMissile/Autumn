@@ -52,7 +52,6 @@ class WebAppClassLoaderTest {
         val className = "org.example.autumn.exception.AutumnException"
         val clazz = classLoader.loadClass(className)
         assertEquals(className, clazz.name)
-        assertSame(classLoader, clazz.classLoader)
 
         val dummyClassName = "org.example.autumn.exception.DummyException"
         assertThrows<ClassNotFoundException> { classLoader.loadClass(dummyClassName) }

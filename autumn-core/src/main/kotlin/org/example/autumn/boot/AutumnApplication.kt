@@ -6,6 +6,8 @@ import org.apache.catalina.startup.Tomcat
 import org.apache.catalina.webresources.DirResourceSet
 import org.apache.catalina.webresources.StandardRoot
 import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.resolver.CONFIG_APP_PROP
+import org.example.autumn.resolver.CONFIG_APP_YAML
 import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.autumn.servlet.DispatcherServlet
 import org.example.autumn.servlet.WebMvcConfiguration
@@ -39,7 +41,7 @@ class AutumnApplication {
             configClass.simpleName, javaVersion, pid, user, pwd
         )
 
-        val configPropertyResolver = ConfigPropertyResolver.load()
+        val configPropertyResolver = ConfigPropertyResolver.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
         val port = configPropertyResolver.getProperty("\${server.port:8080}", Int::class.java)!!
         logger.info("starting Tomcat at port {}...", port)
 

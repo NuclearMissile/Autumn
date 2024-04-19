@@ -6,6 +6,8 @@ import jakarta.servlet.annotation.WebListener
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.exception.AutumnException
+import org.example.autumn.resolver.CONFIG_APP_PROP
+import org.example.autumn.resolver.CONFIG_APP_YAML
 import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerDispatcherServlet
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerFilters
@@ -21,7 +23,7 @@ class ContextLoaderListener : ServletContextListener {
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
 
-        val configPropertyResolver = ConfigPropertyResolver.load()
+        val configPropertyResolver = ConfigPropertyResolver.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
         val encoding = configPropertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")!!
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
