@@ -14,11 +14,12 @@ class WebAppClassLoaderTest {
 
     @Test
     fun testUrls() {
-        val urls = classLoader.urLs
+        val urls = classLoader.urLs.sortedBy { it.toString() }
         assertEquals(22, urls.size)
         assertTrue(urls[0].toString().endsWith("/test-classpath/WEB-INF/classes/"))
-        assertTrue(urls[1].toString().endsWith("/test-classpath/WEB-INF/lib/annotations-13.0.jar"))
-        assertTrue(urls[2].toString().endsWith("/test-classpath/WEB-INF/lib/autumn-core-1.0.0.jar"))
+        assertTrue(urls[1].toString().endsWith("/test-classpath/WEB-INF/lib/HikariCP-5.1.0.jar"))
+        assertTrue(urls[2].toString().endsWith("/test-classpath/WEB-INF/lib/annotations-13.0.jar"))
+        assertTrue(urls[3].toString().endsWith("/test-classpath/WEB-INF/lib/autumn-core-1.0.0.jar"))
     }
 
     @Test

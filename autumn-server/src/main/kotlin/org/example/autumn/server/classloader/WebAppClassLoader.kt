@@ -32,13 +32,14 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
         }
 
         private fun Path.scanJars(): List<Path> {
-            return Files.list(this).filter { it.extension == "jar" }.sorted().toList()
+            return Files.list(this).filter { it.extension == "jar" }.toList()
         }
 
         private fun createUrls(classPath: Path, libPath: Path?): Array<URL> {
             return buildList {
                 add(classPath.dirUrl())
-                if (libPath != null) addAll(libPath.scanJars().map { it.jarUrl() })
+                if (libPath != null)
+                    addAll(libPath.scanJars().map { it.jarUrl() })
             }.toTypedArray()
         }
     }
