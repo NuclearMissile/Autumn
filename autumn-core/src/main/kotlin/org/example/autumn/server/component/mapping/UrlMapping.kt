@@ -4,8 +4,8 @@ import jakarta.servlet.Filter
 import jakarta.servlet.Servlet
 import java.util.regex.Pattern
 
-abstract class UrlMapping(val url: String) : Comparable<UrlMapping> {
-    val pattern: Pattern = run {
+abstract class UrlMapping(private val url: String) : Comparable<UrlMapping> {
+    private val pattern: Pattern = run {
         val sb = StringBuilder(url.length + 16)
         sb.append('^')
         url.forEach {
