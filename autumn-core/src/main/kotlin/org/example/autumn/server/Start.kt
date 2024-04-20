@@ -3,7 +3,7 @@ package org.example.autumn.server
 import org.example.autumn.server.connector.HttpConnector
 import org.slf4j.LoggerFactory
 
-object Main {
+object Start {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @JvmStatic

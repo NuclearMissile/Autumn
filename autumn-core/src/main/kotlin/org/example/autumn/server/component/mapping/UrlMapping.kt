@@ -4,7 +4,7 @@ import jakarta.servlet.Filter
 import jakarta.servlet.Servlet
 import java.util.regex.Pattern
 
-abstract class UrlMapping(private val url: String) : Comparable<UrlMapping> {
+open class UrlMapping(private val url: String) : Comparable<UrlMapping> {
     private val pattern: Pattern = run {
         val sb = StringBuilder(url.length + 16)
         sb.append('^')
@@ -20,11 +20,11 @@ abstract class UrlMapping(private val url: String) : Comparable<UrlMapping> {
     }
 
     private val priority: Int =
-        if (this.url == "/") {
+        if (url == "/") {
             Int.MAX_VALUE
-        } else if (this.url.startsWith("*")) {
+        } else if (url.startsWith("*")) {
             Int.MAX_VALUE - 1
-        } else 100000 - this.url.length
+        } else 100000 - url.length
 
 
     fun matches(uri: String): Boolean {
