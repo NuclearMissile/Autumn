@@ -1,10 +1,33 @@
 package org.example.autumn.server.component
 
-import jakarta.servlet.DispatcherType
-import jakarta.servlet.FilterRegistration
+import jakarta.servlet.*
 import java.util.*
 
-class FilterRegistrationImpl : FilterRegistration {
+class FilterRegistrationImpl(
+    private val servletContext: ServletContext, val name: String, val filter: Filter
+) : FilterRegistration {
+    var initialized: Boolean = false
+
+    fun getFilterConfig(): FilterConfig {
+        return object : FilterConfig {
+            override fun getFilterName(): String {
+                return this@FilterRegistrationImpl.name
+            }
+
+            override fun getServletContext(): ServletContext {
+                return this@FilterRegistrationImpl.servletContext
+            }
+
+            override fun getInitParameter(name: String): String? {
+                return this@FilterRegistrationImpl.initParameters[name]
+            }
+
+            override fun getInitParameterNames(): Enumeration<String> {
+                return Collections.enumeration(this@FilterRegistrationImpl.initParameters.keys)
+            }
+        }
+    }
+
     override fun getName(): String {
         TODO("Not yet implemented")
     }

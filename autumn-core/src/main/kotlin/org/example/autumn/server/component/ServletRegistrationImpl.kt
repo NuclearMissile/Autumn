@@ -1,8 +1,36 @@
 package org.example.autumn.server.component
 
+import jakarta.servlet.Servlet
+import jakarta.servlet.ServletConfig
+import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletRegistration
+import java.util.*
 
-class ServletRegistrationImpl : ServletRegistration {
+class ServletRegistrationImpl(
+    val servletContext: ServletContext, val name: String, val servlet: Servlet
+) : ServletRegistration {
+    var initialized: Boolean = false
+
+    fun getServletConfig(): ServletConfig {
+        return object : ServletConfig {
+            override fun getServletName(): String {
+                return this@ServletRegistrationImpl.name
+            }
+
+            override fun getServletContext(): ServletContext {
+                return this@ServletRegistrationImpl.servletContext
+            }
+
+            override fun getInitParameter(name: String): String? {
+                return this@ServletRegistrationImpl.initParameters[name]
+            }
+
+            override fun getInitParameterNames(): Enumeration<String> {
+                return Collections.enumeration(this@ServletRegistrationImpl.initParameters.keys)
+            }
+        }
+    }
+
     override fun getName(): String {
         TODO("Not yet implemented")
     }

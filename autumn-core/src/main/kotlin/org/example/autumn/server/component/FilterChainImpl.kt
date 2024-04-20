@@ -1,11 +1,18 @@
 package org.example.autumn.server.component
 
-import jakarta.servlet.FilterChain
-import jakarta.servlet.ServletRequest
-import jakarta.servlet.ServletResponse
+import jakarta.servlet.*
 
-class FilterChainImpl : FilterChain {
+class FilterChainImpl(
+    private val filters: List<Filter>, private val servlet: Servlet
+) : FilterChain {
+    private var index: Int = 0
+
     override fun doFilter(request: ServletRequest, response: ServletResponse) {
-        TODO("Not yet implemented")
+        if (index < filters.size) {
+            filters[index].doFilter(request, response, this)
+            index++
+        } else {
+            servlet.service(request, response)
+        }
     }
 }

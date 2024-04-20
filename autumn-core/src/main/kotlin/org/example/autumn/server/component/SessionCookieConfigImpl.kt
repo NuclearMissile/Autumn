@@ -1,8 +1,11 @@
 package org.example.autumn.server.component
 
 import jakarta.servlet.SessionCookieConfig
+import org.example.autumn.resolver.PropertyResolver
 
-class SessionCookieConfigImpl : SessionCookieConfig {
+class SessionCookieConfigImpl(
+    private val config: PropertyResolver
+) : SessionCookieConfig {
     override fun setName(name: String?) {
         TODO("Not yet implemented")
     }
