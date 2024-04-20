@@ -8,19 +8,6 @@ object Start {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        try {
-            HttpConnector().use {
-                while (true) {
-                    try {
-                        Thread.sleep(1000)
-                    } catch (e: InterruptedException) {
-                        break
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            logger.error(e.message, e)
-        }
-        logger.info("Autumn server shutdown.")
+
     }
 }

@@ -3,10 +3,20 @@ package org.example.autumn.server.component
 import jakarta.servlet.ServletOutputStream
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
+import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.server.connector.HttpExchangeResponse
 import java.io.PrintWriter
 import java.util.*
 
-class HttpServletResponseImpl:HttpServletResponse {
+class HttpServletResponseImpl(
+    private val config: PropertyResolver,
+    private val exchangeResp: HttpExchangeResponse
+) : HttpServletResponse {
+
+    fun cleanup() {
+        TODO()
+    }
+
     override fun getCharacterEncoding(): String {
         TODO("Not yet implemented")
     }

@@ -2,11 +2,35 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.*
 import jakarta.servlet.descriptor.JspConfigDescriptor
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.example.autumn.resolver.PropertyResolver
 import java.io.InputStream
 import java.net.URL
+import java.nio.file.Paths
 import java.util.*
 
-class ServletContextImpl:ServletContext {
+class ServletContextImpl(
+    private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String
+) : ServletContext, AutoCloseable {
+    private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()
+    private val sessionManager = SessionManager(
+        this, config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
+    )
+    private var isInit = false
+
+    fun init(scannedClasses: List<Class<*>>) {
+        TODO()
+    }
+
+    fun process(req: HttpServletRequest, resp: HttpServletResponse) {
+        TODO()
+    }
+
+    override fun close() {
+        TODO()
+    }
+
     override fun getContextPath(): String {
         TODO("Not yet implemented")
     }

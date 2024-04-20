@@ -23,28 +23,42 @@ interface PropertyResolver {
     fun <T> getRequiredProperty(key: String, clazz: Class<T>): T
 }
 
-const val CONFIG_APP_YAML: String = "/application.yml"
-const val CONFIG_APP_PROP: String = "/application.properties"
-const val CONFIG_SERVER_YAML: String = "/server.yml"
-const val CONFIG_SERVER_PROP: String = "/server.properties"
+class AppConfig(props: Properties) : ConfigPropertyResolver(props) {
+    companion object {
+        private const val CONFIG_APP_YAML: String = "/application.yml"
+        private const val CONFIG_APP_PROP: String = "/application.properties"
+        fun load(): PropertyResolver {
+            return load(CONFIG_APP_YAML, CONFIG_APP_PROP)
+        }
+    }
+}
 
-class ConfigPropertyResolver(props: Properties) : PropertyResolver {
+class ServerConfig(props: Properties) : ConfigPropertyResolver(props) {
+    companion object {
+        private const val CONFIG_SERVER_YAML: String = "/server.yml"
+        private const val CONFIG_SERVER_PROP: String = "/server.properties"
+        fun load(): PropertyResolver {
+            return load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
+        }
+    }
+}
+
+open class ConfigPropertyResolver(props: Properties) : PropertyResolver {
     companion object {
         private val logger = LoggerFactory.getLogger(Companion::class.java)
 
-        /**
-         * Try load property resolver from /application.yml or /application.properties.
-         */
-        fun load(yamlPath: String, propPath: String): ConfigPropertyResolver {
+        // Try load property resolver from *.yml or *.properties.
+        @JvmStatic
+        protected fun load(yamlPath: String, propPath: String): ConfigPropertyResolver {
             var props = Properties()
             // try load application.yml:
             try {
                 val yamlMap = loadYamlAsPlainMap(yamlPath).filter { it.value is String } as Map<String, String>
-                logger.info("load config: {}", yamlMap)
+                logger.info("load config: {}", yamlPath)
                 props = yamlMap.toProperties()
             } catch (e: UncheckedIOException) {
                 if (e.cause is FileNotFoundException) {
-                    // try load application.properties:
+                    // try load application.properties: props.load(ClassPathUtils.readString(propPath))
                     ClassPathUtils.readInputStream(propPath) { input ->
                         logger.info("load config: {}", propPath)
                         props.load(input)

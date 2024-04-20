@@ -2,20 +2,17 @@ package org.example.autumn.servlet
 
 import jakarta.servlet.ServletContextEvent
 import jakarta.servlet.ServletContextListener
-import jakarta.servlet.annotation.WebListener
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.exception.AutumnException
-import org.example.autumn.resolver.CONFIG_APP_PROP
-import org.example.autumn.resolver.CONFIG_APP_YAML
-import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.resolver.AppConfig
+import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerDispatcherServlet
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerFilters
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@WebListener
-class ContextLoaderListener : ServletContextListener {
+open class ContextLoaderListener : ServletContextListener {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun contextInitialized(sce: ServletContextEvent) {
@@ -23,13 +20,13 @@ class ContextLoaderListener : ServletContextListener {
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
 
-        val configPropertyResolver = ConfigPropertyResolver.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
-        val encoding = configPropertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")!!
+        val appConfig = AppConfig.load()
+        val encoding = appConfig.getRequiredProperty("\${autumn.web.character-encoding:UTF-8}")
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
         val configClassName = servletContext.getInitParameter("configClassPath")
-            ?: configPropertyResolver.getRequiredProperty("\${autumn.config-class-path}")
-        val applicationContext = createApplicationContext(configClassName, configPropertyResolver)
+            ?: appConfig.getRequiredProperty("\${autumn.config-class-path}")
+        val applicationContext = createApplicationContext(configClassName, appConfig)
         logger.info("Application context created: {}", applicationContext)
 
         registerFilters(servletContext)
@@ -37,7 +34,7 @@ class ContextLoaderListener : ServletContextListener {
     }
 
     private fun createApplicationContext(
-        configClassName: String, configPropertyResolver: ConfigPropertyResolver
+        configClassName: String, configPropertyResolver: PropertyResolver
     ): ApplicationContext {
         logger.info("init ApplicationContext by configuration: {}", configClassName)
         if (configClassName.isEmpty()) {

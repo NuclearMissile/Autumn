@@ -2,7 +2,6 @@ package org.example.autumn.context
 
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
-import org.example.autumn.resolver.ConfigPropertyResolver
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils
 import org.example.autumn.utils.ClassUtils.findAnnotationMethod
@@ -19,7 +18,7 @@ object ApplicationContextHolder {
 }
 
 class AnnotationConfigApplicationContext(
-    configClass: Class<*>, private val configPropertyResolver: ConfigPropertyResolver
+    configClass: Class<*>, private val configPropertyResolver: PropertyResolver
 ) : ConfigurableApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val infos = mutableMapOf<String, BeanMetaInfo>()
@@ -263,7 +262,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -283,7 +282,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                        "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }

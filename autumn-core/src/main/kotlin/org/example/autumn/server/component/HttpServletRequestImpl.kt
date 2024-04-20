@@ -2,11 +2,18 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.*
 import jakarta.servlet.http.*
+import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.server.connector.HttpExchangeRequest
 import java.io.BufferedReader
 import java.security.Principal
 import java.util.*
 
-class HttpServletRequestImpl : HttpServletRequest {
+class HttpServletRequestImpl(
+    private val config: PropertyResolver,
+    private val servletContext: ServletContextImpl,
+    private val exchangeReq: HttpExchangeRequest,
+    private val resp: HttpServletResponse
+) : HttpServletRequest {
     override fun getAttribute(name: String): Any {
         TODO("Not yet implemented")
     }

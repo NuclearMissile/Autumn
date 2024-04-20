@@ -14,14 +14,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 
-class ConfigPropertyResolverTest {
+class PropertyResolverTest {
     @Test
     fun testConfigLoad() {
-        val cpr = ConfigPropertyResolver.load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
-        assertEquals("Autumn Webapp", cpr.getRequiredProperty("server.web-app.name"))
+        val serverConfig = ServerConfig.load()
+        assertEquals("Autumn Webapp", serverConfig.getRequiredProperty("server.web-app.name"))
 
-        cpr.setProperty("server.web-app.name", "dummy")
-        assertEquals("dummy", cpr.getRequiredProperty("server.web-app.name"))
+        serverConfig.setProperty("server.web-app.name", "dummy")
+        assertEquals("dummy", serverConfig.getRequiredProperty("server.web-app.name"))
     }
 
     @Test

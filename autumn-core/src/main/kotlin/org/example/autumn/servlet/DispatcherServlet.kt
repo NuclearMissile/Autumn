@@ -43,7 +43,7 @@ class DispatcherServlet : HttpServlet() {
         fun registerDispatcherServlet(servletContext: ServletContext) {
             val dispatcherServlet = DispatcherServlet()
             logger.info("register servlet {} for ROOT", dispatcherServlet.javaClass.name)
-            servletContext.addServlet("dispatcherServlet", dispatcherServlet)!!.apply {
+            servletContext.addServlet("dispatcherServlet", dispatcherServlet)?.apply {
                 addMapping("/")
                 setLoadOnStartup(0)
             }
@@ -63,7 +63,7 @@ class DispatcherServlet : HttpServlet() {
                     "register filter '{}' {} for URLs: {}",
                     filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
                 )
-                servletContext.addFilter(filterRegBean.name, filter)!!.addMappingForUrlPatterns(
+                servletContext.addFilter(filterRegBean.name, filter)?.addMappingForUrlPatterns(
                     EnumSet.of(DispatcherType.REQUEST), true, *urlPatterns.toTypedArray()
                 )
             }

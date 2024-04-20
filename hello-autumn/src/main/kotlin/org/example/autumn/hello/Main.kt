@@ -1,10 +1,12 @@
 package org.example.autumn.hello
 
 import jakarta.servlet.*
+import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
 import org.example.autumn.boot.AutumnApplication
+import org.example.autumn.servlet.ContextLoaderListener
 import org.example.autumn.servlet.FilterRegistrationBean
 import org.example.autumn.servlet.ModelAndView
 import org.example.autumn.servlet.WebMvcConfiguration
@@ -25,6 +27,9 @@ object Main {
 @Configuration
 @Import(WebMvcConfiguration::class)
 class HelloConfiguration
+
+@WebListener
+class HelloContextLoadListener : ContextLoaderListener()
 
 @Order(100)
 @Component
