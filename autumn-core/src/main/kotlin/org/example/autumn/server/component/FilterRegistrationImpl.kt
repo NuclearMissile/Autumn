@@ -5,7 +5,7 @@ import java.util.*
 
 class FilterRegistrationImpl(
     private val servletContext: ServletContext, val filterName: String, val filter: Filter
-) : FilterRegistration {
+) : FilterRegistration.Dynamic {
     var initialized: Boolean = false
 
     fun getFilterConfig(): FilterConfig {
@@ -71,6 +71,10 @@ class FilterRegistrationImpl(
     }
 
     override fun getUrlPatternMappings(): MutableCollection<String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun setAsyncSupported(isAsyncSupported: Boolean) {
         TODO("Not yet implemented")
     }
 }

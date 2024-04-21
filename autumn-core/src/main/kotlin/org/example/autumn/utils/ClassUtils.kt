@@ -141,4 +141,12 @@ object ClassUtils {
             }
         }.toSet()
     }
+
+    fun <T> createInstance(className: String): T {
+        return createInstance(Class.forName(className)) as T
+    }
+
+    fun <T> createInstance(clazz: Class<T>): T {
+        return clazz.getConstructor().newInstance()
+    }
 }

@@ -13,6 +13,7 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.mapping.FilterMapping
 import org.example.autumn.server.component.mapping.ServletMapping
 import org.example.autumn.server.component.servlet.DefaultServlet
+import org.example.autumn.utils.ClassUtils.createInstance
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterDispatcherTypes
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterInitParams
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterName
@@ -23,8 +24,13 @@ import org.example.autumn.utils.J2EEAnnoUtils.getServletUrlPatterns
 import org.example.autumn.utils.escapeHtml
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.BufferedInputStream
+import java.io.FileInputStream
 import java.io.InputStream
+import java.net.MalformedURLException
+import java.net.URI
 import java.net.URL
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -41,17 +47,15 @@ class ServletContextImpl(
     private val sessionCookieConfig = SessionCookieConfigImpl(config)
     private val servletRegistrations = mutableMapOf<String, ServletRegistrationImpl>()
     private val filterRegistrations = mutableMapOf<String, FilterRegistrationImpl>()
-    private val servlets = mutableMapOf<String, Servlet>()
-    private val filters = mutableMapOf<String, Filter>()
     private val servletMappings = mutableListOf<ServletMapping>()
     private val filterMappings = mutableListOf<FilterMapping>()
 
-    private val servletContextListeners: List<ServletContextListener> = emptyList()
-    private val servletContextAttributeListeners: List<ServletContextAttributeListener> = emptyList()
-    private val servletRequestListeners: List<ServletRequestListener> = emptyList()
-    private val servletRequestAttributeListeners: List<ServletRequestAttributeListener> = emptyList()
-    private val httpSessionAttributeListeners: List<HttpSessionAttributeListener> = emptyList()
-    private val httpSessionListeners: List<HttpSessionListener> = emptyList()
+    private val servletContextListeners: MutableList<ServletContextListener> = mutableListOf()
+    private val servletContextAttributeListeners: MutableList<ServletContextAttributeListener> = mutableListOf()
+    private val servletRequestListeners: MutableList<ServletRequestListener> = mutableListOf()
+    private val servletRequestAttributeListeners: MutableList<ServletRequestAttributeListener> = mutableListOf()
+    private val httpSessionAttributeListeners: MutableList<HttpSessionAttributeListener> = mutableListOf()
+    private val httpSessionListeners: MutableList<HttpSessionListener> = mutableListOf()
 
     private var initialized = false
     private var defaultServlet: Servlet? = null
@@ -85,12 +89,14 @@ class ServletContextImpl(
             }
         }
 
+        // notify event
+        servletContextListeners.forEach { it.contextInitialized(ServletContextEvent(this)) }
+
         // init servlets while find default servlet:
         var defaultServlet: Servlet? = null
         servletRegistrations.forEach { (name, servletReg) ->
             try {
                 servletReg.servlet.init(servletReg.getServletConfig())
-                servlets[name] = servletReg.servlet
                 for (urlPattern in servletReg.mappings) {
                     servletMappings.add(ServletMapping(servletReg.servlet, urlPattern))
                     if (urlPattern == "/") {
@@ -107,7 +113,8 @@ class ServletContextImpl(
                 logger.error("init servlet failed: $name: ${servletReg.servlet.javaClass.name}", e)
             }
         }
-        if (defaultServlet == null && config.getRequiredProperty("server.web-app.file-listing", Boolean::class.java)
+        if (defaultServlet == null &&
+            config.getRequiredProperty("server.web-app.file-listing", Boolean::class.java)
         ) {
             logger.info("no default servlet. auto register {}...", DefaultServlet::class.java.name)
             defaultServlet = DefaultServlet()
@@ -140,7 +147,6 @@ class ServletContextImpl(
         filterRegistrations.forEach { (name, filterReg) ->
             try {
                 filterReg.filter.init(filterReg.getFilterConfig())
-                filters[name] = filterReg.filter
                 for (urlPattern in filterReg.urlPatternMappings) {
                     filterMappings.add(FilterMapping(filterReg.filter, name, urlPattern))
                 }
@@ -156,8 +162,6 @@ class ServletContextImpl(
         filterMappings.sortBy { it.filterName }
         filterMappings.sort()
 
-        // notify event
-        servletContextListeners.forEach { it.contextInitialized(ServletContextEvent(this)) }
         initialized = true
     }
 
@@ -185,7 +189,7 @@ class ServletContextImpl(
         try {
             servletRequestListeners.forEach { it.requestInitialized(ServletRequestEvent(this, req)) }
             chain.doFilter(req, resp)
-        } catch (e:Exception){
+        } catch (e: Exception) {
             logger.error(e.message, e)
             throw e
         } finally {
@@ -215,222 +219,326 @@ class ServletContextImpl(
     }
 
     override fun getContextPath(): String {
-        TODO("Not yet implemented")
+        return ""
     }
 
-    override fun getContext(uripath: String): ServletContext {
-        TODO("Not yet implemented")
+    override fun getContext(uripath: String): ServletContext? {
+        return if (uripath == "/") this else null
     }
 
     override fun getMajorVersion(): Int {
-        TODO("Not yet implemented")
+        return 6
     }
 
     override fun getMinorVersion(): Int {
-        TODO("Not yet implemented")
+        return 0
     }
 
     override fun getEffectiveMajorVersion(): Int {
-        TODO("Not yet implemented")
+        return 6
     }
 
     override fun getEffectiveMinorVersion(): Int {
-        TODO("Not yet implemented")
+        return 0
     }
 
     override fun getMimeType(file: String): String {
-        TODO("Not yet implemented")
+        val default = config.getRequiredProperty("server.mime-default")
+        val n = file.lastIndexOf(".")
+        return if (n < 0)
+            default else config.getProperty("server.mime-types.${file.substring(n).lowercase()}", default)
     }
 
-    override fun getResourcePaths(path: String): MutableSet<String> {
-        TODO("Not yet implemented")
+    override fun getResourcePaths(path: String): MutableSet<String>? {
+        val loc = webRoot.resolve(path.removePrefix("/")).normalize()
+        if (loc.startsWith(webRoot) && Files.isDirectory(loc)) {
+            try {
+                return Files.list(loc).map { it.fileName.toString() }.toList().toMutableSet()
+            } catch (e: Exception) {
+                logger.warn("list files failed for path: {}", path)
+            }
+        }
+        return null
     }
 
-    override fun getResource(path: String): URL {
-        TODO("Not yet implemented")
+    override fun getResource(path: String): URL? {
+        val loc = webRoot.resolve(path.removePrefix("/")).normalize()
+        if (loc.startsWith(webRoot)) {
+            return if (Files.isRegularFile(loc)) URI.create("file://$loc").toURL() else null
+        }
+        throw MalformedURLException("Path not found: $path")
     }
 
-    override fun getResourceAsStream(path: String): InputStream {
-        TODO("Not yet implemented")
+    override fun getResourceAsStream(path: String): InputStream? {
+        val loc = webRoot.resolve(path.removePrefix("/")).normalize()
+        return if (loc.startsWith(webRoot) && Files.isReadable(loc))
+            BufferedInputStream(FileInputStream(loc.toFile())) else null
     }
 
-    override fun getRequestDispatcher(path: String): RequestDispatcher {
-        TODO("Not yet implemented")
+    override fun getRequestDispatcher(path: String): RequestDispatcher? {
+        // not support
+        return null
     }
 
-    override fun getNamedDispatcher(name: String): RequestDispatcher {
-        TODO("Not yet implemented")
+    override fun getNamedDispatcher(name: String): RequestDispatcher? {
+        // not support
+        return null
     }
 
     override fun log(msg: String) {
-        TODO("Not yet implemented")
+        logger.info(msg)
     }
 
     override fun log(message: String, throwable: Throwable) {
-        TODO("Not yet implemented")
+        logger.error(message, throwable)
     }
 
-    override fun getRealPath(path: String): String {
-        TODO("Not yet implemented")
+    override fun getRealPath(path: String): String? {
+        val loc = webRoot.resolve(path.removePrefix("/")).normalize()
+        return if (loc.startsWith(webRoot)) loc.toString() else null
     }
 
     override fun getServerInfo(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.name")
     }
 
-    override fun getInitParameter(name: String): String {
-        TODO("Not yet implemented")
+    override fun getInitParameter(name: String): String? {
+        // not support
+        return null
     }
 
     override fun getInitParameterNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        // not support
+        return Collections.emptyEnumeration()
     }
 
     override fun setInitParameter(name: String, value: String): Boolean {
-        TODO("Not yet implemented")
+        // not support
+        throw UnsupportedOperationException("setInitParameter")
     }
 
-    override fun getAttribute(name: String): Any {
-        TODO("Not yet implemented")
+    override fun getAttribute(name: String): Any? {
+        return attributes[name]
     }
 
     override fun getAttributeNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        return attributes.keys()
     }
 
-    override fun setAttribute(name: String, `object`: Any) {
-        TODO("Not yet implemented")
+    override fun setAttribute(name: String, value: Any?) {
+        val oldValue = attributes[name]
+        if (value == null) {
+            if (oldValue != null) {
+                attributes.remove(name)
+                servletContextAttributeListeners.forEach {
+                    it.attributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
+                }
+            }
+        } else {
+            attributes[name] = value
+            servletContextAttributeListeners.forEach {
+                if (oldValue == null)
+                    it.attributeAdded(ServletContextAttributeEvent(this, name, value))
+                else
+                    it.attributeReplaced(ServletContextAttributeEvent(this, name, oldValue))
+            }
+        }
     }
 
     override fun removeAttribute(name: String) {
-        TODO("Not yet implemented")
+        val oldValue = attributes[name]
+        if (oldValue != null) {
+            attributes.remove(name)
+            servletContextAttributeListeners.forEach {
+                it.attributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
+            }
+        }
     }
 
     override fun getServletContextName(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.web-app.name")
     }
 
     override fun addServlet(servletName: String, className: String): ServletRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addServlet after initialization.")
+        }
+        return addServlet(servletName, createInstance<Servlet>(className))
     }
 
     override fun addServlet(servletName: String, servlet: Servlet): ServletRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addServlet after initialization.")
+        }
+        val servletReg = ServletRegistrationImpl(this, servletName, servlet)
+        servletRegistrations[servletName] = servletReg
+        return servletReg
     }
 
     override fun addServlet(servletName: String, servletClass: Class<out Servlet>): ServletRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addServlet after initialization.")
+        }
+        return addServlet(servletName, createInstance(servletClass))
     }
 
     override fun addJspFile(servletName: String, jspFile: String): ServletRegistration.Dynamic {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("addJspFile")
     }
 
     override fun <T : Servlet> createServlet(clazz: Class<T>): T {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("createServlet after initialization.")
+        }
+        return createInstance(clazz)
     }
 
-    override fun getServletRegistration(servletName: String): ServletRegistration {
-        TODO("Not yet implemented")
+    override fun getServletRegistration(servletName: String): ServletRegistration? {
+        return servletRegistrations[servletName]
     }
 
     override fun getServletRegistrations(): MutableMap<String, out ServletRegistration> {
-        TODO("Not yet implemented")
+        return servletRegistrations.toMutableMap()
     }
 
     override fun addFilter(filterName: String, className: String): FilterRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addFilter after initialization.")
+        }
+        return addFilter(filterName, createInstance<Filter>(className))
     }
 
     override fun addFilter(filterName: String, filter: Filter): FilterRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addFilter after initialization.")
+        }
+        val filterReg = FilterRegistrationImpl(this, filterName, filter)
+        filterRegistrations[filterName] = filterReg
+        return filterReg
     }
 
     override fun addFilter(filterName: String, filterClass: Class<out Filter>): FilterRegistration.Dynamic {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addFilter after initialization.")
+        }
+        return addFilter(filterName, createInstance(filterClass))
     }
 
     override fun <T : Filter> createFilter(clazz: Class<T>): T {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("createFilter after initialization.")
+        }
+        return createInstance(clazz)
     }
 
-    override fun getFilterRegistration(filterName: String): FilterRegistration {
-        TODO("Not yet implemented")
+    override fun getFilterRegistration(filterName: String): FilterRegistration? {
+        return filterRegistrations[filterName]
     }
 
     override fun getFilterRegistrations(): MutableMap<String, out FilterRegistration> {
-        TODO("Not yet implemented")
+        return filterRegistrations.toMutableMap()
     }
 
     override fun getSessionCookieConfig(): SessionCookieConfig {
-        TODO("Not yet implemented")
+        return sessionCookieConfig
     }
 
     override fun setSessionTrackingModes(sessionTrackingModes: MutableSet<SessionTrackingMode>) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("setSessionTrackingModes")
     }
 
     override fun getDefaultSessionTrackingModes(): MutableSet<SessionTrackingMode> {
-        TODO("Not yet implemented")
+        // only support tracking by cookie:
+        return mutableSetOf(SessionTrackingMode.COOKIE)
     }
 
     override fun getEffectiveSessionTrackingModes(): MutableSet<SessionTrackingMode> {
-        TODO("Not yet implemented")
+        return defaultSessionTrackingModes
     }
 
     override fun addListener(className: String) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addListener after initialization.")
+        }
+        addListener(createInstance<EventListener>(className))
     }
 
     override fun <T : EventListener> addListener(t: T) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addListener after initialization.")
+        }
+        when (t) {
+            is ServletContextListener -> servletContextListeners += t
+            is ServletContextAttributeListener -> servletContextAttributeListeners += t
+            is ServletRequestListener -> servletRequestListeners += t
+            is ServletRequestAttributeListener -> servletRequestAttributeListeners += t
+            is HttpSessionAttributeListener -> httpSessionAttributeListeners += t
+            is HttpSessionListener -> httpSessionListeners += t
+            else -> throw IllegalArgumentException("unsupported listener type: ${t.javaClass.name}")
+        }
     }
 
     override fun addListener(listenerClass: Class<out EventListener>) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addListener after initialization.")
+        }
+        addListener(createInstance(listenerClass))
     }
 
     override fun <T : EventListener> createListener(clazz: Class<T>): T {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("createListener after initialization.")
+        }
+        return createInstance(clazz)
     }
 
-    override fun getJspConfigDescriptor(): JspConfigDescriptor {
-        TODO("Not yet implemented")
+    override fun getJspConfigDescriptor(): JspConfigDescriptor? {
+        // not support
+        return null
     }
 
     override fun getClassLoader(): ClassLoader {
-        TODO("Not yet implemented")
+        return classLoader
     }
 
     override fun declareRoles(vararg roleNames: String) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("declareRoles")
     }
 
     override fun getVirtualServerName(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.web-app.virtual-server-name")
     }
 
     override fun getSessionTimeout(): Int {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
     }
 
     override fun setSessionTimeout(sessionTimeout: Int) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setSessionTimeout after initialization.")
+        }
+        config.setProperty("server.web-app.session-timeout", sessionTimeout.toString())
     }
 
     override fun getRequestCharacterEncoding(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.request-encoding")
     }
 
     override fun setRequestCharacterEncoding(encoding: String) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setRequestCharacterEncoding after initialization.")
+        }
+        config.setProperty("server.request-encoding", encoding)
     }
 
     override fun getResponseCharacterEncoding(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.response-encoding")
     }
 
     override fun setResponseCharacterEncoding(encoding: String) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setResponseCharacterEncoding after initialization.")
+        }
+        config.setProperty("server.response-encoding", encoding)
     }
 }

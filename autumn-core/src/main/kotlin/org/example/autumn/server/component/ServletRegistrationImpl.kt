@@ -1,14 +1,11 @@
 package org.example.autumn.server.component
 
-import jakarta.servlet.Servlet
-import jakarta.servlet.ServletConfig
-import jakarta.servlet.ServletContext
-import jakarta.servlet.ServletRegistration
+import jakarta.servlet.*
 import java.util.*
 
 class ServletRegistrationImpl(
     val servletContext: ServletContext, val servletName: String, val servlet: Servlet
-) : ServletRegistration {
+) : ServletRegistration.Dynamic {
     var initialized: Boolean = false
 
     fun getServletConfig(): ServletConfig {
@@ -64,6 +61,26 @@ class ServletRegistrationImpl(
     }
 
     override fun getRunAsRole(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun setAsyncSupported(isAsyncSupported: Boolean) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setLoadOnStartup(loadOnStartup: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setServletSecurity(constraint: ServletSecurityElement?): MutableSet<String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun setMultipartConfig(multipartConfig: MultipartConfigElement?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setRunAsRole(roleName: String?) {
         TODO("Not yet implemented")
     }
 }
