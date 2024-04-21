@@ -40,9 +40,6 @@ class ServletContextImpl(
 ) : ServletContext, AutoCloseable {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
     private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()
-    private val sessionManager = SessionManager(
-        this, config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
-    )
     private val attributes = ConcurrentHashMap<String, Any>()
     private val sessionCookieConfig = SessionCookieConfigImpl(config)
     private val servletRegistrations = mutableMapOf<String, ServletRegistrationImpl>()
@@ -59,6 +56,10 @@ class ServletContextImpl(
 
     private var initialized = false
     private var defaultServlet: Servlet? = null
+
+    val sessionManager = SessionManager(
+        this, config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
+    )
 
     fun init(scannedClasses: List<Class<*>>) {
         require(!initialized) {

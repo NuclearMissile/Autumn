@@ -4,8 +4,11 @@ import jakarta.servlet.*
 import java.util.*
 
 class ServletRegistrationImpl(
-    val servletContext: ServletContext, val servletName: String, val servlet: Servlet
+    private val servletContext: ServletContext, private val servletName: String, val servlet: Servlet
 ) : ServletRegistration.Dynamic {
+    private val urlPatterns = mutableListOf<String>()
+    private val initParams = mutableMapOf<String, String>()
+
     var initialized: Boolean = false
 
     fun getServletConfig(): ServletConfig {
@@ -37,50 +40,72 @@ class ServletRegistrationImpl(
     }
 
     override fun setInitParameter(name: String, value: String): Boolean {
-       TODO()
+        require(!initialized) {
+            throw IllegalStateException("setInitParameter after initialization.")
+        }
+        require(name.isNotEmpty()) { "name is empty." }
+        require(value.isNotEmpty()) { "value is empty." }
+        if (initParams.contains(name)) return false
+        initParams[name] = value
+        return true
     }
 
-    override fun getInitParameter(name: String): String {
-        TODO("Not yet implemented")
+    override fun getInitParameter(name: String): String? {
+        return initParams[name]
     }
 
     override fun setInitParameters(initParameters: MutableMap<String, String>): MutableSet<String> {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setInitParameters after initialization.")
+        }
+        val conflicts = mutableSetOf<String>()
+        if (initParameters.isEmpty()) return mutableSetOf()
+        initParams.forEach { (k, v) ->
+            if (initParams.contains(k)) conflicts.add(v) else initParams[k] = v
+        }
+        return conflicts
     }
 
     override fun getInitParameters(): MutableMap<String, String> {
-        TODO("Not yet implemented")
+        return initParams
     }
 
     override fun addMapping(vararg urlPatterns: String): MutableSet<String> {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addMapping after initialization.")
+        }
+        require(urlPatterns.isNotEmpty()) { "urlPatterns is empty." }
+        this.urlPatterns.addAll(urlPatterns)
+        return mutableSetOf()
     }
 
     override fun getMappings(): MutableCollection<String> {
-        TODO("Not yet implemented")
+        return urlPatterns
     }
 
-    override fun getRunAsRole(): String {
-        TODO("Not yet implemented")
+    override fun getRunAsRole(): String? {
+        return null
     }
 
     override fun setAsyncSupported(isAsyncSupported: Boolean) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("isAsyncSupported")
     }
 
     override fun setLoadOnStartup(loadOnStartup: Int) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setLoadOnStartup after initialization.")
+        }
     }
 
     override fun setServletSecurity(constraint: ServletSecurityElement?): MutableSet<String> {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("setServletSecurity")
     }
 
     override fun setMultipartConfig(multipartConfig: MultipartConfigElement?) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("setMultipartConfig")
     }
 
     override fun setRunAsRole(roleName: String?) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("setRunAsRole")
     }
 }
