@@ -4,14 +4,14 @@ import jakarta.servlet.*
 import java.util.*
 
 class FilterRegistrationImpl(
-    private val servletContext: ServletContext, val name: String, val filter: Filter
+    private val servletContext: ServletContext, val filterName: String, val filter: Filter
 ) : FilterRegistration {
     var initialized: Boolean = false
 
     fun getFilterConfig(): FilterConfig {
         return object : FilterConfig {
             override fun getFilterName(): String {
-                return this@FilterRegistrationImpl.name
+                return this@FilterRegistrationImpl.filterName
             }
 
             override fun getServletContext(): ServletContext {

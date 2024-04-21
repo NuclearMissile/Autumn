@@ -7,14 +7,14 @@ import jakarta.servlet.ServletRegistration
 import java.util.*
 
 class ServletRegistrationImpl(
-    val servletContext: ServletContext, val name: String, val servlet: Servlet
+    val servletContext: ServletContext, val servletName: String, val servlet: Servlet
 ) : ServletRegistration {
     var initialized: Boolean = false
 
     fun getServletConfig(): ServletConfig {
         return object : ServletConfig {
             override fun getServletName(): String {
-                return this@ServletRegistrationImpl.name
+                return this@ServletRegistrationImpl.servletName
             }
 
             override fun getServletContext(): ServletContext {
@@ -32,15 +32,15 @@ class ServletRegistrationImpl(
     }
 
     override fun getName(): String {
-        TODO("Not yet implemented")
+        return servletName
     }
 
     override fun getClassName(): String {
-        TODO("Not yet implemented")
+        return servlet.javaClass.name
     }
 
     override fun setInitParameter(name: String, value: String): Boolean {
-        TODO("Not yet implemented")
+       TODO()
     }
 
     override fun getInitParameter(name: String): String {
