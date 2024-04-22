@@ -3,8 +3,14 @@ package org.example.autumn.server.component
 import jakarta.servlet.*
 import jakarta.servlet.http.*
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.server.component.support.HttpHeaders
+import org.example.autumn.server.component.support.HttpReqParams
 import org.example.autumn.server.connector.HttpExchangeRequest
+import org.example.autumn.utils.HttpUtils
 import java.io.BufferedReader
+import java.io.ByteArrayInputStream
+import java.io.InputStreamReader
+import java.nio.charset.Charset
 import java.security.Principal
 import java.util.*
 
@@ -14,83 +20,128 @@ class HttpServletRequestImpl(
     private val exchangeReq: HttpExchangeRequest,
     private val resp: HttpServletResponse
 ) : HttpServletRequest {
-    override fun getAttribute(name: String): Any {
-        TODO("Not yet implemented")
+    private val method = exchangeReq.getRequestMethod()
+    private val headers = HttpHeaders(exchangeReq.getRequestHeaders())
+    private val attributes = mutableMapOf<String, Any>()
+    private val requestId = UUID.randomUUID().toString()
+    private val contentLength = if (listOf("POST", "PUT", "DELETE", "PATCH").contains(method))
+        getIntHeader("Content-Length") else 0
+
+    private var isInputStreamOpened = false
+    private var charset = Charset.forName(config.getRequiredProperty("server.request-encoding"))
+    private val params = HttpReqParams(exchangeReq, charset)
+
+    override fun getAttribute(name: String): Any? {
+        return attributes[name]
     }
 
     override fun getAttributeNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        return Collections.enumeration(attributes.keys)
     }
 
     override fun getCharacterEncoding(): String {
-        TODO("Not yet implemented")
+        return charset.name()
     }
 
     override fun setCharacterEncoding(env: String) {
-        TODO("Not yet implemented")
+        charset = Charset.forName(env)
+        params.setCharset(charset)
     }
 
     override fun getContentLength(): Int {
-        TODO("Not yet implemented")
+        return contentLength
     }
 
     override fun getContentLengthLong(): Long {
-        TODO("Not yet implemented")
+        return contentLength.toLong()
     }
 
-    override fun getContentType(): String {
-        TODO("Not yet implemented")
+    override fun getContentType(): String? {
+        return getHeader("Content-Type")
     }
 
     override fun getInputStream(): ServletInputStream {
-        TODO("Not yet implemented")
+        if (!isInputStreamOpened) {
+            isInputStreamOpened = true
+            return ServletInputStreamImpl(exchangeReq.getRequestBody())
+        }
+        throw IllegalStateException("cannot reopen input stream.")
     }
 
-    override fun getParameter(name: String): String {
-        TODO("Not yet implemented")
+    override fun getParameter(name: String): String? {
+        return params.getParameter(name)
     }
 
     override fun getParameterNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        return params.getParameterNames()
     }
 
-    override fun getParameterValues(name: String): Array<String> {
-        TODO("Not yet implemented")
+    override fun getParameterValues(name: String): Array<String>? {
+        return params.getParameterValues(name)
     }
 
-    override fun getParameterMap(): MutableMap<String, Array<String>> {
-        TODO("Not yet implemented")
+    override fun getParameterMap(): Map<String, Array<String>> {
+        return params.getParameterMap()
     }
 
     override fun getProtocol(): String {
-        TODO("Not yet implemented")
+        return "HTTP/1.1"
     }
 
     override fun getScheme(): String {
-        TODO("Not yet implemented")
+        var scheme = "http"
+        val forwarded = config.getRequiredProperty("server.forwarded-headers.forwarded-proto")
+        if (forwarded.isNotEmpty()) {
+            val forwardedHeader = getHeader(forwarded)
+            if (forwardedHeader != null) {
+                scheme = forwardedHeader
+            }
+        }
+        return scheme
     }
 
     override fun getServerName(): String {
-        TODO("Not yet implemented")
+        var serverName = getHeader("Host")
+        val forwarded = config.getRequiredProperty("server.forwarded-headers.forwarded-host")
+        if (forwarded.isNotEmpty()) {
+            val forwardedHeader = getHeader(forwarded)
+            if (forwardedHeader != null) {
+                serverName = forwardedHeader
+            }
+        }
+        return serverName ?: exchangeReq.getLocalAddress().hostString
     }
 
     override fun getServerPort(): Int {
-        TODO("Not yet implemented")
+        return exchangeReq.getLocalAddress().port
     }
 
     override fun getReader(): BufferedReader {
-        TODO("Not yet implemented")
+        if (!isInputStreamOpened) {
+            isInputStreamOpened = true
+            return BufferedReader(InputStreamReader(ByteArrayInputStream(exchangeReq.getRequestBody()), charset))
+        }
+        throw IllegalStateException("cannot reopen input stream.")
     }
 
     override fun getRemoteAddr(): String {
-        TODO("Not yet implemented")
+        var addr: String? = null
+        val forwarded = config.getRequiredProperty("server.forwarded-headers.forwarded-for")
+        if (forwarded.isNotEmpty()) {
+            val forwardedHeader = getHeader(forwarded)
+            if (forwardedHeader != null) {
+                val n = forwardedHeader.indexOf(',')
+                addr = if (n < 0) forwardedHeader else forwardedHeader.substring(n)
+            }
+        }
+        return addr ?: exchangeReq.getRemoteAddress().hostString
     }
 
     override fun getRemoteHost(): String {
-        TODO("Not yet implemented")
+        return remoteAddr
     }
 
-    override fun setAttribute(name: String, o: Any) {
+    override fun setAttribute(name: String, value: Any?) {
         TODO("Not yet implemented")
     }
 
@@ -99,198 +150,215 @@ class HttpServletRequestImpl(
     }
 
     override fun getLocale(): Locale {
-        TODO("Not yet implemented")
+        val langs = getHeader("Accept-Language") ?: return HttpUtils.DEFAULT_LOCALE
+        return HttpUtils.parseAcceptLanguages(langs).first()
     }
 
     override fun getLocales(): Enumeration<Locale> {
-        TODO("Not yet implemented")
+        val langs = getHeader("Accept-Language")
+            ?: return Collections.enumeration(listOf(HttpUtils.DEFAULT_LOCALE))
+        return Collections.enumeration(HttpUtils.parseAcceptLanguages(langs))
     }
 
     override fun isSecure(): Boolean {
-        TODO("Not yet implemented")
+        return "https" == scheme.lowercase()
     }
 
-    override fun getRequestDispatcher(path: String): RequestDispatcher {
-        TODO("Not yet implemented")
+    override fun getRequestDispatcher(path: String): RequestDispatcher? {
+        // not support
+        return null
     }
 
     override fun getRemotePort(): Int {
-        TODO("Not yet implemented")
+        return exchangeReq.getRemoteAddress().port
     }
 
     override fun getLocalName(): String {
-        TODO("Not yet implemented")
+        return localAddr
     }
 
     override fun getLocalAddr(): String {
-        TODO("Not yet implemented")
+        return exchangeReq.getLocalAddress().hostString
     }
 
     override fun getLocalPort(): Int {
-        TODO("Not yet implemented")
+        return exchangeReq.getLocalAddress().port
     }
 
     override fun getServletContext(): ServletContext {
-        TODO("Not yet implemented")
+        return servletContext
     }
 
     override fun startAsync(): AsyncContext {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("startAsync")
     }
 
     override fun startAsync(servletRequest: ServletRequest, servletResponse: ServletResponse): AsyncContext {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("startAsync")
     }
 
     override fun isAsyncStarted(): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun isAsyncSupported(): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun getAsyncContext(): AsyncContext {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("getAsyncContext")
     }
 
     override fun getDispatcherType(): DispatcherType {
-        TODO("Not yet implemented")
+        return DispatcherType.REQUEST
     }
 
     override fun getRequestId(): String {
-        TODO("Not yet implemented")
+        return requestId
     }
 
     override fun getProtocolRequestId(): String {
-        TODO("Not yet implemented")
+        // always empty for HTTP/1.x
+        return ""
     }
 
     override fun getServletConnection(): ServletConnection {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("getServletConnection")
     }
 
-    override fun getAuthType(): String {
-        TODO("Not yet implemented")
+    override fun getAuthType(): String? {
+        // not support
+        return null
     }
 
-    override fun getCookies(): Array<Cookie> {
-        TODO("Not yet implemented")
+    override fun getCookies(): Array<Cookie>? {
+        return HttpUtils.parseCookies(getHeader("Cookie"))
     }
 
     override fun getDateHeader(name: String): Long {
-        TODO("Not yet implemented")
+        return headers.getDateHeader(name)
     }
 
-    override fun getHeader(name: String): String {
-        TODO("Not yet implemented")
+    override fun getHeader(name: String): String? {
+        return headers.getHeader(name)
     }
 
     override fun getHeaders(name: String): Enumeration<String> {
-        TODO("Not yet implemented")
+        val hs = headers.getHeaders(name)
+        return if (hs == null) Collections.emptyEnumeration() else Collections.enumeration(hs)
     }
 
     override fun getHeaderNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        return Collections.enumeration(headers.getHeaderNames())
     }
 
     override fun getIntHeader(name: String): Int {
-        TODO("Not yet implemented")
+        return headers.getIntHeader(name)
     }
 
     override fun getMethod(): String {
-        TODO("Not yet implemented")
+        return method
     }
 
-    override fun getPathInfo(): String {
-        TODO("Not yet implemented")
+    override fun getPathInfo(): String? {
+        return null
     }
 
-    override fun getPathTranslated(): String {
-        TODO("Not yet implemented")
+    override fun getPathTranslated(): String? {
+        return servletContext.getRealPath(requestURI)
     }
 
     override fun getContextPath(): String {
-        TODO("Not yet implemented")
+        // only support root context path
+        return ""
     }
 
-    override fun getQueryString(): String {
-        TODO("Not yet implemented")
+    override fun getQueryString(): String? {
+        return exchangeReq.getRequestURI().rawQuery
     }
 
-    override fun getRemoteUser(): String {
-        TODO("Not yet implemented")
+    override fun getRemoteUser(): String? {
+        // not support
+        return null
     }
 
     override fun isUserInRole(role: String): Boolean {
-        TODO("Not yet implemented")
+        // not support
+        return false
     }
 
-    override fun getUserPrincipal(): Principal {
-        TODO("Not yet implemented")
+    override fun getUserPrincipal(): Principal? {
+        // not support
+        return null
     }
 
-    override fun getRequestedSessionId(): String {
-        TODO("Not yet implemented")
+    override fun getRequestedSessionId(): String? {
+        return null
     }
 
     override fun getRequestURI(): String {
-        TODO("Not yet implemented")
+        return exchangeReq.getRequestURI().path
     }
 
     override fun getRequestURL(): StringBuffer {
-        TODO("Not yet implemented")
+        return StringBuffer(128).apply {
+            append(scheme).append("://").append(serverName).append(':').append(serverPort).append(requestURI)
+        }
     }
 
     override fun getServletPath(): String {
-        TODO("Not yet implemented")
+        return requestURI
     }
 
-    override fun getSession(create: Boolean): HttpSession {
+    override fun getSession(create: Boolean): HttpSession? {
         TODO("Not yet implemented")
     }
 
     override fun getSession(): HttpSession {
-        TODO("Not yet implemented")
+        return getSession(true)!!
     }
 
     override fun changeSessionId(): String {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("changeSessionId")
     }
 
     override fun isRequestedSessionIdValid(): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun isRequestedSessionIdFromCookie(): Boolean {
-        TODO("Not yet implemented")
+        return true
     }
 
     override fun isRequestedSessionIdFromURL(): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun authenticate(response: HttpServletResponse): Boolean {
-        TODO("Not yet implemented")
+        // not support
+        return false
     }
 
     override fun login(username: String, password: String) {
-        TODO("Not yet implemented")
+        // not support
     }
 
     override fun logout() {
-        TODO("Not yet implemented")
+        // not support
     }
 
-    override fun getParts(): MutableCollection<Part> {
-        TODO("Not yet implemented")
+    override fun getParts(): Collection<Part> {
+        // not support
+        return emptyList()
     }
 
-    override fun getPart(name: String): Part {
-        TODO("Not yet implemented")
+    override fun getPart(name: String): Part? {
+        // not support
+        return null
     }
 
-    override fun <T : HttpUpgradeHandler> upgrade(handlerClass: Class<T>): T {
-        TODO("Not yet implemented")
+    override fun <T : HttpUpgradeHandler> upgrade(handlerClass: Class<T>): T? {
+        // not support websocket
+        return null
     }
 }

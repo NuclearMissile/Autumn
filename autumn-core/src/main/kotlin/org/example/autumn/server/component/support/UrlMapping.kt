@@ -1,4 +1,4 @@
-package org.example.autumn.server.component.mapping
+package org.example.autumn.server.component.support
 
 import jakarta.servlet.Filter
 import jakarta.servlet.Servlet

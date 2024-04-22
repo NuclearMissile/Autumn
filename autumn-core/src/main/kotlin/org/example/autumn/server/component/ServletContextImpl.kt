@@ -10,10 +10,11 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSessionAttributeListener
 import jakarta.servlet.http.HttpSessionListener
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.server.component.mapping.FilterMapping
-import org.example.autumn.server.component.mapping.ServletMapping
 import org.example.autumn.server.component.servlet.DefaultServlet
+import org.example.autumn.server.component.support.FilterMapping
+import org.example.autumn.server.component.support.ServletMapping
 import org.example.autumn.utils.ClassUtils.createInstance
+import org.example.autumn.utils.HttpUtils.escapeHtml
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterDispatcherTypes
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterInitParams
 import org.example.autumn.utils.J2EEAnnoUtils.getFilterName
@@ -21,7 +22,6 @@ import org.example.autumn.utils.J2EEAnnoUtils.getFilterUrlPatterns
 import org.example.autumn.utils.J2EEAnnoUtils.getServletInitParams
 import org.example.autumn.utils.J2EEAnnoUtils.getServletName
 import org.example.autumn.utils.J2EEAnnoUtils.getServletUrlPatterns
-import org.example.autumn.utils.escapeHtml
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedInputStream

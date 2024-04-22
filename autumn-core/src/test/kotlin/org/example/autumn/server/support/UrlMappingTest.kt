@@ -1,5 +1,6 @@
-package org.example.autumn.server.component.mapping
+package org.example.autumn.server.support
 
+import org.example.autumn.server.component.support.UrlMapping
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertSame

@@ -3,7 +3,7 @@ package org.example.autumn.server.component
 import jakarta.servlet.ReadListener
 import jakarta.servlet.ServletInputStream
 
-class ServletInputStreamImpl : ServletInputStream() {
+class ServletInputStreamImpl(data: ByteArray) : ServletInputStream() {
     override fun read(): Int {
         TODO("Not yet implemented")
     }
