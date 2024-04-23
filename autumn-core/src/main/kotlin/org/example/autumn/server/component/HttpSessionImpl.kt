@@ -14,7 +14,7 @@ class HttpSessionImpl(
     private val creationTime = System.currentTimeMillis()
     private val attributes = ConcurrentHashMap<String, Any>()
 
-    var lastAccessedTime = creationTime
+    var lastAccessedAt = creationTime
 
     override fun getCreationTime(): Long {
         return creationTime
@@ -25,7 +25,7 @@ class HttpSessionImpl(
     }
 
     override fun getLastAccessedTime(): Long {
-        return lastAccessedTime
+        return lastAccessedAt
     }
 
     override fun getServletContext(): ServletContext {
@@ -95,6 +95,10 @@ class HttpSessionImpl(
     }
 
     override fun isNew(): Boolean {
-        return creationTime == lastAccessedTime
+        return creationTime == lastAccessedAt
+    }
+
+    override fun toString(): String {
+        return "HttpSessionImpl(sessionId=$sessionId)"
     }
 }

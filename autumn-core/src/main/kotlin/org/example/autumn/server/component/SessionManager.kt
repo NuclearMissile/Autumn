@@ -23,7 +23,7 @@ class SessionManager(
             sessions[sessionId] = session
             servletContext.invokeHttpSessionCreated(HttpSessionEvent(session))
         } else {
-            session.lastAccessedTime = System.currentTimeMillis()
+            session.lastAccessedAt = System.currentTimeMillis()
         }
         return session
     }
@@ -43,10 +43,10 @@ class SessionManager(
             }
             val now = System.currentTimeMillis()
             sessions.forEach { (sessionId, session) ->
-                if (session.lastAccessedTime + session.maxInactiveInterval * 1000L < now) {
+                if (session.lastAccessedAt + session.maxInactiveInterval * 1000L < now) {
                     logger.atDebug().log(
                         "remove expired session: {}, last access time: {}", sessionId,
-                        DateUtils.formatDateTimeGMT(session.lastAccessedTime)
+                        DateUtils.formatDateTimeGMT(session.lastAccessedAt)
                     )
                     session.invalidate()
                 }

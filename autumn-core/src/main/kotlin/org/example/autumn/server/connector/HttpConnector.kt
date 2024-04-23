@@ -2,7 +2,7 @@ package org.example.autumn.server.connector
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
-import com.sun.net.httpserver.HttpsServer
+import com.sun.net.httpserver.HttpServer
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
@@ -17,11 +17,11 @@ class HttpConnector(
 ) : HttpHandler, AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val servletContext: ServletContextImpl
-    private val httpServer: HttpsServer
+    private val httpServer: HttpServer
     private val stopDelayInSeconds = 5
 
     init {
-        val host = config.getRequiredProperty("sever.host")
+        val host = config.getRequiredProperty("server.host")
         val port = config.getRequiredProperty("server.port", Int::class.java)
         val backlog = config.getRequiredProperty("server.backlog", Int::class.java)
 
@@ -32,7 +32,7 @@ class HttpConnector(
         Thread.currentThread().contextClassLoader = null
 
         // start http server
-        httpServer = HttpsServer.create(InetSocketAddress(host, port), backlog, "/", this)
+        httpServer = HttpServer.create(InetSocketAddress(host, port), backlog, "/", this)
         httpServer.executor = executor
         httpServer.start()
         logger.info("http server started at http://{}:{}...", host, port)

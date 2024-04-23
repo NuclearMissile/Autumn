@@ -2,8 +2,9 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.ServletOutputStream
 import jakarta.servlet.WriteListener
+import java.io.OutputStream
 
-class ServletOutputStreamImpl : ServletOutputStream() {
+class ServletOutputStreamImpl(private val outputStream: OutputStream) : ServletOutputStream() {
     override fun write(b: Int) {
         TODO("Not yet implemented")
     }

@@ -406,4 +406,8 @@ class HttpServletRequestImpl(
         // not support websocket
         return null
     }
+
+    override fun toString(): String {
+        return "HttpServletRequestImpl(method=$method, uri=$requestURI)"
+    }
 }

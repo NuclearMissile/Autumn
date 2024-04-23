@@ -112,7 +112,7 @@ class ServletContextImpl(
             }
         }
         if (defaultServlet == null &&
-            config.getRequiredProperty("server.web-app.file-listing", Boolean::class.java)
+            config.getRequiredProperty("server.web-app.default-servlet", Boolean::class.java)
         ) {
             logger.info("no default servlet. auto register {}...", DefaultServlet::class.java.name)
             defaultServlet = DefaultServlet()
