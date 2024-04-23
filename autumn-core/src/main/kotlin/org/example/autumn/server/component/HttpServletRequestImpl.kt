@@ -27,7 +27,8 @@ class HttpServletRequestImpl(
     private val contentLength = if (listOf("POST", "PUT", "DELETE", "PATCH").contains(method))
         getIntHeader("Content-Length") else 0
 
-    private var isInputStreamOpened = false
+    private var inputStream: ServletInputStream? = null
+    private var reader: BufferedReader? = null
     private var charset = Charset.forName(config.getRequiredProperty("server.request-encoding"))
     private val params = HttpReqParams(exchangeReq, charset)
 
@@ -61,11 +62,11 @@ class HttpServletRequestImpl(
     }
 
     override fun getInputStream(): ServletInputStream {
-        if (!isInputStreamOpened) {
-            isInputStreamOpened = true
-            return ServletInputStreamImpl(exchangeReq.getRequestBody())
+        if (reader != null) throw IllegalStateException("cannot getInputStream with reader opened.")
+        if (inputStream == null) {
+            inputStream = ServletInputStreamImpl(exchangeReq.getRequestBody())
         }
-        throw IllegalStateException("cannot reopen input stream.")
+        return inputStream!!
     }
 
     override fun getParameter(name: String): String? {
@@ -117,11 +118,11 @@ class HttpServletRequestImpl(
     }
 
     override fun getReader(): BufferedReader {
-        if (!isInputStreamOpened) {
-            isInputStreamOpened = true
-            return BufferedReader(InputStreamReader(ByteArrayInputStream(exchangeReq.getRequestBody()), charset))
+        if (inputStream != null) throw IllegalStateException("cannot getReader with input stream opened.")
+        if (reader == null) {
+            reader = BufferedReader(InputStreamReader(ByteArrayInputStream(exchangeReq.getRequestBody()), charset))
         }
-        throw IllegalStateException("cannot reopen input stream.")
+        return reader!!
     }
 
     override fun getRemoteAddr(): String {
@@ -352,7 +353,7 @@ class HttpServletRequestImpl(
             }
             sessionId = UUID.randomUUID().toString()
             val cookieValue = config.getRequiredProperty("server.web-app.session-cookie-name") +
-                "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
+                    "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
             resp.addHeader("Set-Cookie", cookieValue)
         }
 

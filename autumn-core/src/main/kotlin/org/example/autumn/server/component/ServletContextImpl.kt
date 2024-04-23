@@ -66,18 +66,18 @@ class ServletContextImpl(
         // register @WebListener, @WebServlet, @WebFilter
         scannedClasses.forEach {
             if (it.isAnnotationPresent(WebListener::class.java)) {
-                logger.info("register @WebListener: {}", it.name)
+                logger.atDebug().log("register @WebListener: {}", it.name)
                 addListener(it as Class<out EventListener>)
             }
             if (it.isAnnotationPresent(WebServlet::class.java)) {
-                logger.info("register @WebServlet: {}", it.name)
+                logger.atDebug().log("register @WebServlet: {}", it.name)
                 val clazz = it as Class<out Servlet>
                 val registration = addServlet(getServletName(clazz), clazz)
                 registration.addMapping(*getServletUrlPatterns(clazz))
                 registration.setInitParameters(getServletInitParams(clazz))
             }
             if (it.isAnnotationPresent(WebFilter::class.java)) {
-                logger.info("register @WebFilter: {}", it.name)
+                logger.atDebug().log("register @WebFilter: {}", it.name)
                 val clazz = it as Class<out Filter>
                 val registration = addFilter(getFilterName(clazz), clazz)
                 registration.addMappingForUrlPatterns(

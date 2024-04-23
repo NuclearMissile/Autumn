@@ -1,6 +1,6 @@
 # default server configuration:
 server:
-  host: 0.0.0.0
+  host: localhost
   port: 8080
   backlog: 0
   request-encoding: UTF-8
