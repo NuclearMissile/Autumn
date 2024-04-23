@@ -6,70 +6,77 @@ import org.example.autumn.resolver.PropertyResolver
 class SessionCookieConfigImpl(
     private val config: PropertyResolver
 ) : SessionCookieConfig {
-    override fun setName(name: String?) {
-        TODO("Not yet implemented")
+    private val attributes = mutableMapOf<String, String>()
+    private var maxAge = config.getRequiredProperty("server.web-app.session-timeout", Int::class.java) * 60
+    private var httpOnly = true
+    private var secure = false
+    private var domain: String? = null
+    private var path: String? = null
+
+    override fun setName(name: String) {
+        config.setProperty("server.web-app.session-cookie-name", name)
     }
 
     override fun getName(): String {
-        TODO("Not yet implemented")
+        return config.getRequiredProperty("server.web-app.session-cookie-name")
     }
 
-    override fun setDomain(domain: String?) {
-        TODO("Not yet implemented")
+    override fun setDomain(domain: String) {
+        this.domain = domain
     }
 
-    override fun getDomain(): String {
-        TODO("Not yet implemented")
+    override fun getDomain(): String? {
+        return domain
     }
 
-    override fun setPath(path: String?) {
-        TODO("Not yet implemented")
+    override fun setPath(path: String) {
+        this.path = path
     }
 
-    override fun getPath(): String {
-        TODO("Not yet implemented")
+    override fun getPath(): String? {
+        return path
     }
 
-    override fun setComment(comment: String?) {
+    override fun setComment(comment: String) {
     }
 
-    override fun getComment(): String {
-        TODO("Not yet implemented")
+    override fun getComment(): String? {
+        return null
     }
 
     override fun setHttpOnly(httpOnly: Boolean) {
-        TODO("Not yet implemented")
+        this.httpOnly = httpOnly
     }
 
     override fun isHttpOnly(): Boolean {
-        TODO("Not yet implemented")
+        return httpOnly
     }
 
     override fun setSecure(secure: Boolean) {
-        TODO("Not yet implemented")
+        this.secure = secure
     }
 
     override fun isSecure(): Boolean {
-        TODO("Not yet implemented")
+        return secure
     }
 
     override fun setMaxAge(maxAge: Int) {
-        TODO("Not yet implemented")
+        this.maxAge = maxAge
     }
 
     override fun getMaxAge(): Int {
-        TODO("Not yet implemented")
+        return maxAge
     }
 
-    override fun setAttribute(name: String?, value: String?) {
-        TODO("Not yet implemented")
+    override fun setAttribute(name: String, value: String) {
+        attributes[name] = value
     }
 
-    override fun getAttribute(name: String?): String {
-        TODO("Not yet implemented")
+    override fun getAttribute(name: String): String? {
+        return attributes[name]
     }
 
-    override fun getAttributes(): MutableMap<String, String> {
-        TODO("Not yet implemented")
+    override fun getAttributes(): Map<String, String> {
+        return attributes
     }
 }

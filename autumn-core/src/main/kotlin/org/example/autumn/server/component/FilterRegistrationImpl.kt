@@ -4,8 +4,11 @@ import jakarta.servlet.*
 import java.util.*
 
 class FilterRegistrationImpl(
-    private val servletContext: ServletContext, val filterName: String, val filter: Filter
+    private val servletContext: ServletContext, private val filterName: String, val filter: Filter
 ) : FilterRegistration.Dynamic {
+    private val urlPatterns = mutableListOf<String>()
+    private val initParams = mutableMapOf<String, String>()
+
     var initialized: Boolean = false
 
     fun getFilterConfig(): FilterConfig {
@@ -29,52 +32,72 @@ class FilterRegistrationImpl(
     }
 
     override fun getName(): String {
-        TODO("Not yet implemented")
+        return filterName
     }
 
     override fun getClassName(): String {
-        TODO("Not yet implemented")
+        return filter.javaClass.name
     }
 
     override fun setInitParameter(name: String, value: String): Boolean {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setInitParameter after initialization.")
+        }
+        require(name.isNotEmpty()) { "name is empty." }
+        require(value.isNotEmpty()) { "value is empty." }
+        if (initParams.contains(name)) return false
+        initParams[name] = value
+        return true
     }
 
-    override fun getInitParameter(name: String): String {
-        TODO("Not yet implemented")
+    override fun getInitParameter(name: String): String? {
+        return initParams[name]
     }
 
     override fun setInitParameters(initParameters: MutableMap<String, String>): MutableSet<String> {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("setInitParameters after initialization.")
+        }
+        val conflicts = mutableSetOf<String>()
+        if (initParameters.isEmpty()) return mutableSetOf()
+        initParams.forEach { (k, v) ->
+            if (initParams.contains(k)) conflicts.add(v) else initParams[k] = v
+        }
+        return conflicts
     }
 
     override fun getInitParameters(): MutableMap<String, String> {
-        TODO("Not yet implemented")
+        return initParams
     }
 
     override fun addMappingForServletNames(
         dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg servletNames: String
     ) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("addMappingForServletNames")
     }
 
-    override fun getServletNameMappings(): MutableCollection<String> {
-        TODO("Not yet implemented")
+    override fun getServletNameMappings(): Collection<String> {
+        return emptyList()
     }
 
     override fun addMappingForUrlPatterns(
-        dispatcherTypes: EnumSet<DispatcherType>,
-        isMatchAfter: Boolean,
-        vararg urlPatterns: String
+        dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg urlPatterns: String
     ) {
-        TODO("Not yet implemented")
+        require(!initialized) {
+            throw IllegalStateException("addMappingForUrlPatterns after initialization.")
+        }
+        require(dispatcherTypes.contains(DispatcherType.REQUEST) && dispatcherTypes.size == 1) {
+            "Only support DispatcherType.REQUEST."
+        }
+        require(urlPatterns.isNotEmpty()) { "Missing urlPatterns." }
+        this.urlPatterns.addAll(urlPatterns)
     }
 
-    override fun getUrlPatternMappings(): MutableCollection<String> {
-        TODO("Not yet implemented")
+    override fun getUrlPatternMappings(): Collection<String> {
+        return urlPatterns
     }
 
     override fun setAsyncSupported(isAsyncSupported: Boolean) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("setAsyncSupported")
     }
 }

@@ -2,18 +2,31 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.ServletOutputStream
 import jakarta.servlet.WriteListener
+import java.io.IOException
 import java.io.OutputStream
 
-class ServletOutputStreamImpl(private val outputStream: OutputStream) : ServletOutputStream() {
+class ServletOutputStreamImpl(private val output: OutputStream) : ServletOutputStream() {
+    private var writeListener: WriteListener? = null
+
     override fun write(b: Int) {
-        TODO("Not yet implemented")
+        try {
+            output.write(b)
+        } catch (e: IOException) {
+            writeListener?.onError(e)
+            throw e
+        }
+    }
+
+    override fun close() {
+        output.close()
     }
 
     override fun isReady(): Boolean {
-        TODO("Not yet implemented")
+        return true
     }
 
-    override fun setWriteListener(writeListener: WriteListener?) {
-        TODO("Not yet implemented")
+    override fun setWriteListener(writeListener: WriteListener) {
+        this.writeListener = writeListener
+        writeListener.onWritePossible()
     }
 }
