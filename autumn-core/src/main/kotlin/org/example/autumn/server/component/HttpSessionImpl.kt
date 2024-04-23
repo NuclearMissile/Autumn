@@ -2,54 +2,99 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSessionBindingEvent
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-class HttpSessionImpl : HttpSession {
+class HttpSessionImpl(
+    private val servletContext: ServletContextImpl,
+    private var sessionId: String?,
+    private var sessionTimeout: Int
+) : HttpSession {
+    private val creationTime = System.currentTimeMillis()
+    private val attributes = ConcurrentHashMap<String, Any>()
+
+    var lastAccessedTime = creationTime
+
     override fun getCreationTime(): Long {
-        TODO("Not yet implemented")
+        return creationTime
     }
 
-    override fun getId(): String {
-        TODO("Not yet implemented")
+    override fun getId(): String? {
+        return sessionId
     }
 
     override fun getLastAccessedTime(): Long {
-        TODO("Not yet implemented")
+        return lastAccessedTime
     }
 
     override fun getServletContext(): ServletContext {
-        TODO("Not yet implemented")
+        return servletContext
     }
 
     override fun setMaxInactiveInterval(interval: Int) {
-        TODO("Not yet implemented")
+        sessionTimeout = interval
     }
 
     override fun getMaxInactiveInterval(): Int {
-        TODO("Not yet implemented")
+        return sessionTimeout
     }
 
-    override fun getAttribute(name: String?): Any {
-        TODO("Not yet implemented")
+    override fun getAttribute(name: String): Any? {
+        require(sessionId != null) {
+            throw IllegalStateException("session is already invalided")
+        }
+        return attributes[name]
     }
 
     override fun getAttributeNames(): Enumeration<String> {
-        TODO("Not yet implemented")
+        require(sessionId != null) {
+            throw IllegalStateException("session is already invalided")
+        }
+        return Collections.enumeration(attributes.keys)
     }
 
-    override fun setAttribute(name: String?, value: Any?) {
-        TODO("Not yet implemented")
+    override fun setAttribute(name: String, value: Any?) {
+        require(sessionId != null) {
+            throw IllegalStateException("session is already invalided")
+        }
+        val oldValue = attributes[name]
+        if (value == null) {
+            if (oldValue != null) {
+                attributes.remove(name)
+                servletContext.invokeHttpSessionAttributeRemoved(HttpSessionBindingEvent(this, name, oldValue))
+            }
+        } else {
+            attributes[name] = value
+            if (oldValue == null)
+                servletContext.invokeHttpSessionAttributeAdded(HttpSessionBindingEvent(this, name, value))
+            else
+                servletContext.invokeHttpSessionAttributeReplaced(HttpSessionBindingEvent(this, name, oldValue))
+        }
     }
 
-    override fun removeAttribute(name: String?) {
-        TODO("Not yet implemented")
+    override fun removeAttribute(name: String) {
+        require(sessionId != null) {
+            throw IllegalStateException("session is already invalided")
+        }
+        val oldValue = attributes[name]
+        if (oldValue != null) {
+            attributes.remove(name)
+            servletContext.invokeHttpSessionAttributeRemoved(
+                HttpSessionBindingEvent(this, name, oldValue)
+            )
+        }
     }
 
     override fun invalidate() {
-        TODO("Not yet implemented")
+        require(sessionId != null) {
+            throw IllegalStateException("session is already invalided")
+        }
+        servletContext.sessionManager.removeSession(this)
+        sessionId = null
     }
 
     override fun isNew(): Boolean {
-        TODO("Not yet implemented")
+        return creationTime == lastAccessedTime
     }
 }

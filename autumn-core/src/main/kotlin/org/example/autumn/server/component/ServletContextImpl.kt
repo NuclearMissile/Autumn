@@ -5,10 +5,7 @@ import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import jakarta.servlet.descriptor.JspConfigDescriptor
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
-import jakarta.servlet.http.HttpSessionAttributeListener
-import jakarta.servlet.http.HttpSessionListener
+import jakarta.servlet.http.*
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.servlet.DefaultServlet
 import org.example.autumn.server.component.support.FilterMapping
@@ -47,12 +44,12 @@ class ServletContextImpl(
     private val servletMappings = mutableListOf<ServletMapping>()
     private val filterMappings = mutableListOf<FilterMapping>()
 
-    private val servletContextListeners: MutableList<ServletContextListener> = mutableListOf()
-    private val servletContextAttributeListeners: MutableList<ServletContextAttributeListener> = mutableListOf()
-    private val servletRequestListeners: MutableList<ServletRequestListener> = mutableListOf()
-    private val servletRequestAttributeListeners: MutableList<ServletRequestAttributeListener> = mutableListOf()
-    private val httpSessionAttributeListeners: MutableList<HttpSessionAttributeListener> = mutableListOf()
-    private val httpSessionListeners: MutableList<HttpSessionListener> = mutableListOf()
+    private val servletContextListeners = mutableListOf<ServletContextListener>()
+    private val servletContextAttributeListeners = mutableListOf<ServletContextAttributeListener>()
+    private val servletRequestListeners = mutableListOf<ServletRequestListener>()
+    private val servletRequestAttributeListeners = mutableListOf<ServletRequestAttributeListener>()
+    private val httpSessionAttributeListeners = mutableListOf<HttpSessionAttributeListener>()
+    private val httpSessionListeners = mutableListOf<HttpSessionListener>()
 
     private var initialized = false
     private var defaultServlet: Servlet? = null
@@ -91,7 +88,7 @@ class ServletContextImpl(
         }
 
         // notify event
-        servletContextListeners.forEach { it.contextInitialized(ServletContextEvent(this)) }
+        invokeServletContextInitialized(ServletContextEvent(this))
 
         // init servlets while find default servlet:
         var defaultServlet: Servlet? = null
@@ -188,14 +185,89 @@ class ServletContextImpl(
         )
         val chain = FilterChainImpl(filters, servlet)
         try {
-            servletRequestListeners.forEach { it.requestInitialized(ServletRequestEvent(this, req)) }
+            invokeServletRequestInitialized(ServletRequestEvent(this, req))
             chain.doFilter(req, resp)
         } catch (e: Exception) {
             logger.error(e.message, e)
             throw e
         } finally {
-            servletRequestListeners.forEach { it.requestDestroyed(ServletRequestEvent(this, req)) }
+            invokeServletRequestDestroyed(ServletRequestEvent(this, req))
         }
+    }
+
+    fun invokeServletContextInitialized(event: ServletContextEvent) {
+        logger.atDebug().log("invoke ServletContextInitialized")
+        servletContextListeners.forEach { it.contextInitialized(event) }
+    }
+
+    fun invokeServletContextDestroyed(event: ServletContextEvent) {
+        logger.atDebug().log("invoke ServletContextDestroyed")
+        servletContextListeners.forEach { it.contextDestroyed(event) }
+    }
+
+    fun invokeServletContextAttributeAdded(event: ServletContextAttributeEvent) {
+        logger.atDebug().log("invoke ServletContextAttributeAdded")
+        servletContextAttributeListeners.forEach { it.attributeAdded(event) }
+    }
+
+    fun invokeServletContextAttributeRemoved(event: ServletContextAttributeEvent) {
+        logger.atDebug().log("invoke ServletContextAttributeRemoved")
+        servletContextAttributeListeners.forEach { it.attributeRemoved(event) }
+    }
+
+    fun invokeServletContextAttributeReplaced(event: ServletContextAttributeEvent) {
+        logger.atDebug().log("invoke ServletContextAttributeReplaced")
+        servletContextAttributeListeners.forEach { it.attributeReplaced(event) }
+    }
+
+    fun invokeServletRequestInitialized(event: ServletRequestEvent) {
+        logger.atDebug().log("invoke ServletRequestInitialized")
+        servletRequestListeners.forEach { it.requestInitialized(event) }
+    }
+
+    fun invokeServletRequestDestroyed(event: ServletRequestEvent) {
+        logger.atDebug().log("invoke ServletRequestDestroyed")
+        servletRequestListeners.forEach { it.requestDestroyed(event) }
+    }
+
+    fun invokeServletRequestAttributeAdded(event: ServletRequestAttributeEvent) {
+        logger.atDebug().log("invoke ServletRequestAttributeAdded")
+        servletRequestAttributeListeners.forEach { it.attributeAdded(event) }
+    }
+
+    fun invokeServletRequestAttributeRemoved(event: ServletRequestAttributeEvent) {
+        logger.atDebug().log("invoke ServletRequestAttributeRemoved")
+        servletRequestAttributeListeners.forEach { it.attributeRemoved(event) }
+    }
+
+    fun invokeServletRequestAttributeReplaced(event: ServletRequestAttributeEvent) {
+        logger.atDebug().log("invoke ServletRequestAttributeReplaced")
+        servletRequestAttributeListeners.forEach { it.attributeReplaced(event) }
+    }
+
+    fun invokeHttpSessionAttributeAdded(event: HttpSessionBindingEvent) {
+        logger.atDebug().log("invoke HttpSessionAttributeAdded")
+        httpSessionAttributeListeners.forEach { it.attributeAdded(event) }
+    }
+
+    fun invokeHttpSessionAttributeRemoved(event: HttpSessionBindingEvent) {
+        logger.atDebug().log("invoke HttpSessionAttributeRemoved")
+        httpSessionAttributeListeners.forEach { it.attributeRemoved(event) }
+    }
+
+    fun invokeHttpSessionAttributeReplaced(event: HttpSessionBindingEvent) {
+        logger.atDebug().log("invoke HttpSessionAttributeReplaced")
+        httpSessionAttributeListeners.forEach { it.attributeReplaced(event) }
+    }
+
+    fun invokeHttpSessionCreated(event: HttpSessionEvent) {
+        logger.atDebug().log("invoke HttpSessionCreated")
+        httpSessionListeners.forEach { it.sessionCreated(event) }
+    }
+
+    fun invokeHttpSessionDestroyed(event: HttpSessionEvent) {
+        logger.atDebug().log("invoke HttpSessionDestroyed")
+        httpSessionListeners.forEach { it.sessionDestroyed(event) }
     }
 
     override fun close() {
@@ -216,7 +288,7 @@ class ServletContextImpl(
         }
 
         // notify event
-        servletContextListeners.forEach { it.contextDestroyed(ServletContextEvent(this)) }
+        invokeServletContextDestroyed(ServletContextEvent(this))
     }
 
     override fun getContextPath(): String {
@@ -331,18 +403,14 @@ class ServletContextImpl(
         if (value == null) {
             if (oldValue != null) {
                 attributes.remove(name)
-                servletContextAttributeListeners.forEach {
-                    it.attributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
-                }
+                invokeServletContextAttributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
             }
         } else {
             attributes[name] = value
-            servletContextAttributeListeners.forEach {
-                if (oldValue == null)
-                    it.attributeAdded(ServletContextAttributeEvent(this, name, value))
-                else
-                    it.attributeReplaced(ServletContextAttributeEvent(this, name, oldValue))
-            }
+            if (oldValue == null)
+                invokeServletContextAttributeAdded(ServletContextAttributeEvent(this, name, value))
+            else
+                invokeServletContextAttributeReplaced(ServletContextAttributeEvent(this, name, oldValue))
         }
     }
 
@@ -350,9 +418,7 @@ class ServletContextImpl(
         val oldValue = attributes[name]
         if (oldValue != null) {
             attributes.remove(name)
-            servletContextAttributeListeners.forEach {
-                it.attributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
-            }
+            invokeServletContextAttributeRemoved(ServletContextAttributeEvent(this, name, oldValue))
         }
     }
 

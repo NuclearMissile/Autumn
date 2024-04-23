@@ -142,11 +142,35 @@ class HttpServletRequestImpl(
     }
 
     override fun setAttribute(name: String, value: Any?) {
-        TODO("Not yet implemented")
+        val oldValue = attributes[name]
+        if (value == null) {
+            if (oldValue != null) {
+                attributes.remove(name)
+                servletContext.invokeServletRequestAttributeRemoved(
+                    ServletRequestAttributeEvent(servletContext, this, name, oldValue)
+                )
+            }
+        } else {
+            attributes[name] = value
+            if (oldValue == null)
+                servletContext.invokeServletRequestAttributeAdded(
+                    ServletRequestAttributeEvent(servletContext, this, name, value)
+                )
+            else
+                servletContext.invokeServletRequestAttributeReplaced(
+                    ServletRequestAttributeEvent(servletContext, this, name, oldValue)
+                )
+        }
     }
 
     override fun removeAttribute(name: String) {
-        TODO("Not yet implemented")
+        val oldValue = attributes[name]
+        if (oldValue != null) {
+            attributes.remove(name)
+            servletContext.invokeServletRequestAttributeRemoved(
+                ServletRequestAttributeEvent(servletContext, this, name, oldValue)
+            )
+        }
     }
 
     override fun getLocale(): Locale {
@@ -311,7 +335,28 @@ class HttpServletRequestImpl(
     }
 
     override fun getSession(create: Boolean): HttpSession? {
-        TODO("Not yet implemented")
+        var sessionId: String? = null
+        val cookies = cookies
+        if (cookies != null) {
+            for (cookie in cookies) {
+                if (cookie.name == config.getRequiredProperty("server.web-app.session-cookie-name")) {
+                    sessionId = cookie.value
+                    break
+                }
+            }
+        }
+        if (sessionId == null) {
+            if (!create) return null
+            if (resp.isCommitted) {
+                throw IllegalStateException("cannot create session for response committed ")
+            }
+            sessionId = UUID.randomUUID().toString()
+            val cookieValue = config.getRequiredProperty("server.web-app.session-cookie-name") +
+                "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
+            resp.addHeader("Set-Cookie", cookieValue)
+        }
+
+        return servletContext.sessionManager.getSession(sessionId)
     }
 
     override fun getSession(): HttpSession {
