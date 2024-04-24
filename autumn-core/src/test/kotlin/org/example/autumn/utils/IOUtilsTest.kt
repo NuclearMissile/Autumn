@@ -1,16 +1,14 @@
 package org.example.autumn.utils
 
-import org.example.autumn.utils.ConfigUtils.loadProperties
 import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
-
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class ConfigUtilsTest {
+class IOUtilsTest {
     @Test
     fun testLoadYaml() {
-        val configs = loadYamlAsPlainMap("/application.yml")
+        val configs = loadYamlAsPlainMap("/application.yml", true)
         configs.keys.forEach {
             println("$it: ${configs[it]} (${configs[it]!!.javaClass})")
         }
@@ -24,17 +22,5 @@ class ConfigUtilsTest {
         assertEquals("0x1a2b3c", configs["other.hex-string"])
         assertEquals(listOf("Apple", "Orange", "Pear"), configs["other.list"])
         assertEquals(emptyList<String>(), configs["other.list2"])
-    }
-
-    @Test
-    fun testLoadProperties() {
-        val configs = loadProperties("/application.properties")
-        configs.keys.forEach {
-            println("$it: ${configs[it]} (${configs[it]!!.javaClass})")
-        }
-
-        assertEquals("Autumn Framework", configs["app.title"])
-        assertEquals("1.0.0", configs["app.version"])
-        assertEquals("", configs["app.empty.property"])
     }
 }

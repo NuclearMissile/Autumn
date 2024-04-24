@@ -1,29 +1,23 @@
 package org.example.autumn.utils
 
-import org.example.autumn.utils.ClassPathUtils.readInputStream
+import org.example.autumn.utils.IOUtils.readInputStream
+import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
 import org.yaml.snakeyaml.resolver.Resolver
-import java.util.*
+import java.nio.file.Path
 
 object ConfigUtils {
-    fun loadProperties(path: String): Map<String, String> {
-        // try load *.properties:
-        return readInputStream(path) { input ->
-            Properties().apply { load(input) }.toMap() as Map<String, String>
-        }
-    }
-
-    fun loadYamlAsPlainMap(path: String): Map<String, Any> {
+    fun loadYamlAsPlainMap(path: String, fromClassPath: Boolean): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
-        flatten(loadYaml(path), "", result)
+        flatten(loadYaml(path, fromClassPath), "", result)
         return result
     }
 
-    private fun loadYaml(path: String): Map<String, Any> {
+    private fun loadYaml(path: String, fromClassPath: Boolean): Map<String, Any> {
         val loaderOptions = LoaderOptions()
         val dumperOptions = DumperOptions()
         val representer = Representer(dumperOptions)
@@ -32,7 +26,10 @@ object ConfigUtils {
                 yamlImplicitResolvers.clear()
             }
         })
-        return readInputStream(path) { input -> yaml.load(input) as Map<String, Any> }
+        return if (fromClassPath)
+            readInputStreamFromClassPath(path) { input -> yaml.load(input) as Map<String, Any> }
+        else
+            readInputStream(Path.of(path)) { input -> yaml.load(input) as Map<String, Any> }
     }
 
     private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, Any>) {

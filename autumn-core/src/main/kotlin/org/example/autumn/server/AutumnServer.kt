@@ -4,13 +4,14 @@ import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
+import org.example.autumn.resolver.AppConfig
 import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.resolver.ServerConfig
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
-import org.example.autumn.utils.ClassPathUtils
+import org.example.autumn.utils.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.lang.management.ManagementFactory
@@ -61,8 +62,8 @@ class AutumnServer {
                 "warDir must be a file or a directory"
             }
             if (customConfig != null) {
-                require(customConfig.endsWith(".yml") || customConfig.endsWith(".properties")) {
-                    "customConfigPath must be .yml or .properties file"
+                require(customConfig.endsWith(".yml")) {
+                    "customConfigPath must be .yml file"
                 }
             }
 
@@ -70,10 +71,18 @@ class AutumnServer {
             val webRoot = classesPath.parent.parent.toString()
             logger.info("set webRoot as {}", webRoot)
 
-            val config = if (customConfig == null)
-                ServerConfig.load() else ServerConfig.load().merge(Config.load(customConfig, customConfig))
-
             val classLoader = WebAppClassLoader(classesPath, libPath)
+            val config: PropertyResolver
+
+            try {
+                Thread.currentThread().contextClassLoader = classLoader
+                val cfg = ServerConfig.load().merge(AppConfig.load())
+                config = if (customConfig == null) cfg else
+                    cfg.merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
+            } finally {
+                Thread.currentThread().contextClassLoader = null
+            }
+
             // scan class:
             val classSet = mutableSetOf<Class<*>>()
             val handler = Consumer { r: Resource ->
@@ -112,7 +121,7 @@ class AutumnServer {
 
         // embedded server entry point
         fun start(webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>) {
-            logger.info(ClassPathUtils.readString("/banner.txt"))
+            logger.info(IOUtils.readStringFromClassPath("/banner.txt"))
             // start info:
             val startTime = System.currentTimeMillis()
             val javaVersion = Runtime.version().feature()
