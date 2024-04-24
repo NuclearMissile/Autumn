@@ -44,7 +44,7 @@ class AutumnServer {
         }
 
         // embedded server entry point
-        fun start(config: PropertyResolver, webRoot: String, annoClasses: List<Class<*>>) {
+        fun start(config: PropertyResolver, webRoot: String, vararg annoClasses: Class<*>) {
             logger.info(ClassPathUtils.readString("/banner.txt"))
 
             // start info:
@@ -63,7 +63,9 @@ class AutumnServer {
                 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
             try {
-                HttpConnector(config, Thread.currentThread().contextClassLoader, webRoot, executor, annoClasses).use {
+                HttpConnector(
+                    config, Thread.currentThread().contextClassLoader, webRoot, executor, annoClasses.toList()
+                ).use {
                     it.start()
                     // started info:
                     val endTime = System.currentTimeMillis()

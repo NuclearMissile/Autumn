@@ -4,8 +4,6 @@ import org.example.autumn.utils.ClassPathUtils
 import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.FileNotFoundException
-import java.io.UncheckedIOException
 import java.time.*
 import java.util.*
 
@@ -25,23 +23,19 @@ interface PropertyResolver {
     fun getMap(): Map<String, String>
 }
 
-class AppConfig(props: Properties) : ConfigPropertyResolver(props) {
-    companion object {
-        private const val CONFIG_APP_YAML: String = "/application.yml"
-        private const val CONFIG_APP_PROP: String = "/application.properties"
-        fun load(): PropertyResolver {
-            return load(CONFIG_APP_YAML, CONFIG_APP_PROP)
-        }
+object AppConfig {
+    private const val CONFIG_APP_YAML: String = "/application.yml"
+    private const val CONFIG_APP_PROP: String = "/application.properties"
+    fun load(): PropertyResolver {
+        return ConfigPropertyResolver.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
     }
 }
 
-class ServerConfig(props: Properties) : ConfigPropertyResolver(props) {
-    companion object {
-        private const val CONFIG_SERVER_YAML: String = "/server.yml"
-        private const val CONFIG_SERVER_PROP: String = "/server.properties"
-        fun load(): PropertyResolver {
-            return load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
-        }
+object ServerConfig {
+    private const val CONFIG_SERVER_YAML: String = "/server.yml"
+    private const val CONFIG_SERVER_PROP: String = "/server.properties"
+    fun load(): PropertyResolver {
+        return ConfigPropertyResolver.load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
     }
 }
 
@@ -49,25 +43,28 @@ open class ConfigPropertyResolver(props: Properties) : PropertyResolver {
     companion object {
         private val logger = LoggerFactory.getLogger(Companion::class.java)
 
-        // Try load property resolver from *.yml or *.properties.
-        @JvmStatic
-        protected fun load(yamlPath: String, propPath: String): ConfigPropertyResolver {
-            var props = Properties()
-            // try load application.yml:
-            try {
-                val yamlMap = loadYamlAsPlainMap(yamlPath).filter { it.value is String } as Map<String, String>
-                logger.info("load config: {}", yamlPath)
-                props = yamlMap.toProperties()
-            } catch (e: UncheckedIOException) {
-                if (e.cause is FileNotFoundException) {
-                    // try load application.properties: props.load(ClassPathUtils.readString(propPath))
-                    ClassPathUtils.readInputStream(propPath) { input ->
-                        logger.info("load config: {}", propPath)
-                        props.load(input)
-                    }
-                }
+        fun loadYaml(yamlPath: String): ConfigPropertyResolver {
+            val yamlMap = loadYamlAsPlainMap(yamlPath).filter { it.value is String } as Map<String, String>
+            logger.info("load config: {}", yamlPath)
+            return ConfigPropertyResolver(yamlMap.toProperties())
+        }
+
+        fun loadProp(propPath: String): ConfigPropertyResolver {
+            val props = Properties()
+            ClassPathUtils.readInputStream(propPath) { input ->
+                logger.info("load config: {}", propPath)
+                props.load(input)
             }
             return ConfigPropertyResolver(props)
+        }
+
+        // Try load property resolver from *.yml or *.properties.
+        fun load(yamlPath: String, propPath: String): ConfigPropertyResolver {
+            return try {
+                loadYaml(yamlPath)
+            } catch (e: Exception) {
+                loadProp(propPath)
+            }
         }
     }
 

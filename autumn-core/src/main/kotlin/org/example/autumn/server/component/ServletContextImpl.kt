@@ -154,12 +154,6 @@ class ServletContextImpl(
             }
         }
 
-        // sort servlet mapping:
-        servletMappings.sort()
-        // sort by filter name then by itself
-        filterMappings.sortBy { it.filterName }
-        filterMappings.sort()
-
         initialized = true
     }
 

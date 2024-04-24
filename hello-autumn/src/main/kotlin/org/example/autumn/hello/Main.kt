@@ -17,13 +17,17 @@ import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 
 object Main {
-    @JvmStatic
-    fun main(args: Array<String>) {
+//    @JvmStatic
+//    fun main(args: Array<String>) {
 //        AutumnApplication.run(
 //            "src/main/webapp", "target/classes", "", HelloConfiguration::class.java, *args
 //        )
+//    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
         val config = ServerConfig.load().merge(AppConfig.load())
-        AutumnServer.start(config, "src/main/webapp", listOf(HelloContextLoadListener::class.java))
+        AutumnServer.start(config, "src/main/webapp", HelloContextLoadListener::class.java)
     }
 }
 
@@ -66,7 +70,7 @@ class ApiErrorFilterReg : FilterRegistrationBean() {
         override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
             try {
                 chain.doFilter(req, resp)
-            } catch (e: ServletException) {
+            } catch (e: Throwable) {
                 req as HttpServletRequest
                 resp as HttpServletResponse
                 logger.warn("api error when handling {}: {}", req.method, req.requestURI)
@@ -74,7 +78,7 @@ class ApiErrorFilterReg : FilterRegistrationBean() {
                     resp.apply {
                         reset()
                         status = 400
-                        writer.writeJson(mapOf("error" to true, "type" to (e.cause ?: e).javaClass.simpleName)).flush()
+                        writer.writeJson(mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName)).flush()
                     }
                 }
             }
