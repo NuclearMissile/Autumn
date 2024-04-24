@@ -7,7 +7,7 @@ server:
   response-encoding: UTF-8
   name: Autumn Web Server/1.0
   thread-pool-size: 200
-  enable-virtual-thread: false
+  enable-virtual-thread: true
 
   # default one and only one web app:
   web-app:

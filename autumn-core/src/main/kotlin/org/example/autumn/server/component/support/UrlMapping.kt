@@ -10,7 +10,7 @@ open class UrlMapping(private val url: String) : Comparable<UrlMapping> {
         sb.append('^')
         url.forEach {
             when (it) {
-                '*' -> sb.append(".*")
+                '*' -> sb.append(".+")
                 in 'a'..'z', in 'A'..'Z', in '0'..'9' -> sb.append(it)
                 else -> sb.append("\\").append(it)
             }

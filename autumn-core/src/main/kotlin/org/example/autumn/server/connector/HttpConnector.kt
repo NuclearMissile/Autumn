@@ -3,6 +3,7 @@ package org.example.autumn.server.connector
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
+import jakarta.servlet.ServletContainerInitializer
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
@@ -13,14 +14,14 @@ import java.util.concurrent.Executor
 
 class HttpConnector(
     private val config: PropertyResolver, private val classLoader: ClassLoader,
-    webRoot: String, executor: Executor, scannedClasses: List<Class<*>>
+    private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>
 ) : HttpHandler, AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val servletContext: ServletContextImpl
-    private val httpServer: HttpServer
-    private val stopDelayInSeconds = 5
+    private val initializers = mutableMapOf<ServletContainerInitializer, Set<Class<*>>>()
+    private lateinit var servletContext: ServletContextImpl
+    private lateinit var httpServer: HttpServer
 
-    init {
+    fun start() {
         val host = config.getRequiredProperty("server.host")
         val port = config.getRequiredProperty("server.port", Int::class.java)
         val backlog = config.getRequiredProperty("server.backlog", Int::class.java)
@@ -28,6 +29,8 @@ class HttpConnector(
         // init servlet context:
         Thread.currentThread().contextClassLoader = classLoader
         servletContext = ServletContextImpl(classLoader, config, webRoot)
+        servletContext.setAttribute("config", config)
+        initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
         servletContext.init(scannedClasses)
         Thread.currentThread().contextClassLoader = null
 
@@ -35,9 +38,12 @@ class HttpConnector(
         httpServer = HttpServer.create(InetSocketAddress(host, port), backlog, "/", this)
         httpServer.executor = executor
         httpServer.start()
-        logger.info("http server started at http://{}:{}...", host, port)
+        logger.info("Autumn server started at http://{}:{}...", host, port)
     }
 
+    fun addServletContainerInitializer(sci: ServletContainerInitializer, classes: Set<Class<*>>) {
+        initializers[sci] = classes
+    }
 
     override fun handle(exchange: HttpExchange) {
         val adapter = HttpExchangeAdapter(exchange)
@@ -56,6 +62,6 @@ class HttpConnector(
 
     override fun close() {
         servletContext.close()
-        httpServer.stop(stopDelayInSeconds)
+        httpServer.stop(0)
     }
 }

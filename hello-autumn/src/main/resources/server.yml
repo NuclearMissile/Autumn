@@ -22,11 +22,11 @@ server:
   # forwarded headers should ONLY set when behind a reverse proxy like Nginx:
   forwarded-headers:
     # usually set to "X-Forwarded-Proto"
-    forwarded-proto: 
+    forwarded-proto:
     # usually set to "X-Forwarded-Host"
-    forwarded-host: 
+    forwarded-host:
     # usually set to "X-Forwarded-For"
-    forwarded-for: 
+    forwarded-for:
 
   mime-default: text/html
   mime-types:

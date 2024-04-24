@@ -67,19 +67,19 @@ class AutumnApplication {
 }
 
 class ContextLoaderInitializer(
-    private val configClass: Class<*>, private val configPropertyResolver: PropertyResolver
+    private val configClass: Class<*>, private val config: PropertyResolver
 ) : ServletContainerInitializer {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     override fun onStartup(c: Set<Class<*>>, servletContext: ServletContext) {
         logger.info("Servlet container start. ServletContext = {}", servletContext)
 
-        val encoding = configPropertyResolver.getProperty("\${autumn.web.character-encoding:UTF-8}")
+        val encoding = config.getProperty("\${autumn.web.character-encoding:UTF-8}")
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
 
         WebMvcConfiguration.servletContext = servletContext
-        val applicationContext = AnnotationConfigApplicationContext(configClass, configPropertyResolver)
+        val applicationContext = AnnotationConfigApplicationContext(configClass, config)
         logger.info("Application context created: {}", applicationContext)
 
         DispatcherServlet.registerFilters(servletContext)

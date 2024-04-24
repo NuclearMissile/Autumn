@@ -10,6 +10,6 @@
     </context-param>
 
     <listener>
-        <listener-class>org.example.autumn.servlet.ContextLoaderListener</listener-class>
+        <listener-class>org.example.autumn.servlet.ContextLoadListener</listener-class>
     </listener>
 </web-app>

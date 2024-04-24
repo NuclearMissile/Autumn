@@ -9,8 +9,9 @@ class FilterChainImpl(
 
     override fun doFilter(request: ServletRequest, response: ServletResponse) {
         if (index < filters.size) {
-            filters[index].doFilter(request, response, this)
+            val current = index
             index++
+            filters[current].doFilter(request, response, this)
         } else {
             servlet.service(request, response)
         }

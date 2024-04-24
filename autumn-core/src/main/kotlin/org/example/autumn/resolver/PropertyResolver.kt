@@ -21,6 +21,8 @@ interface PropertyResolver {
     fun <T> getProperty(key: String, default: T, clazz: Class<T>): T
     fun getRequiredProperty(key: String): String
     fun <T> getRequiredProperty(key: String, clazz: Class<T>): T
+    fun merge(other: PropertyResolver): PropertyResolver
+    fun getMap(): Map<String, String>
 }
 
 class AppConfig(props: Properties) : ConfigPropertyResolver(props) {
@@ -104,6 +106,15 @@ open class ConfigPropertyResolver(props: Properties) : PropertyResolver {
                 logger.debug("$key = $value")
             }
         }
+    }
+
+    override fun merge(other: PropertyResolver): PropertyResolver {
+        properties += other.getMap()
+        return this
+    }
+
+    override fun getMap(): Map<String, String> {
+        return properties
     }
 
     override fun contains(key: String) = properties.containsKey(key)

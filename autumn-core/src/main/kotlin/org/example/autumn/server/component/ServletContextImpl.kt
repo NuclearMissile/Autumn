@@ -168,7 +168,7 @@ class ServletContextImpl(
 
         // search servlet:
         val servlet = if ("/" != path)
-            servletMappings.firstOrNull { it.matches(path) }?.servlet else defaultServlet
+            servletMappings.firstOrNull { it.matches(path) }?.servlet ?: defaultServlet else defaultServlet
         // 404 Not Found:
         if (servlet == null) {
             resp.writer.apply {
@@ -187,9 +187,9 @@ class ServletContextImpl(
         try {
             invokeServletRequestInitialized(ServletRequestEvent(this, req))
             chain.doFilter(req, resp)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             logger.error(e.message, e)
-            throw e
+            resp.sendError(400)
         } finally {
             invokeServletRequestDestroyed(ServletRequestEvent(this, req))
         }
