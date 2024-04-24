@@ -31,8 +31,7 @@ object Main {
     fun main(args: Array<String>) {
         val config = ServerConfig.load().merge(AppConfig.load())
         AutumnServer.start(
-            "src/main/webapp", config, Thread.currentThread().contextClassLoader,
-            listOf(HelloContextLoadListener::class.java)
+            "src/main/webapp", config, javaClass.classLoader, listOf(HelloContextLoadListener::class.java)
         )
     }
 }

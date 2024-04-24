@@ -143,7 +143,7 @@ object ClassUtils {
     }
 
     fun <T> createInstance(className: String): T {
-        return createInstance(Class.forName(className)) as T
+        return createInstance(Class.forName(className, true, Thread.currentThread().contextClassLoader)) as T
     }
 
     fun <T> createInstance(clazz: Class<T>): T {

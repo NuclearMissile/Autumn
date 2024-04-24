@@ -164,7 +164,7 @@ class AutumnServer {
                 Files.walk(tmpPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete)
             })
 
-            logger.info("extracting {} to {}", warPath, tmpPath)
+            logger.info("extract {} to {}", warPath, tmpPath)
             val war = JarFile(warPath.toFile())
             war.stream().forEach { entry ->
                 if (!entry.isDirectory) {

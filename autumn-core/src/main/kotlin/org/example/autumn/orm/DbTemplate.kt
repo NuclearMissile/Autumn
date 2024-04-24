@@ -12,9 +12,10 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {
-        scanClassNames(listOf(entityPackagePath)).map { Class.forName(it) }.filter {
-            findAnnotation(it, Entity::class.java) != null
-        }.associateWith { Mapper(it) }
+        scanClassNames(listOf(entityPackagePath))
+            .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
+            .filter { findAnnotation(it, Entity::class.java) != null }
+            .associateWith { Mapper(it) }
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -38,12 +38,12 @@ open class ContextLoadListener : ServletContextListener {
     ): ApplicationContext {
         logger.info("init ApplicationContext by configuration: {}", configClassName)
         if (configClassName.isEmpty()) {
-            throw AutumnException("Cannot init ApplicationContext for missing init param name: configuration", null)
+            throw AutumnException("Cannot init ApplicationContext for missing configClassName", null)
         }
         val configClass = try {
-            Class.forName(configClassName)
+            Class.forName(configClassName, true, Thread.currentThread().contextClassLoader)
         } catch (e: ClassNotFoundException) {
-            throw AutumnException("Could not load class from init param 'configuration': $configClassName", null)
+            throw AutumnException("Could not load autumn config class: $configClassName", null)
         }
         return AnnotationConfigApplicationContext(configClass, config)
     }
