@@ -313,7 +313,7 @@ class ServletContextImpl(
         val default = config.getRequiredProperty("server.mime-default")
         val n = file.lastIndexOf(".")
         return if (n < 0)
-            default else config.getProperty("server.mime-types.${file.substring(n).lowercase()}", default)
+            default else config.getProperty("server.mime-types${file.substring(n).lowercase()}", default)
     }
 
     override fun getResourcePaths(path: String): MutableSet<String>? {

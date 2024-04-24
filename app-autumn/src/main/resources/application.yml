@@ -6,6 +6,7 @@ app:
   version: 1.0
 
 autumn:
+  config-class-path: org.example.autumn.app.AutumnAppConfiguration
   datasource:
     url: jdbc:sqlite:app.db
     username: sa

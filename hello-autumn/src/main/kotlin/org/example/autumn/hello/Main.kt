@@ -20,13 +20,6 @@ import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 
 object Main {
-//    @JvmStatic
-//    fun main(args: Array<String>) {
-//        AutumnApplication.run(
-//            "src/main/webapp", "target/classes", "", HelloConfiguration::class.java, *args
-//        )
-//    }
-
     @JvmStatic
     fun main(args: Array<String>) {
         val config = ServerConfig.load().merge(AppConfig.load())
