@@ -1,3 +1,5 @@
+autumn:
+  config-class-path: org.example.autumn.hello.HelloConfiguration
 # default server configuration:
 server:
   host: localhost

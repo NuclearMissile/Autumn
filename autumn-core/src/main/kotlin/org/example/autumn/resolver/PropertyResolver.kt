@@ -27,7 +27,7 @@ object AppConfig {
     private const val CONFIG_APP_YAML: String = "/application.yml"
     private const val CONFIG_APP_PROP: String = "/application.properties"
     fun load(): PropertyResolver {
-        return ConfigPropertyResolver.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
+        return Config.load(CONFIG_APP_YAML, CONFIG_APP_PROP)
     }
 }
 
@@ -35,31 +35,31 @@ object ServerConfig {
     private const val CONFIG_SERVER_YAML: String = "/server.yml"
     private const val CONFIG_SERVER_PROP: String = "/server.properties"
     fun load(): PropertyResolver {
-        return ConfigPropertyResolver.load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
+        return Config.load(CONFIG_SERVER_YAML, CONFIG_SERVER_PROP)
     }
 }
 
-open class ConfigPropertyResolver(props: Properties) : PropertyResolver {
+open class Config(props: Properties) : PropertyResolver {
     companion object {
         private val logger = LoggerFactory.getLogger(Companion::class.java)
 
-        fun loadYaml(yamlPath: String): ConfigPropertyResolver {
+        fun loadYaml(yamlPath: String): Config {
             val yamlMap = loadYamlAsPlainMap(yamlPath).filter { it.value is String } as Map<String, String>
             logger.info("load config: {}", yamlPath)
-            return ConfigPropertyResolver(yamlMap.toProperties())
+            return Config(yamlMap.toProperties())
         }
 
-        fun loadProp(propPath: String): ConfigPropertyResolver {
+        fun loadProp(propPath: String): Config {
             val props = Properties()
             ClassPathUtils.readInputStream(propPath) { input ->
                 logger.info("load config: {}", propPath)
                 props.load(input)
             }
-            return ConfigPropertyResolver(props)
+            return Config(props)
         }
 
         // Try load property resolver from *.yml or *.properties.
-        fun load(yamlPath: String, propPath: String): ConfigPropertyResolver {
+        fun load(yamlPath: String, propPath: String): Config {
             return try {
                 loadYaml(yamlPath)
             } catch (e: Exception) {

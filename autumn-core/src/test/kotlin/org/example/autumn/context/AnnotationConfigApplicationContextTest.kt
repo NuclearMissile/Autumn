@@ -1,6 +1,6 @@
 package org.example.autumn.context
 
-import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.resolver.Config
 import org.example.imported.LocalDateConfiguration
 import org.example.imported.ZonedDateConfiguration
 import org.example.scan.*
@@ -151,7 +151,7 @@ class AnnotationConfigApplicationContextTest {
         }
     }
 
-    val propertyResolver = ConfigPropertyResolver(
+    val propertyResolver = Config(
         mapOf(
             "app.title" to "Scan App",
             "app.version" to "v1.0",

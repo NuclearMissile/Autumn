@@ -7,8 +7,10 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.Consumer
 import java.util.jar.JarFile
 import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
 
 data class Resource(val path: Path, val name: String)
 
@@ -53,22 +55,18 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
         libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
     }
 
-    fun walkLibPaths(visitor: (Resource) -> Unit) {
-        fun scanJar(handler: (Resource) -> Unit, jarPath: Path) {
+    fun walkLibPaths(visitor: Consumer<Resource>) {
+        fun scanJar(handler: Consumer<Resource>, jarPath: Path) {
             JarFile(jarPath.toFile()).stream().filter { !it.isDirectory }.forEach {
-                handler.invoke(Resource(jarPath, it.name))
+                handler.accept(Resource(jarPath, it.name))
             }
         }
         libPaths.forEach { scanJar(visitor, it) }
     }
 
-    fun walkClassesPath(visitor: (Resource) -> Unit, basePath: Path = classesPath, path: Path = classesPath) {
-        Files.list(path).sorted().forEach { p ->
-            if (Files.isDirectory(p)) {
-                walkClassesPath(visitor, basePath, p)
-            } else if (Files.isRegularFile(p)) {
-                visitor.invoke(Resource(p, basePath.relativize(p).toString().replace("\\", "/")))
-            }
+    fun walkClassesPath(visitor: Consumer<Resource>, basePath: Path = classesPath) {
+        Files.walk(basePath).filter(Path::isRegularFile).forEach { p ->
+            visitor.accept(Resource(p, basePath.relativize(p).toString().replace("\\", "/")))
         }
     }
 }

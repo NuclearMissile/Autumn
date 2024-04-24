@@ -26,7 +26,7 @@ class PropertyResolverTest {
 
     @Test
     fun propertyValue() {
-        val cpr = ConfigPropertyResolver(
+        val cpr = Config(
             mapOf(
                 "app.title" to "Autumn Framework",
                 "app.version" to "v1.0",
@@ -80,7 +80,7 @@ class PropertyResolverTest {
         props.setProperty("app.title", "Autumn Framework")
         props.setProperty("app.version", "v1.0")
 
-        val cpr = ConfigPropertyResolver(props)
+        val cpr = Config(props)
         assertThrows<IllegalArgumentException> {
             cpr.getRequiredProperty("not.exist")
         }
@@ -95,7 +95,7 @@ class PropertyResolverTest {
         val props = Properties()
         props.setProperty("app.title", "Autumn Framework")
 
-        val cpr = ConfigPropertyResolver(props)
+        val cpr = Config(props)
         assertEquals("Autumn Framework", cpr.getProperty("\${app.title}"))
         assertThrows<IllegalArgumentException> {
             cpr.getProperty("\${app.version}")
@@ -116,7 +116,7 @@ class PropertyResolverTest {
     fun propertyHolderOnWin() {
         val os = System.getenv("OS")
         println("env OS=$os")
-        val cpr = ConfigPropertyResolver(Properties())
+        val cpr = Config(Properties())
         assertEquals("Windows_NT", cpr.getProperty("\${app.os:\${OS}}"))
     }
 }

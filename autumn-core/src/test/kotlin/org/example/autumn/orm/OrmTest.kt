@@ -5,7 +5,7 @@ import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.orm.entity.EventEntity
 import org.example.autumn.orm.entity.PasswordAuthEntity
 import org.example.autumn.orm.entity.UserEntity
-import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
@@ -22,7 +22,7 @@ class OrmTest {
             "CREATE TABLE password_auths (userId INTEGER PRIMARY KEY AUTOINCREMENT, random TEXT NOT NULL, passwd TEXT NOT NULL);"
     }
 
-    val propertyResolver = ConfigPropertyResolver(
+    val propertyResolver = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
             "autumn.datasource.username" to "sa",

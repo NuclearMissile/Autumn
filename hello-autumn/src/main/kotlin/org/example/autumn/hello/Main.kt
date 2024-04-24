@@ -1,6 +1,9 @@
 package org.example.autumn.hello
 
-import jakarta.servlet.*
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -27,7 +30,10 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         val config = ServerConfig.load().merge(AppConfig.load())
-        AutumnServer.start(config, "src/main/webapp", HelloContextLoadListener::class.java)
+        AutumnServer.start(
+            "src/main/webapp", config, Thread.currentThread().contextClassLoader,
+            listOf(HelloContextLoadListener::class.java)
+        )
     }
 }
 
@@ -78,7 +84,8 @@ class ApiErrorFilterReg : FilterRegistrationBean() {
                     resp.apply {
                         reset()
                         status = 400
-                        writer.writeJson(mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName)).flush()
+                        writer.writeJson(mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName))
+                            .flush()
                     }
                 }
             }

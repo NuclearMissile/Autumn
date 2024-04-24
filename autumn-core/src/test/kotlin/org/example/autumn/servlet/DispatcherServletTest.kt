@@ -2,7 +2,7 @@ package org.example.autumn.servlet
 
 import jakarta.servlet.ServletException
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.ConfigPropertyResolver
+import org.example.autumn.resolver.Config
 import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -289,8 +289,8 @@ class DispatcherServletTest {
         assertEquals(true, req.session!!.getAttribute("signout"))
     }
 
-    private fun createPropertyResolver(): ConfigPropertyResolver {
-        return ConfigPropertyResolver(
+    private fun createPropertyResolver(): Config {
+        return Config(
             mapOf(
                 "app.title" to "Scan App",
                 "app.version" to "v1.0",
