@@ -102,7 +102,8 @@ class ServletContextImpl(
                             defaultServlet = servletReg.servlet
                             logger.info("set default servlet: {}", servletReg.className)
                         } else {
-                            logger.warn("found duplicate default servlet: {}", servletReg.className)
+                            logger.warn(
+                                "found duplicate default servlet: {} and {}", defaultServlet, servletReg.className)
                         }
                     }
                 }
@@ -190,77 +191,62 @@ class ServletContextImpl(
     }
 
     fun invokeServletContextInitialized(event: ServletContextEvent) {
-        logger.atDebug().log("invoke ServletContextInitialized")
         servletContextListeners.forEach { it.contextInitialized(event) }
     }
 
     fun invokeServletContextDestroyed(event: ServletContextEvent) {
-        logger.atDebug().log("invoke ServletContextDestroyed")
         servletContextListeners.forEach { it.contextDestroyed(event) }
     }
 
     fun invokeServletContextAttributeAdded(event: ServletContextAttributeEvent) {
-        logger.atDebug().log("invoke ServletContextAttributeAdded")
         servletContextAttributeListeners.forEach { it.attributeAdded(event) }
     }
 
     fun invokeServletContextAttributeRemoved(event: ServletContextAttributeEvent) {
-        logger.atDebug().log("invoke ServletContextAttributeRemoved")
         servletContextAttributeListeners.forEach { it.attributeRemoved(event) }
     }
 
     fun invokeServletContextAttributeReplaced(event: ServletContextAttributeEvent) {
-        logger.atDebug().log("invoke ServletContextAttributeReplaced")
         servletContextAttributeListeners.forEach { it.attributeReplaced(event) }
     }
 
     fun invokeServletRequestInitialized(event: ServletRequestEvent) {
-        logger.atDebug().log("invoke ServletRequestInitialized")
         servletRequestListeners.forEach { it.requestInitialized(event) }
     }
 
     fun invokeServletRequestDestroyed(event: ServletRequestEvent) {
-        logger.atDebug().log("invoke ServletRequestDestroyed")
         servletRequestListeners.forEach { it.requestDestroyed(event) }
     }
 
     fun invokeServletRequestAttributeAdded(event: ServletRequestAttributeEvent) {
-        logger.atDebug().log("invoke ServletRequestAttributeAdded")
         servletRequestAttributeListeners.forEach { it.attributeAdded(event) }
     }
 
     fun invokeServletRequestAttributeRemoved(event: ServletRequestAttributeEvent) {
-        logger.atDebug().log("invoke ServletRequestAttributeRemoved")
         servletRequestAttributeListeners.forEach { it.attributeRemoved(event) }
     }
 
     fun invokeServletRequestAttributeReplaced(event: ServletRequestAttributeEvent) {
-        logger.atDebug().log("invoke ServletRequestAttributeReplaced")
         servletRequestAttributeListeners.forEach { it.attributeReplaced(event) }
     }
 
     fun invokeHttpSessionAttributeAdded(event: HttpSessionBindingEvent) {
-        logger.atDebug().log("invoke HttpSessionAttributeAdded")
         httpSessionAttributeListeners.forEach { it.attributeAdded(event) }
     }
 
     fun invokeHttpSessionAttributeRemoved(event: HttpSessionBindingEvent) {
-        logger.atDebug().log("invoke HttpSessionAttributeRemoved")
         httpSessionAttributeListeners.forEach { it.attributeRemoved(event) }
     }
 
     fun invokeHttpSessionAttributeReplaced(event: HttpSessionBindingEvent) {
-        logger.atDebug().log("invoke HttpSessionAttributeReplaced")
         httpSessionAttributeListeners.forEach { it.attributeReplaced(event) }
     }
 
     fun invokeHttpSessionCreated(event: HttpSessionEvent) {
-        logger.atDebug().log("invoke HttpSessionCreated")
         httpSessionListeners.forEach { it.sessionCreated(event) }
     }
 
     fun invokeHttpSessionDestroyed(event: HttpSessionEvent) {
-        logger.atDebug().log("invoke HttpSessionDestroyed")
         httpSessionListeners.forEach { it.sessionDestroyed(event) }
     }
 

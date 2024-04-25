@@ -4,7 +4,6 @@ import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
-import org.example.autumn.resolver.AppConfig
 import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.resolver.ServerConfig
@@ -76,9 +75,8 @@ class AutumnServer {
 
             try {
                 Thread.currentThread().contextClassLoader = classLoader
-                val cfg = ServerConfig.load().merge(AppConfig.load())
-                config = if (customConfig == null) cfg else
-                    cfg.merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
+                config = if (customConfig == null) ServerConfig.load() else
+                    ServerConfig.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
             } finally {
                 Thread.currentThread().contextClassLoader = null
             }
@@ -99,17 +97,19 @@ class AutumnServer {
                         )
                         return@Consumer
                     }
-                    if (clazz.isAnnotationPresent(WebServlet::class.java)) {
-                        logger.info("Found @WebServlet: {}", clazz.name)
-                        classSet.add(clazz)
-                    }
-                    if (clazz.isAnnotationPresent(WebFilter::class.java)) {
-                        logger.info("Found @WebFilter: {}", clazz.name)
-                        classSet.add(clazz)
-                    }
-                    if (clazz.isAnnotationPresent(WebListener::class.java)) {
-                        logger.info("Found @WebListener: {}", clazz.name)
-                        classSet.add(clazz)
+                    when {
+                        clazz.isAnnotationPresent(WebServlet::class.java) -> {
+                            logger.info("Found @WebServlet: {}", clazz.name)
+                            classSet.add(clazz)
+                        }
+                        clazz.isAnnotationPresent(WebFilter::class.java) -> {
+                            logger.info("Found @WebFilter: {}", clazz.name)
+                            classSet.add(clazz)
+                        }
+                        clazz.isAnnotationPresent(WebListener::class.java) -> {
+                            logger.info("Found @WebListener: {}", clazz.name)
+                            classSet.add(clazz)
+                        }
                     }
                 }
             }

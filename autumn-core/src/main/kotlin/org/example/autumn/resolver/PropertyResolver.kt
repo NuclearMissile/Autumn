@@ -76,11 +76,6 @@ open class Config(props: Properties) : PropertyResolver {
         properties += System.getenv()
         @Suppress("UNCHECKED_CAST")
         properties += props.toMap() as Map<String, String>
-        if (logger.isDebugEnabled) {
-            properties.toSortedMap().forEach { (key, value) ->
-                logger.debug("$key = $value")
-            }
-        }
     }
 
     override fun merge(other: PropertyResolver): PropertyResolver {
