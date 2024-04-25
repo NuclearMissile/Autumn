@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebRoot Browser for ${URI}</title>
+    <style>
+        html, body, table, h1, h3, tr, th, td {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 18px;
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif !important;
+        }
+
+        body {
+            margin: 20px;
+        }
+
+        table {
+            width: 75%;
+            margin: 20px 0;
+        }
+
+        th {
+            font-weight: bold;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px;
+        }
+
+        thead > tr {
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        tbody > tr:nth-of-type(even) > * {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>WebRoot Browser for ${URI}</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Filename</th>
+        <th>Size</th>
+        <th>Last Modified</th>
+    </tr>
+    </thead>
+    <tbody>
+    ${TRS}
+    </tbody>
+</table>
+<h3>${SERVER_INFO}</h3>
+</body>
+</html>
