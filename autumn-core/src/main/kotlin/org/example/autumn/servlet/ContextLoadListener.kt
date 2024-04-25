@@ -5,7 +5,6 @@ import jakarta.servlet.ServletContextListener
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.exception.AutumnException
-import org.example.autumn.resolver.AppConfig
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerDispatcherServlet
 import org.example.autumn.servlet.DispatcherServlet.Companion.registerFilters
@@ -20,12 +19,11 @@ open class ContextLoadListener : ServletContextListener {
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
 
-        val config = servletContext.getAttribute("config") as? PropertyResolver ?: AppConfig.load()
+        val config = servletContext.getAttribute("config") as PropertyResolver
         val encoding = config.getRequiredProperty("\${autumn.web.character-encoding:UTF-8}")
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
-        val configClassName = servletContext.getInitParameter("configClassPath")
-            ?: config.getRequiredProperty("autumn.config-class-path")
+        val configClassName = config.getRequiredProperty("autumn.config-class-path")
         val applicationContext = createApplicationContext(configClassName, config)
         logger.info("Application context created: {}", applicationContext)
 

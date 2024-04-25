@@ -6,7 +6,6 @@ import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
 import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.resolver.ServerConfig
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
@@ -75,8 +74,8 @@ class AutumnServer {
 
             try {
                 Thread.currentThread().contextClassLoader = classLoader
-                config = if (customConfig == null) ServerConfig.load() else
-                    ServerConfig.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
+                config = if (customConfig == null) Config.load() else
+                    Config.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
             } finally {
                 Thread.currentThread().contextClassLoader = null
             }
@@ -102,10 +101,12 @@ class AutumnServer {
                             logger.info("Found @WebServlet: {}", clazz.name)
                             classSet.add(clazz)
                         }
+
                         clazz.isAnnotationPresent(WebFilter::class.java) -> {
                             logger.info("Found @WebFilter: {}", clazz.name)
                             classSet.add(clazz)
                         }
+
                         clazz.isAnnotationPresent(WebListener::class.java) -> {
                             logger.info("Found @WebListener: {}", clazz.name)
                             classSet.add(clazz)

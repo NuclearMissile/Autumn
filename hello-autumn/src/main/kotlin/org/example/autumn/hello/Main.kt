@@ -8,8 +8,7 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
-import org.example.autumn.resolver.AppConfig
-import org.example.autumn.resolver.ServerConfig
+import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
 import org.example.autumn.servlet.FilterRegistrationBean
@@ -22,9 +21,8 @@ import org.slf4j.LoggerFactory
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        val config = ServerConfig.load().merge(AppConfig.load())
         AutumnServer.start(
-            "src/main/webapp", config, javaClass.classLoader, listOf(HelloContextLoadListener::class.java)
+            "src/main/webapp", Config.load(), javaClass.classLoader, listOf(HelloContextLoadListener::class.java)
         )
     }
 }

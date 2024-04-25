@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 class IOUtilsTest {
     @Test
     fun testLoadYaml() {
-        val configs = loadYamlAsPlainMap("/application.yml", true)
+        val configs = loadYamlAsPlainMap("/test.yml", true)
         configs.keys.forEach {
             println("$it: ${configs[it]} (${configs[it]!!.javaClass})")
         }

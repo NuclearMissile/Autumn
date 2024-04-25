@@ -27,12 +27,15 @@ class HttpConnector(
         val backlog = config.getRequiredProperty("server.backlog", Int::class.java)
 
         // init servlet context:
-        Thread.currentThread().contextClassLoader = classLoader
-        servletContext = ServletContextImpl(classLoader, config, webRoot)
-        servletContext.setAttribute("config", config)
-        initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
-        servletContext.init(scannedClasses)
-        Thread.currentThread().contextClassLoader = null
+        try {
+            Thread.currentThread().contextClassLoader = classLoader
+            servletContext = ServletContextImpl(classLoader, config, webRoot)
+            servletContext.setAttribute("config", config)
+            initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
+            servletContext.init(scannedClasses)
+        } finally {
+            Thread.currentThread().contextClassLoader = null
+        }
 
         // start http server
         httpServer = HttpServer.create(InetSocketAddress(host, port), backlog, "/", this)

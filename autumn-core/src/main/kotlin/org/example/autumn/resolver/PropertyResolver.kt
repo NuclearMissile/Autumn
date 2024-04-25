@@ -21,26 +21,18 @@ interface PropertyResolver {
     fun getMap(): Map<String, String>
 }
 
-object AppConfig {
-    private const val CONFIG_APP_YAML: String = "/application.yml"
-    fun load(): PropertyResolver {
-        return Config.loadYaml(CONFIG_APP_YAML)
-    }
-}
-
-object ServerConfig {
-    private const val CONFIG_SERVER_YAML: String = "/server.yml"
-    fun load(): PropertyResolver {
-        return Config.loadYaml(CONFIG_SERVER_YAML)
-    }
-}
-
 open class Config(props: Properties) : PropertyResolver {
     companion object {
+        private const val CONFIG_YML: String = "/config.yml"
         private val logger = LoggerFactory.getLogger(Companion::class.java)
-        fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): PropertyResolver {
+
+        fun load(): PropertyResolver {
+            return loadYaml(CONFIG_YML)
+        }
+
+        fun loadYaml(yamlPath: String, isClassPath: Boolean = true): PropertyResolver {
             logger.info("load config: {}", yamlPath)
-            val yamlMap = loadYamlAsPlainMap(yamlPath, fromClassPath).filter { it.value is String } as Map<String, String>
+            val yamlMap = loadYamlAsPlainMap(yamlPath, isClassPath).filter { it.value is String } as Map<String, String>
             return Config(yamlMap.toProperties())
         }
     }

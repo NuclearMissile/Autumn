@@ -17,13 +17,13 @@ import kotlin.test.assertTrue
 class PropertyResolverTest {
     @Test
     fun testConfigLoad() {
-        val serverConfig = ServerConfig.load()
-        assertEquals("Autumn Webapp", serverConfig.getRequiredProperty("server.web-app.name"))
-        serverConfig.setProperty("server.web-app.name", "dummy")
-        assertEquals("dummy", serverConfig.getRequiredProperty("server.web-app.name"))
+        val config = Config.loadYaml("/config.yml")
+        assertEquals("Autumn Webapp", config.getRequiredProperty("server.web-app.name"))
+        config.setProperty("server.web-app.name", "dummy")
+        assertEquals("dummy", config.getRequiredProperty("server.web-app.name"))
 
-        val appConfig = AppConfig.load()
-        assertThrows<IllegalArgumentException> { appConfig.getRequiredProperty("other.list") }
+        val test = Config.loadYaml("/test.yml")
+        assertThrows<IllegalArgumentException> { test.getRequiredProperty("other.list") }
     }
 
     @Test
