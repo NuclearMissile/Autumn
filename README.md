@@ -13,8 +13,8 @@ Yet another toy web application framework imitating Spring in Kotlin.
 - [x] Web MVC framework
 - [x] JdbcTemplate and naive ORM
 - [x] Package to standard .war
-- [ ] Self-bootable .war
+- [ ] ~~Self-bootable .war~~
 - [ ] Demo webapp
-- [ ] Homemade http server to replace Tomcat
+- [x] Homemade http server replacing Tomcat, support embedded and standalone mode
 - [ ] 90%+ ut coverage
 
