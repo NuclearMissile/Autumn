@@ -1,7 +1,6 @@
 package org.example.autumn.resolver
 
 import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.*
 import java.util.*
@@ -40,13 +39,12 @@ open class Config(props: Properties) : PropertyResolver {
     companion object {
         private val logger = LoggerFactory.getLogger(Companion::class.java)
         fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): PropertyResolver {
-            val yamlMap = loadYamlAsPlainMap(yamlPath, fromClassPath).filter { it.value is String } as Map<String, String>
             logger.info("load config: {}", yamlPath)
+            val yamlMap = loadYamlAsPlainMap(yamlPath, fromClassPath).filter { it.value is String } as Map<String, String>
             return Config(yamlMap.toProperties())
         }
     }
 
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
     private val properties: MutableMap<String, String> = mutableMapOf()
     private val converters: MutableMap<Class<*>, (String) -> Any> = mutableMapOf(
         String::class.java to { s -> s },

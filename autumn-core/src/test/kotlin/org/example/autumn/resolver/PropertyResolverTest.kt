@@ -19,9 +19,11 @@ class PropertyResolverTest {
     fun testConfigLoad() {
         val serverConfig = ServerConfig.load()
         assertEquals("Autumn Webapp", serverConfig.getRequiredProperty("server.web-app.name"))
-
         serverConfig.setProperty("server.web-app.name", "dummy")
         assertEquals("dummy", serverConfig.getRequiredProperty("server.web-app.name"))
+
+        val appConfig = AppConfig.load()
+        assertThrows<IllegalArgumentException> { appConfig.getRequiredProperty("other.list") }
     }
 
     @Test

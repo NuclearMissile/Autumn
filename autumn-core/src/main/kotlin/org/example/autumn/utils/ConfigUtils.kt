@@ -27,24 +27,24 @@ object ConfigUtils {
             }
         })
         return if (fromClassPath)
-            readInputStreamFromClassPath(path) { input -> yaml.load(input) as Map<String, Any> }
+            readInputStreamFromClassPath(path) { input -> yaml.load(input) }
         else
-            readInputStream(Path.of(path)) { input -> yaml.load(input) as Map<String, Any> }
+            readInputStream(Path.of(path)) { input -> yaml.load(input) }
     }
 
     private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, Any>) {
-        for (key in source.keys) {
-            when (val value = source[key]) {
+        source.forEach { (k, v) ->
+            when (v) {
                 is Map<*, *> -> {
-                    flatten(value as Map<String, String>, "$prefix$key.", plain)
+                    flatten(v as Map<String, Any>, "$prefix$k.", plain)
                 }
 
                 is List<*> -> {
-                    plain[prefix + key] = value
+                    plain[prefix + k] = v
                 }
 
                 else -> {
-                    plain[prefix + key] = value.toString()
+                    plain[prefix + k] = v.toString()
                 }
             }
         }

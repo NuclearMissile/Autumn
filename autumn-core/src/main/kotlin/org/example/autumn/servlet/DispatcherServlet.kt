@@ -207,7 +207,7 @@ class DispatcherServlet : HttpServlet() {
     private fun serveError(
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse
     ) {
-        logger.warn("process request failed with status: ${e.statusCode}, $url (${e.message})")
+        logger.warn("process request failed with status: ${e.statusCode}, $url", e)
         resp.reset()
         resp.contentType = "text/html"
         if (e.responseBody != null) {
