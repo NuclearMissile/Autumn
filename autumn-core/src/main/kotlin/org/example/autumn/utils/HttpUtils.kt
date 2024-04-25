@@ -60,15 +60,13 @@ object HttpUtils {
 
     fun parseCookies(cookieValue: String?): Array<Cookie>? {
         if (cookieValue.isNullOrBlank()) return null
-        val cookies = cookieValue.trim().removeSurrounding(";").split(";")
-        val ret = ArrayList<Cookie>(cookies.size)
-        for (i in cookies.indices) {
-            val s = cookies[i].trim()
-            val pos = s.indexOf('=')
-            val name = if (pos >= 0) s.substring(0, pos) else s
-            val value = if (pos >= 0) s.substring(pos + 1) else ""
-            ret[i] = Cookie(name, value)
-        }
-        return ret.toTypedArray()
+        val cookies = cookieValue.trim().trim(';').split(";")
+        return cookies.map {
+            val cookie = it.trim()
+            val pos = cookie.indexOf('=')
+            val name = if (pos >= 0) cookie.substring(0, pos) else cookie
+            val value = if (pos >= 0) cookie.substring(pos + 1) else ""
+            Cookie(name, value)
+        }.toTypedArray()
     }
 }

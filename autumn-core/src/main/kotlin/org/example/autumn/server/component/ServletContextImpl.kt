@@ -54,7 +54,7 @@ class ServletContextImpl(
     private var initialized = false
     private var defaultServlet: Servlet? = null
 
-    val sessionManager = SessionManager(
+    internal val sessionManager = SessionManager(
         this, config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
     )
 
@@ -103,7 +103,8 @@ class ServletContextImpl(
                             logger.info("set default servlet: {}", servletReg.className)
                         } else {
                             logger.warn(
-                                "found duplicate default servlet: {} and {}", defaultServlet, servletReg.className)
+                                "found duplicate default servlet: {} and {}", defaultServlet, servletReg.className
+                            )
                         }
                     }
                 }

@@ -93,10 +93,10 @@ class DispatcherServlet : HttpServlet() {
                 throw ServletException("Found both @Controller and @RestController on class: ${beanClass.name}")
             }
             if (controllerAnno != null) {
-                addController(info.beanName, bean, false)
+                addController(info.beanName, controllerAnno.prefix, bean, false)
             }
             if (restControllerAnno != null) {
-                addController(info.beanName, bean, true)
+                addController(info.beanName, restControllerAnno.prefix, bean, true)
             }
         }
     }
@@ -219,12 +219,12 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun addController(name: String, instance: Any, isRest: Boolean) {
+    private fun addController(name: String, prefix: String, instance: Any, isRest: Boolean) {
         logger.info("add {} controller '{}': {}", if (isRest) "REST" else "MVC", name, instance.javaClass.name)
-        addMethods(name, instance, instance.javaClass, isRest)
+        addMethods(name, prefix, instance, instance.javaClass, isRest)
     }
 
-    private fun addMethods(name: String, instance: Any, clazz: Class<*>, isRest: Boolean) {
+    private fun addMethods(name: String, prefix: String, instance: Any, clazz: Class<*>, isRest: Boolean) {
         fun configMethod(m: Method) {
             if (Modifier.isStatic(m.modifiers))
                 throw ServletException("Cannot map url to a static method: $m.")
@@ -236,16 +236,16 @@ class DispatcherServlet : HttpServlet() {
             val postAnno = m.getAnnotation(Post::class.java)
             if (getAnno != null) {
                 configMethod(m)
-                getDispatchers += Dispatcher(instance, m, getAnno.value, isRest)
+                getDispatchers += Dispatcher(instance, m, "/" + (prefix + getAnno.value).trim('/'), isRest)
             }
             if (postAnno != null) {
                 configMethod(m)
-                postDispatchers += Dispatcher(instance, m, postAnno.value, isRest)
+                postDispatchers += Dispatcher(instance, m, "/" + (prefix + postAnno.value).trim('/'), isRest)
             }
         }
 
         if (clazz.superclass != null) {
-            addMethods(name, instance, clazz.superclass, isRest)
+            addMethods(name, prefix, instance, clazz.superclass, isRest)
         }
     }
 

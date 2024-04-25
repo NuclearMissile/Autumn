@@ -158,7 +158,7 @@ annotation class Controller(
     /**
      * Bean name. Default to simple class name with first-letter-lowercase.
      */
-    val value: String = ""
+    val prefix: String = "", val value: String = ""
 )
 
 @Target(AnnotationTarget.FUNCTION)
@@ -218,5 +218,5 @@ annotation class RestController(
     /**
      * Bean name. Default to simple class name with first-letter-lowercase.
      */
-    val value: String = ""
+    val prefix: String = "", val value: String = ""
 )
