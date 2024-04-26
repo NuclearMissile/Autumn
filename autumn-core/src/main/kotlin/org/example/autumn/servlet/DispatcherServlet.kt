@@ -1,6 +1,5 @@
 package org.example.autumn.servlet
 
-import jakarta.servlet.DispatcherType
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
@@ -22,51 +21,16 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
-import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.regex.Pattern
 
 class DispatcherServlet : HttpServlet() {
     companion object {
-        private val logger = LoggerFactory.getLogger(Companion::class.java)
-
-        const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
-
         fun compilePath(path: String): Pattern {
             val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
             return Pattern.compile("^$regPath$")
-        }
-
-        fun registerDispatcherServlet(servletContext: ServletContext) {
-            val dispatcherServlet = DispatcherServlet()
-            logger.info("register servlet {} for ROOT", dispatcherServlet.javaClass.name)
-            servletContext.addServlet("dispatcherServlet", dispatcherServlet)?.apply {
-                addMapping("/")
-                setLoadOnStartup(0)
-            }
-        }
-
-        fun registerFilters(servletContext: ServletContext) {
-            val applicationContext = ApplicationContextHolder.requiredApplicationContext
-            for (filterRegBean in applicationContext.getBeans(FilterRegistrationBean::class.java)) {
-                val urlPatterns = filterRegBean.urlPatterns
-                require(urlPatterns.isNotEmpty()) {
-                    "No url patterns for ${filterRegBean.javaClass.name}"
-                }
-                val filter = requireNonNull(filterRegBean.filter) {
-                    "FilterRegistrationBean.filter must not return null."
-                }
-                logger.info(
-                    "register filter '{}' {} for URLs: {}",
-                    filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
-                )
-                servletContext.addFilter(filterRegBean.name, filter)?.addMappingForUrlPatterns(
-                    EnumSet.of(DispatcherType.REQUEST), true, *urlPatterns.toTypedArray()
-                )
-            }
         }
     }
 

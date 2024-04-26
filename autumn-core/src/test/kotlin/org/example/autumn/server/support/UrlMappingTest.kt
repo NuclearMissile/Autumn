@@ -10,7 +10,7 @@ class UrlMappingTest {
     @Test
     fun testMatch() {
         val all = UrlMapping("/*")
-        assertFalse(all.matches("/"))
+        assertTrue(all.matches("/"))
         assertTrue(all.matches("/a"))
         assertTrue(all.matches("/abc/"))
         assertTrue(all.matches("/abc/x.y.z"))
@@ -22,7 +22,7 @@ class UrlMappingTest {
         assertFalse(m.matches("/hello/1"))
 
         val prefix = UrlMapping("/hello/*")
-        assertFalse(prefix.matches("/hello/"))
+        assertTrue(prefix.matches("/hello/"))
         assertTrue(prefix.matches("/hello/1"))
         assertTrue(prefix.matches("/hello/a%20c"))
         assertTrue(prefix.matches("/hello/world/"))

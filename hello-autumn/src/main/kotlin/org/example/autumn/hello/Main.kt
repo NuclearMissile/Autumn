@@ -105,7 +105,7 @@ class MvcController {
 
     @Get("/hello/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp, Error("test"))
+        throw ResponseErrorException(errorCode, "test", errorResp)
     }
 }
 
@@ -150,6 +150,6 @@ class RestApiController {
 
     @Get("/api/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp, null)
+        throw ResponseErrorException(errorCode, "test", errorResp)
     }
 }
