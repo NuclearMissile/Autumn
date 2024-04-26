@@ -122,7 +122,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveError(url, NotFoundException("Resource not found: $url"), req, resp)
+                serveError(url, NotFoundException("Resource not found: $url"), req, resp, false)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -138,15 +138,16 @@ class DispatcherServlet : HttpServlet() {
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
-                dispatcher == null -> serveError(url, NotFoundException("Not found: $url"), req, resp)
+                dispatcher == null -> serveError(url, NotFoundException("Not found: $url"), req, resp, false)
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
                 else -> serveNormal(url, dispatcher, req, resp)
             }
         } catch (e: ResponseErrorException) {
-            serveError(url, e, req, resp)
+            serveError(url, e, req, resp, dispatcher!!.isRest)
         } catch (e: Exception) {
             serveError(
-                url, ServerErrorException("Serve request failed: $url with an internal exception.", null, e), req, resp
+                url, ServerErrorException("Serve request failed: $url with an internal exception.", null, e),
+                req, resp, dispatcher!!.isRest
             )
         }
     }
@@ -205,17 +206,27 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveError(
-        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse
+        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean
     ) {
         logger.warn("process request failed with status: ${e.statusCode}, $url", e)
         resp.reset()
-        resp.contentType = "text/html"
-        if (e.responseBody != null) {
-            resp.status = e.statusCode
-            resp.writer.write(e.responseBody)
-            resp.writer.flush()
-        } else {
-            viewResolver.renderError(null, e.statusCode, req, resp)
+        resp.status = e.statusCode
+        when {
+            isRest -> {
+                resp.contentType = "application/json"
+                resp.writer.write(e.responseBody ?: "")
+                resp.writer.flush()
+            }
+
+            e.responseBody != null -> {
+                resp.contentType = "text/plain"
+                resp.writer.write(e.responseBody)
+                resp.writer.flush()
+            }
+
+            else -> {
+                viewResolver.renderError(null, e.statusCode, req, resp)
+            }
         }
     }
 

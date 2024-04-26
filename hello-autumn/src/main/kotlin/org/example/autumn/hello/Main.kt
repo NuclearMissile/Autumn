@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
+import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
@@ -83,16 +84,54 @@ class ApiErrorFilterReg : FilterRegistrationBean() {
     }
 }
 
+val USERS = mapOf("test" to "test")
+
 @Controller
 class MvcController {
     @Get("/")
-    fun index(): String {
-        return "redirect:/hello"
+    fun index(@Header("Cookie") a: String?): ModelAndView {
+        return ModelAndView("/index.html")
     }
 
     @Get("/hello")
     fun hello(): ModelAndView {
         return ModelAndView("/hello.html")
+    }
+
+    @Get("/hello/error")
+    fun error(): ModelAndView {
+        return ModelAndView("/index.html", mapOf(), 400)
+    }
+
+    @Get("/hello/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw ResponseErrorException(errorCode, "test", errorResp, Error("test"))
+    }
+}
+
+@Controller("/user")
+class UserController {
+    @Get("/")
+    fun user(req: HttpServletRequest): ModelAndView {
+        val userName = req.session.getAttribute("username")
+        return ModelAndView("/user.ftl", mapOf("username" to userName))
+    }
+
+    @Get("/logout")
+    fun logout(req: HttpServletRequest): String {
+        req.session.invalidate()
+        return "redirect:/user"
+    }
+
+    @Post("/login")
+    fun login(req: HttpServletRequest): ModelAndView {
+        val username = req.getParameter("username")
+        val password = req.getParameter("password")
+        if (username == null || password == null || USERS[username] != password) {
+            return ModelAndView("/login_failed.html")
+        }
+        req.session.setAttribute("username", username)
+        return ModelAndView("redirect:/user")
     }
 }
 
@@ -104,9 +143,13 @@ class RestApiController {
         return mapOf("name" to name).toJson()
     }
 
-    @Get("/api/error")
-    @ResponseBody
-    fun error() {
-        throw AssertionError("test error")
+    @Get("/api/params")
+    fun params(@RequestParam("test") test: String): Map<String, String> {
+        return mapOf("test" to test)
+    }
+
+    @Get("/api/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw ResponseErrorException(errorCode, "test", errorResp, null)
     }
 }

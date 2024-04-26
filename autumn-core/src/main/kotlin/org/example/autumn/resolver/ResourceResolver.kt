@@ -37,7 +37,7 @@ class ResourceResolver(private val basePackage: String) {
     }
 
     private fun jarUriToPath(basePackagePath: String, jarUri: URI): Path {
-        return FileSystems.newFileSystem(jarUri, mutableMapOf<String, Any?>()).use {
+        return FileSystems.newFileSystem(jarUri, mutableMapOf<String, Any>()).use {
             it.getPath(basePackagePath)
         }
     }

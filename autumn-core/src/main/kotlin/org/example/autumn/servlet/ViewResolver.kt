@@ -17,11 +17,11 @@ import java.io.*
 interface ViewResolver {
     fun init()
     fun render(
-        viewName: String, model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     )
 
     fun renderError(
-        model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     )
 }
 
@@ -56,7 +56,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun render(
-        viewName: String, model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
@@ -64,6 +64,7 @@ class FreeMarkerViewResolver(
             throw NotFoundException("Template '$viewName' not found.")
         }
         resp.status = statusCode
+        resp.contentType = "text/html"
         resp.writer.also {
             try {
                 template.process(model, it)
@@ -75,7 +76,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun renderError(
-        model: Map<String, Any?>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
