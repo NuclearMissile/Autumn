@@ -11,7 +11,7 @@ Yet another toy web application framework imitating Spring and Homemade http ser
 - [x] JdbcTemplate and naive ORM, support @Transactional annotation
 - [x] Standard .war packaging
 - [ ] Demo webapp
-- ... ...
+- [ ] ......
 
 ## Demo
 
