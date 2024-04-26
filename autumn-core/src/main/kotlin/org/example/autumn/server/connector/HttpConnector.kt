@@ -58,11 +58,6 @@ class HttpConnector(
         } catch (e: Throwable) {
             // fall-over error handling
             logger.error("unhandled exception caught:", e)
-            resp.reset()
-            resp.writer.apply {
-                write("<h1>500 Internal Error</h1>")
-                flush()
-            }
             resp.sendError(500)
         } finally {
             Thread.currentThread().contextClassLoader = null

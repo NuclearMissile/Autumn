@@ -11,8 +11,7 @@ import java.nio.charset.Charset
 import java.util.*
 
 class HttpServletResponseImpl(
-    private val config: PropertyResolver,
-    private val exchangeResp: HttpExchangeResponse
+    config: PropertyResolver, private val exchangeResp: HttpExchangeResponse
 ) : HttpServletResponse {
     private val headers = HttpHeaders(exchangeResp.getResponseHeaders())
     private val cookies = mutableListOf<Cookie>()
@@ -124,8 +123,6 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot reset after committed")
         }
         status = 200
-        outputStream?.close()
-        printWriter?.close()
         outputStream = null
         printWriter = null
         headers.clearHeaders()
