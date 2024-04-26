@@ -91,7 +91,7 @@ class AutumnServer {
                     val clazz = try {
                         classLoader.loadClass(className)
                     } catch (e: Throwable) {
-                        logger.warn(
+                        logger.debug(
                             "load class '{}' failed: {}: {}", className, e.javaClass.simpleName, e.message
                         )
                         return@Consumer
