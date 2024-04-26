@@ -2,19 +2,19 @@
 
 # Autumn
 
-Yet another toy web application framework imitating Spring in Kotlin.
+Yet another toy web application framework imitating Spring and Homemade http server in Kotlin.
 ![](screenshot.png)
 
-## Functions
+## Features
 
-- [x] IOC context
-- [x] AOP injection
-- [x] Jakarta EE servlet
-- [x] Web MVC framework
-- [x] JdbcTemplate and naive ORM
-- [x] Package to standard .war
-- [ ] ~~Self-bootable .war~~
+- [x] DI + AOP + MVC web framework + Homemade Jakarta EE 6.0 http server 
+- [x] JdbcTemplate and naive ORM, support @Transactional annotation
+- [x] Standard .war packaging
 - [ ] Demo webapp
-- [x] Homemade http server replacing Tomcat, support embedded and standalone mode
-- [ ] 90%+ ut coverage
+- ... ...
+
+## Demo
+
+Please refer to app-autumn (WIP) and hello-autumn.
+
 

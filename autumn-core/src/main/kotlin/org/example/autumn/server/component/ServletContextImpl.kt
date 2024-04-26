@@ -183,9 +183,6 @@ class ServletContextImpl(
         try {
             invokeServletRequestInitialized(ServletRequestEvent(this, req))
             chain.doFilter(req, resp)
-        } catch (e: Throwable) {
-            logger.error(e.message, e)
-            resp.sendError(400)
         } finally {
             invokeServletRequestDestroyed(ServletRequestEvent(this, req))
         }

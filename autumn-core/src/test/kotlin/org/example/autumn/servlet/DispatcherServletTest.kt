@@ -164,9 +164,7 @@ class DispatcherServletTest {
 
         val req3 = createMockRequest("GET", "/api/error")
         val resp3 = createMockResponse()
-        dispatcherServlet.service(req3, resp3)
-        assertEquals(500, resp3.status)
-        assertEquals("application/json", resp3.contentType)
+        assertThrows<Exception> { dispatcherServlet.service(req3, resp3) }
     }
 
     @Test

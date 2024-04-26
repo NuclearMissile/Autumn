@@ -124,6 +124,10 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot reset after committed")
         }
         status = 200
+        outputStream?.close()
+        printWriter?.close()
+        outputStream = null
+        printWriter = null
         headers.clearHeaders()
     }
 

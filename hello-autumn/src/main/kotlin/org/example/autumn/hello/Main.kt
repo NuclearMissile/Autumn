@@ -135,20 +135,25 @@ class UserController {
     }
 }
 
-@RestController
+@RestController("/api")
 class RestApiController {
-    @Get("/api/hello/{name}")
+    @Get("/hello/{name}")
     @ResponseBody
     fun hello(@PathVariable("name") name: String): String {
         return mapOf("name" to name).toJson()
     }
 
-    @Get("/api/params")
+    @Get("/params")
     fun params(@RequestParam("test") test: String): Map<String, String> {
         return mapOf("test" to test)
     }
 
-    @Get("/api/error/{errorCode}/{errorResp}")
+    @Get("/error")
+    fun error() {
+        throw Exception("api test error")
+    }
+
+    @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw ResponseErrorException(errorCode, "test", errorResp)
     }

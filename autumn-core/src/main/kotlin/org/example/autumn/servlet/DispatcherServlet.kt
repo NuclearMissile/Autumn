@@ -108,11 +108,6 @@ class DispatcherServlet : HttpServlet() {
             }
         } catch (e: ResponseErrorException) {
             serveError(url, e, req, resp, dispatcher!!.isRest)
-        } catch (e: Exception) {
-            serveError(
-                url, ServerErrorException("Serve request failed: $url with an internal exception.", null, e),
-                req, resp, dispatcher!!.isRest
-            )
         }
     }
 
