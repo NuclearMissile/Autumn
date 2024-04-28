@@ -26,7 +26,7 @@ import java.util.regex.Pattern
 class DispatcherServlet : HttpServlet() {
     companion object {
         fun compilePath(path: String): Pattern {
-            val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)\\}".toRegex(), "(?<$1>[^/]*)")
+            val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex(), "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
@@ -264,7 +264,8 @@ class DispatcherServlet : HttpServlet() {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
 
-                    is RequestBody -> req.reader.readJson(param.paramType)
+                    is RequestBody -> if (param.paramType == String::class.java)
+                        req.reader.readText() else req.reader.readJson(param.paramType)
 
                     is RequestParam -> {
                         val value = req.getParameter(param.name) ?: param.defaultValue!!

@@ -22,7 +22,6 @@ class FileObj(
     var content: ByteArray? = null,
 )
 
-
 class SigninObj(
     var name: String? = null,
     var password: String? = null
@@ -88,6 +87,14 @@ class RestApiController {
         resp.contentType = "application/json"
         val pw = resp.writer
         pw.write("[\"${signin.name}\",true,12345]")
+        pw.flush()
+    }
+
+    @Post("/api/echo-string-body")
+    fun echoStringBody(@RequestBody body: String,  resp: HttpServletResponse) {
+        resp.contentType = "text/plain"
+        val pw = resp.writer
+        pw.write(body)
         pw.flush()
     }
 }

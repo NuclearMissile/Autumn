@@ -253,17 +253,6 @@ class DispatcherServletTest {
         assertTrue(resp.contentAsString.contains("<h1>Welcome, Bob</h1>"))
     }
 
-
-    @BeforeEach
-    fun init() {
-        ctx = createMockServletContext()
-        WebMvcConfiguration.servletContext = ctx
-        val propertyResolver = createPropertyResolver()
-        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, propertyResolver)
-        dispatcherServlet = DispatcherServlet()
-        dispatcherServlet.init()
-    }
-
     @Test
     fun postApiRegister() {
         val signin = SigninObj()
@@ -278,6 +267,16 @@ class DispatcherServletTest {
     }
 
     @Test
+    fun testEchoStringBody() {
+        val req = createMockRequest("POST", "/api/echo-string-body", "test")
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(200, resp.status)
+        assertEquals("text/plain", resp.contentType)
+        assertEquals("test", resp.contentAsString)
+    }
+
+    @Test
     fun postSignout() {
         val req = createMockRequest("POST", "/signout", null, mapOf("name" to "Bob"))
         val resp = createMockResponse()
@@ -287,8 +286,11 @@ class DispatcherServletTest {
         assertEquals(true, req.session!!.getAttribute("signout"))
     }
 
-    private fun createPropertyResolver(): Config {
-        return Config(
+    @BeforeEach
+    fun init() {
+        ctx = createMockServletContext()
+        WebMvcConfiguration.servletContext = ctx
+        val propertyResolver = Config(
             mapOf(
                 "app.title" to "Scan App",
                 "app.version" to "v1.0",
@@ -298,6 +300,9 @@ class DispatcherServletTest {
                 "jdbc.password" to "",
             ).toProperties()
         )
+        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, propertyResolver)
+        dispatcherServlet = DispatcherServlet()
+        dispatcherServlet.init()
     }
 
     private fun createMockServletContext(): MockServletContext {
@@ -319,7 +324,7 @@ class DispatcherServletTest {
         } else if (method == "POST") {
             if (body != null) {
                 req.contentType = "application/json"
-                req.setContent(body.toJsonAsBytes())
+                req.setContent(if (body is String) body.toByteArray() else body.toJsonAsBytes())
             } else {
                 req.contentType = "application/x-www-form-urlencoded"
                 params?.forEach { (k, v) -> req.setParameter(k, v) }
