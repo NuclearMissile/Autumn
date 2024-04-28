@@ -2,7 +2,7 @@
 
 # Autumn
 
-Yet another toy web application framework imitating Spring wuth homemade http server in Kotlin.
+Yet another toy web application framework imitating Spring with homemade http server in Kotlin.
 ![](screenshot.png)
 
 ## Features
