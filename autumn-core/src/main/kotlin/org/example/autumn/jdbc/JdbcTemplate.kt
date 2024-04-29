@@ -115,8 +115,8 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     fun <T> queryRequiredObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
         return when {
-            clazz == String::class.java -> queryRequiredObject(sql, StringRowMapper.instance, *args) as T
-            clazz == Boolean::class.java || clazz == Boolean::class.javaPrimitiveType ->
+            String::class.java.isAssignableFrom(clazz) -> queryRequiredObject(sql, StringRowMapper.instance, *args) as T
+            Boolean::class.java.isAssignableFrom(clazz) || clazz == Boolean::class.javaPrimitiveType ->
                 queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
 
             Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive ->

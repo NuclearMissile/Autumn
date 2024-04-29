@@ -30,7 +30,7 @@ class DispatcherServlet : HttpServlet() {
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
-            return Pattern.compile("^$regPath$")
+            return Pattern.compile("^$regPath\$")
         }
     }
 
@@ -264,7 +264,7 @@ class DispatcherServlet : HttpServlet() {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
 
-                    is RequestBody -> if (param.paramType == String::class.java)
+                    is RequestBody -> if (String::class.java.isAssignableFrom(param.paramType))
                         req.reader.readText() else req.reader.readJson(param.paramType)
 
                     is RequestParam -> {
@@ -354,7 +354,7 @@ class DispatcherServlet : HttpServlet() {
                 is RequestBody -> {}
 
                 is Header -> {
-                    if (!paramType.isAssignableFrom(String::class.java))
+                    if (!String::class.java.isAssignableFrom(paramType))
                         throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Header parameter must be String? type.")
                     name = paramAnno.value.ifEmpty { param.name }
                     required = paramAnno.required
