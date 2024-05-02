@@ -7,6 +7,7 @@ import jakarta.servlet.ServletResponse
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
@@ -84,54 +85,75 @@ class ApiErrorFilterReg : FilterRegistrationBean() {
     }
 }
 
-val USERS = mapOf("test" to "test")
-
-@Controller
-class MvcController {
+@Controller("/hello")
+class HelloController {
     @Get("/")
-    fun index(@Header("Cookie") a: String?): ModelAndView {
-        return ModelAndView("/index.html")
-    }
-
-    @Get("/hello")
     fun hello(): ModelAndView {
         return ModelAndView("/hello.html")
     }
 
-    @Get("/hello/error")
+    @Get("/error")
     fun error(): ModelAndView {
-        return ModelAndView("/index.html", mapOf(), 400)
+        return ModelAndView("/hello.html", mapOf(), 400)
     }
 
-    @Get("/hello/error/{errorCode}/{errorResp}")
+    @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw ResponseErrorException(errorCode, "test", errorResp)
     }
 }
 
-@Controller("/user")
-class UserController {
-    @Get("/")
-    fun user(req: HttpServletRequest): ModelAndView {
-        val userName = req.session.getAttribute("username")
-        return ModelAndView("/user.ftl", mapOf("username" to userName))
+@Controller("/")
+class IndexController(@Autowired private val userService: UserService) {
+    companion object {
+        const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
 
-    @Get("/logout")
-    fun logout(req: HttpServletRequest): String {
-        req.session.invalidate()
-        return "redirect:/user"
+    @Get("/")
+    fun index(session: HttpSession): ModelAndView {
+        val user = session.getAttribute(USER_SESSION_KEY)
+        return if (user == null)
+            ModelAndView("redirect:/register") else ModelAndView("/index.ftl", mapOf("user" to user))
+    }
+
+    @Get("/register")
+    fun register(): ModelAndView {
+        return ModelAndView("/register.ftl")
+    }
+
+    @Post("/register")
+    fun register(
+        @RequestParam email: String,
+        @RequestParam name: String,
+        @RequestParam password: String
+    ): ModelAndView {
+        return try {
+            userService.createUser(email, name, password)
+            ModelAndView("redirect:/login")
+        } catch (e: Exception) {
+            ModelAndView("/register.ftl", mapOf("error" to "$email already registered"))
+        }
+    }
+
+    @Get("/login")
+    fun login(): ModelAndView {
+        return ModelAndView("/login.ftl")
     }
 
     @Post("/login")
-    fun login(req: HttpServletRequest): ModelAndView {
-        val username = req.getParameter("username")
-        val password = req.getParameter("password")
-        if (username == null || password == null || USERS[username] != password) {
-            return ModelAndView("/login_failed.html")
+    fun login(@RequestParam email: String, @RequestParam password: String, session: HttpSession): ModelAndView {
+        val user = userService.getUser(email)
+        if (user == null || user.password != password) {
+            return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         }
-        req.session.setAttribute("username", username)
-        return ModelAndView("redirect:/user")
+        session.setAttribute(USER_SESSION_KEY, user)
+        return ModelAndView("redirect:/")
+    }
+
+    @Get("/logoff")
+    fun logoff(session: HttpSession): String {
+        session.removeAttribute(USER_SESSION_KEY)
+        return "redirect:/login"
     }
 }
 
@@ -139,12 +161,12 @@ class UserController {
 class RestApiController {
     @Get("/hello/{name}")
     @ResponseBody
-    fun hello(@PathVariable("name") name: String): String {
+    fun hello(@PathVariable name: String): String {
         return mapOf("name" to name).toJson()
     }
 
     @Get("/params")
-    fun params(@RequestParam("test") test: String): Map<String, String> {
+    fun params(@RequestParam test: String): Map<String, String> {
         return mapOf("test" to test)
     }
 
