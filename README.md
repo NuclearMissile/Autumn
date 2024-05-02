@@ -1,4 +1,4 @@
-![](autumn.png | width=250)
+<img src="https://raw.githubusercontent.com/NuclearMissile/Autumn/master/autumn.png" width="300"> 
 
 # Autumn
 
