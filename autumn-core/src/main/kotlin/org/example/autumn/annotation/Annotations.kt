@@ -166,20 +166,14 @@ annotation class Controller(
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Get(
-    /**
-     * URL mapping.
-     */
-    val value: String
+    val value: String, val produce: String = ""
 )
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Post(
-    /**
-     * URL mapping.
-     */
-    val value: String
+    val value: String, val produce: String = ""
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)

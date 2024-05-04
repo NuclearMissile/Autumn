@@ -78,6 +78,16 @@ class DispatcherServletTest {
     }
 
     @Test
+    fun getApiHelloProduceText() {
+        val req = createMockRequest("GET", "/api/hello/produce_text/Bob")
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(200, resp.status)
+        assertEquals("text/plain", resp.contentType)
+        assertEquals("Bob", resp.contentAsString)
+    }
+
+    @Test
     fun getGreeting() {
         val req = createMockRequest("GET", "/greeting", null, mapOf("name" to "Bob"))
         val resp = createMockResponse()

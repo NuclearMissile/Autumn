@@ -52,6 +52,12 @@ class RestApiController {
         return mapOf("name" to name).toJson()
     }
 
+    @Get("/api/hello/produce_text/{name}", "text/plain")
+    @ResponseBody
+    fun helloProduce(@PathVariable("name") name: String): String {
+        return name
+    }
+
     @Get("/api/greeting")
     fun greeting(
         @RequestParam(value = "action", defaultValue = "Hello") action: String,
@@ -91,7 +97,7 @@ class RestApiController {
     }
 
     @Post("/api/echo-string-body")
-    fun echoStringBody(@RequestBody body: String,  resp: HttpServletResponse) {
+    fun echoStringBody(@RequestBody body: String, resp: HttpServletResponse) {
         resp.contentType = "text/plain"
         val pw = resp.writer
         pw.write(body)

@@ -104,7 +104,7 @@ class DispatcherServlet : HttpServlet() {
             when {
                 dispatcher == null -> serveError(url, NotFoundException("Not found: $url"), req, resp, false)
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
-                else -> serveNormal(url, dispatcher, req, resp)
+                else -> serveMvc(url, dispatcher, req, resp)
             }
         } catch (e: ResponseErrorException) {
             serveError(url, e, req, resp, dispatcher!!.isRest)
@@ -113,7 +113,7 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted) resp.contentType = "application/json"
+        if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "application/json" }
         if (dispatcher.isResponseBody) {
             when (ret) {
                 is String -> resp.writer.also { it.write(ret) }.flush()
@@ -125,9 +125,9 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun serveNormal(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
+    private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted) resp.contentType = "text/html"
+        if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "text/html" }
         when (ret) {
             is String -> {
                 if (dispatcher.isResponseBody) {
@@ -205,12 +205,14 @@ class DispatcherServlet : HttpServlet() {
             val getAnno = m.getAnnotation(Get::class.java)
             val postAnno = m.getAnnotation(Post::class.java)
             if (getAnno != null) {
+                val urlPattern = "/" + (prefix + getAnno.value).trim('/')
                 configMethod(m)
-                getDispatchers += Dispatcher(instance, m, "/" + (prefix + getAnno.value).trim('/'), isRest)
+                getDispatchers += Dispatcher(instance, m, urlPattern, getAnno.produce, isRest)
             }
             if (postAnno != null) {
+                val urlPattern = "/" + (prefix + postAnno.value).trim('/')
                 configMethod(m)
-                postDispatchers += Dispatcher(instance, m, "/" + (prefix + postAnno.value).trim('/'), isRest)
+                postDispatchers += Dispatcher(instance, m, urlPattern, postAnno.produce, isRest)
             }
         }
 
@@ -223,6 +225,7 @@ class DispatcherServlet : HttpServlet() {
         private val controller: Any,
         private val handlerMethod: Method,
         urlPattern: String,
+        val produce: String,
         val isRest: Boolean
     ) {
         val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
