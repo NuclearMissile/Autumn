@@ -162,14 +162,14 @@ class DispatcherServletTest {
         val resp = createMockResponse()
         dispatcherServlet.service(req, resp)
         assertEquals(402, resp.status)
-        assertEquals("application/json", resp.contentType)
+        assertEquals("text/plain", resp.contentType)
         assertTrue(resp.contentAsString == "test_402_error")
 
         val req2 = createMockRequest("GET", "/api/error/400")
         val resp2 = createMockResponse()
         dispatcherServlet.service(req2, resp2)
         assertEquals(400, resp2.status)
-        assertEquals("application/json", resp2.contentType)
+        assertEquals("text/plain", resp2.contentType)
         assertTrue(resp2.contentAsString == "")
 
         val req3 = createMockRequest("GET", "/api/error")

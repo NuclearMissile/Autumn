@@ -177,6 +177,8 @@ class RestApiController {
 
     @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp)
+        throw ResponseErrorException(
+            errorCode, "test", mapOf("errorCode" to errorCode, "errorResp" to errorResp).toJson()
+        )
     }
 }

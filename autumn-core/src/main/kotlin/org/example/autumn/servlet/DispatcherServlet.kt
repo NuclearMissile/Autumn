@@ -168,24 +168,22 @@ class DispatcherServlet : HttpServlet() {
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean
     ) {
         logger.warn("process request failed with status: ${e.statusCode}, $url", e)
+        if (resp.isCommitted) return
         resp.reset()
         resp.status = e.statusCode
-        when {
-            isRest -> {
-                resp.contentType = "application/json"
-                resp.writer.write(e.responseBody ?: "")
-                resp.writer.flush()
+        resp.contentType = "text/plain"
+        if (isRest) {
+            resp.writer.apply {
+                write(e.responseBody ?: "")
+                flush()
             }
-
-            e.responseBody != null -> {
-                resp.contentType = "text/plain"
-                resp.writer.write(e.responseBody)
-                resp.writer.flush()
+        } else if (e.responseBody != null) {
+            resp.writer.apply {
+                write(e.responseBody)
+                flush()
             }
-
-            else -> {
-                viewResolver.renderError(null, e.statusCode, req, resp)
-            }
+        } else {
+            viewResolver.renderError(null, e.statusCode, req, resp)
         }
     }
 
