@@ -40,46 +40,42 @@ class HelloContextLoadListener : ContextLoadListener()
 @Order(100)
 @Component
 class LogFilter : FilterRegistrationBean() {
-    override val urlPatterns: List<String>
-        get() = listOf("/*")
-    override val filter: Filter
-        get() = object : Filter {
-            private val logger = LoggerFactory.getLogger(javaClass)
-            override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
-                val httpReq = req as HttpServletRequest
-                logger.info("{}: {}", httpReq.method, httpReq.requestURI)
-                chain.doFilter(req, resp)
-            }
+    override val urlPatterns = listOf("/*")
+    override val filter = object : Filter {
+        private val logger = LoggerFactory.getLogger(javaClass)
+        override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
+            val httpReq = req as HttpServletRequest
+            logger.info("{}: {}", httpReq.method, httpReq.requestURI)
+            chain.doFilter(req, resp)
         }
+    }
 }
 
 @Order(200)
 @Component
 class ApiErrorFilter : FilterRegistrationBean() {
-    override val urlPatterns: List<String>
-        get() = listOf("/api/*")
-    override val filter: Filter
-        get() = object : Filter {
-            private val logger = LoggerFactory.getLogger(javaClass)
-            override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
-                try {
-                    chain.doFilter(req, resp)
-                } catch (e: Throwable) {
-                    req as HttpServletRequest
-                    resp as HttpServletResponse
-                    logger.warn("api error when handling {}: {}", req.method, req.requestURI)
-                    if (!resp.isCommitted) {
-                        resp.apply {
-                            reset()
-                            status = 400
-                            writer.writeJson(
-                                mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName)
-                            ).flush()
-                        }
+    override val urlPatterns = listOf("/api/*")
+    override val filter = object : Filter {
+        private val logger = LoggerFactory.getLogger(javaClass)
+        override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
+            try {
+                chain.doFilter(req, resp)
+            } catch (e: Throwable) {
+                req as HttpServletRequest
+                resp as HttpServletResponse
+                logger.warn("api error when handling {}: {}", req.method, req.requestURI)
+                if (!resp.isCommitted) {
+                    resp.apply {
+                        reset()
+                        status = 400
+                        writer.writeJson(
+                            mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName)
+                        ).flush()
                     }
                 }
             }
         }
+    }
 }
 
 @Controller("/hello")
