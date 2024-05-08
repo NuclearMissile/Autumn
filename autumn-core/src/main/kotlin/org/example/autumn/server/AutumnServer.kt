@@ -15,6 +15,7 @@ import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
 import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.FileNotFoundException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -79,12 +80,18 @@ class AutumnServer {
 
             try {
                 Thread.currentThread().contextClassLoader = classLoader
-                // load correct logger config
-                val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
-                loggerContext.reset()
-                val configurator = JoranConfigurator()
-                configurator.context = loggerContext
-                readInputStreamFromClassPath("logback.xml") { configurator.doConfigure(it) }
+                try {
+                    // load correct logger config
+                    readInputStreamFromClassPath("logback.xml") {
+                        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+                        loggerContext.reset()
+                        val configurator = JoranConfigurator()
+                        configurator.context = loggerContext
+                        configurator.doConfigure(it)
+                    }
+                } catch (e: FileNotFoundException) {
+                    logger.info("logback.xml not found, using default logging config")
+                }
                 // load config
                 config = if (customConfig == null) Config.load() else
                     Config.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
