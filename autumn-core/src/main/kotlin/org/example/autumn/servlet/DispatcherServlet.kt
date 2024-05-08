@@ -86,7 +86,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveError(url, NotFoundException("Resource not found: $url"), req, resp, false)
+                serveError(url, NotFoundException("Resource not found"), req, resp, false)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -102,7 +102,7 @@ class DispatcherServlet : HttpServlet() {
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
-                dispatcher == null -> serveError(url, NotFoundException("Not found: $url"), req, resp, false)
+                dispatcher == null -> serveError(url, NotFoundException("Path not found"), req, resp, false)
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
                 else -> serveMvc(url, dispatcher, req, resp)
             }
@@ -167,7 +167,7 @@ class DispatcherServlet : HttpServlet() {
     private fun serveError(
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean
     ) {
-        logger.warn("process request failed with status: ${e.statusCode}, $url", e)
+        logger.warn("[$url] process request failed: ${e.message}, status: ${e.statusCode}", e)
         if (resp.isCommitted) return
         resp.reset()
         resp.status = e.statusCode
