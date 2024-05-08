@@ -1,5 +1,7 @@
 package org.example.autumn.server
 
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.joran.JoranConfigurator
 import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
@@ -9,7 +11,8 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
-import org.example.autumn.utils.IOUtils
+import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
+import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.lang.management.ManagementFactory
@@ -25,6 +28,7 @@ import java.util.jar.JarFile
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.system.exitProcess
+
 
 class AutumnServer {
     companion object {
@@ -60,10 +64,11 @@ class AutumnServer {
                 "warDir must be a file or a directory"
             }
             if (customConfig != null) {
-                require(customConfig.endsWith(".yml")) {
-                    "customConfigPath must be .yml file"
-                }
+                require(customConfig.endsWith(".yml")) { "customConfigPath must be .yml file" }
             }
+
+            // show banner
+            logger.info(readStringFromClassPath("/banner.txt"))
 
             val (classesPath, libPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
@@ -74,6 +79,13 @@ class AutumnServer {
 
             try {
                 Thread.currentThread().contextClassLoader = classLoader
+                // load correct logger config
+                val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+                loggerContext.reset()
+                val configurator = JoranConfigurator()
+                configurator.context = loggerContext
+                readInputStreamFromClassPath("logback.xml") { configurator.doConfigure(it) }
+                // load config
                 config = if (customConfig == null) Config.load() else
                     Config.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
             } finally {
@@ -117,12 +129,16 @@ class AutumnServer {
             classLoader.walkClassesPath(handler)
             classLoader.walkLibPaths(handler)
 
-            start(webRoot, config, classLoader, classSet.toList())
+            start(webRoot, config, classLoader, classSet.toList(), false)
         }
 
-        // embedded server entry point
-        fun start(webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>) {
-            logger.info(IOUtils.readStringFromClassPath("/banner.txt"))
+        // server entry point
+        fun start(
+            webRoot: String, config: PropertyResolver, classLoader: ClassLoader,
+            annoClasses: List<Class<*>>, showBanner: Boolean = true
+        ) {
+            // show banner in embedded mode
+            if (showBanner) logger.info(readStringFromClassPath("/banner.txt"))
             // start info:
             val startTime = System.currentTimeMillis()
             val javaVersion = Runtime.version().feature()

@@ -52,7 +52,7 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
 
     init {
         logger.info("set class path: ${this.classesPath.absPath()}")
-        libPaths.forEach { logger.debug("set jar path: ${it.absPath()}") }
+        libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
     }
 
     fun walkLibPaths(visitor: Consumer<Resource>) {

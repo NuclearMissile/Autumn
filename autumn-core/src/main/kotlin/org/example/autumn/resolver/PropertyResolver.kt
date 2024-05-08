@@ -31,7 +31,6 @@ open class Config(props: Properties) : PropertyResolver {
         }
 
         fun loadYaml(yamlPath: String, isClassPath: Boolean = true): PropertyResolver {
-            logger.info("load config: {}", yamlPath)
             val yamlMap = loadYamlAsPlainMap(yamlPath, isClassPath).filter { it.value is String } as Map<String, String>
             return Config(yamlMap.toProperties())
         }
