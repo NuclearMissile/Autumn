@@ -12,18 +12,16 @@ import org.slf4j.LoggerFactory
 
 @Order(100)
 @Component
-class LogFilterRegistrationBean : FilterRegistrationBean() {
+class LogFilter : FilterRegistrationBean() {
     override val urlPatterns: List<String>
         get() = listOf("/*")
     override val filter: Filter
-        get() = LogFilter()
-
-    class LogFilter : Filter {
-        private val logger = LoggerFactory.getLogger(javaClass)
-        override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
-            val httpReq = req as HttpServletRequest
-            logger.info("{}: {}", httpReq.method, httpReq.requestURI)
-            chain.doFilter(req, resp)
+        get() = object : Filter {
+            private val logger = LoggerFactory.getLogger(javaClass)
+            override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
+                val httpReq = req as HttpServletRequest
+                logger.info("{}: {}", httpReq.method, httpReq.requestURI)
+                chain.doFilter(req, resp)
+            }
         }
-    }
 }
