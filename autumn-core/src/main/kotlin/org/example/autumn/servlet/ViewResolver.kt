@@ -85,6 +85,7 @@ class FreeMarkerViewResolver(
             return
         }
         resp.status = statusCode
+        resp.contentType = "text/html"
         resp.writer.also {
             try {
                 template.process(model, it)
