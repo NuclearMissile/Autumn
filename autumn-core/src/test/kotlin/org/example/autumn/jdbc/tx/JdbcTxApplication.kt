@@ -1,14 +1,37 @@
 package org.example.autumn.jdbc.tx
 
 import org.example.autumn.annotation.*
+import org.example.autumn.aop.AroundProxyBeanPostProcessor
+import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.jdbc.JdbcConfiguration
 import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.jdbc.JdbcTestBase
+import org.slf4j.LoggerFactory
+import java.lang.reflect.Method
 
 @ComponentScan
 @Configuration
 @Import(JdbcConfiguration::class)
 class JdbcTxApplication
+
+@Configuration
+class BeforeApplication {
+    @Bean
+    fun createAroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
+        return AroundProxyBeanPostProcessor()
+    }
+}
+
+@Component
+class LogInvocationHandler : BeforeInvocationHandlerAdapter() {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun before(proxy: Any, method: Method, args: Array<Any>?) {
+        if (method.isAnnotationPresent(WithTransaction::class.java))
+            logger.info("[Before] {}()", method.name)
+    }
+}
+
 class Address(
     var id: Int = 0,
     var userId: Int = 0,
@@ -20,6 +43,7 @@ class User(var id: Int = 0, var name: String? = null, var age: Int? = null)
 
 @Component
 @Transactional
+// @Around("logInvocationHandler")
 class AddressService {
     @Autowired
     var userService: UserService? = null

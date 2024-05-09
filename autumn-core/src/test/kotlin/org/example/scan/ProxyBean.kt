@@ -5,7 +5,6 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Order
 import org.example.autumn.annotation.Value
 import org.example.autumn.context.BeanPostProcessor
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @Component
@@ -44,7 +43,7 @@ class FirstProxyBean(val target: OriginBean) : OriginBean() {
 @Order(100)
 @Component
 class FirstProxyBeanPostProcessor : BeanPostProcessor {
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     var originBeans: MutableMap<String, Any> = HashMap()
 
@@ -86,7 +85,7 @@ class SecondProxyBean(val target: OriginBean) : OriginBean() {
 @Order(200)
 @Component
 class SecondProxyBeanPostProcessor : BeanPostProcessor {
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
     var originBeans: MutableMap<String, Any> = HashMap()
 
     override fun beforeInitialization(bean: Any, beanName: String): Any {

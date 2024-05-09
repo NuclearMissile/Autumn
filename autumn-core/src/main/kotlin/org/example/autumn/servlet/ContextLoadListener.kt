@@ -9,13 +9,12 @@ import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.AutumnException
 import org.example.autumn.resolver.PropertyResolver
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.Objects.requireNonNull
 
 open class ContextLoadListener : ServletContextListener {
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun contextInitialized(sce: ServletContextEvent) {
         logger.info("init {}.", javaClass.name)

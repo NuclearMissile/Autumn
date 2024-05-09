@@ -19,7 +19,6 @@ import org.example.autumn.utils.J2EEAnnoUtils.getFilterUrlPatterns
 import org.example.autumn.utils.J2EEAnnoUtils.getServletInitParams
 import org.example.autumn.utils.J2EEAnnoUtils.getServletName
 import org.example.autumn.utils.J2EEAnnoUtils.getServletUrlPatterns
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedInputStream
 import java.io.FileInputStream
@@ -35,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ServletContextImpl(
     private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String
 ) : ServletContext, AutoCloseable {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
     private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()
     private val attributes = ConcurrentHashMap<String, Any>()
     private val sessionCookieConfig = SessionCookieConfigImpl(config)

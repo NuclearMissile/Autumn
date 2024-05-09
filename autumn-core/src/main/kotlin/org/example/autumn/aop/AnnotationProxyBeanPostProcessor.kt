@@ -36,7 +36,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         }
     }
 
-    private val originBeans = mutableMapOf<String, Any>()
+    private val originalBeans = mutableMapOf<String, Any>()
     private val annotationClass = run {
         val type = javaClass.genericSuperclass
         require(type is ParameterizedType) { "Class ${javaClass.name} does not have parameterized type." }
@@ -56,20 +56,20 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
         } as String
         val ctx = ApplicationContextHolder.requiredApplicationContext as ConfigurableApplicationContext
-        val info = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
+        val handlerInfo = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
         )
-        val handlerBean = info.instance ?: ctx.createEarlySingleton(info)
-        val proxy = if (handlerBean is InvocationHandler)
-            createProxy(bean, handlerBean)
+        val handler = handlerInfo.instance ?: ctx.createEarlySingleton(handlerInfo)
+        val proxy = if (handler is InvocationHandler)
+            createProxy(bean, handler)
         else throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' is not type of ${InvocationHandler::class.java.name}.",
         )
-        originBeans[beanName] = bean
+        originalBeans[beanName] = bean
         return proxy
     }
 
     override fun beforePropertySet(bean: Any, beanName: String): Any {
-        return originBeans[beanName] ?: bean
+        return originalBeans[beanName] ?: bean
     }
 }

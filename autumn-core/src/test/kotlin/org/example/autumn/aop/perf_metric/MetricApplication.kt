@@ -4,7 +4,6 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.ComponentScan
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.annotation.Inherited
 import java.lang.reflect.InvocationHandler
@@ -30,7 +29,7 @@ class MetricProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Metric>()
 
 @Component
 class MetricInvocationHandler : InvocationHandler {
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
     val lastProcessedTime = mutableMapOf<String, Long>()
     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
         val metric = method.getAnnotation(Metric::class.java)

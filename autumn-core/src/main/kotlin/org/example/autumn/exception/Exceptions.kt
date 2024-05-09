@@ -1,6 +1,6 @@
 package org.example.autumn.exception
 
-open class AutumnException(message: String?, cause: Throwable?) : Throwable(message, cause)
+open class AutumnException(message: String?, cause: Throwable?) : Exception(message, cause)
 
 open class BeanDefinitionException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)

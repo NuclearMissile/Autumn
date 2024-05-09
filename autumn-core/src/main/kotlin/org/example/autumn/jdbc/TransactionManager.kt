@@ -4,7 +4,6 @@ import org.example.autumn.annotation.Transactional
 import org.example.autumn.annotation.WithTransaction
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.exception.TransactionException
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
@@ -21,12 +20,12 @@ class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transact
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
-        private val transactionStatus = ThreadLocal<TransactionStatus?>()
+        private val transactionStatus = ThreadLocal<TransactionStatus>()
         val transactionConn: Connection?
             get() = transactionStatus.get()?.conn
     }
 
-    val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
         val txs = transactionStatus.get()
@@ -45,11 +44,11 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 conn.commit()
                 return ret
             } catch (e: InvocationTargetException) {
-                val cause = e.cause?.cause
+                val target = e.targetException
                 logger.warn(
-                    "will rollback transaction for caused exception: {}", cause?.toString() ?: "null"
+                    "will rollback transaction for exception: $e", e
                 )
-                val txe = TransactionException("Exception thrown in tx context.", cause)
+                val txe = TransactionException("Exception thrown in tx context.", target)
                 try {
                     conn.rollback()
                 } catch (sqle: SQLException) {

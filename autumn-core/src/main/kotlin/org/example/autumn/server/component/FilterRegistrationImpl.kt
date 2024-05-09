@@ -9,7 +9,7 @@ class FilterRegistrationImpl(
     private val urlPatterns = mutableListOf<String>()
     private val initParams = mutableMapOf<String, String>()
 
-    var initialized: Boolean = false
+    var initialized = false
 
     fun getFilterConfig(): FilterConfig {
         return object : FilterConfig {

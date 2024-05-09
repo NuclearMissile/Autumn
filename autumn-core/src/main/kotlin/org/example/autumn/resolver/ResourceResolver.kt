@@ -1,6 +1,5 @@
 package org.example.autumn.resolver
 
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.file.FileSystems
@@ -11,7 +10,7 @@ import java.nio.file.Paths
 data class Resource(val path: String, val name: String)
 
 class ResourceResolver(private val basePackage: String) {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
     private val contextClassLoader: ClassLoader
         get() = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
 

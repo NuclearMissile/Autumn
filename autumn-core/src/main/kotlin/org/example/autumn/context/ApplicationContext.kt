@@ -44,17 +44,17 @@ class AnnotationConfigApplicationContext(
             }
         }
         // call init method
-        infos.values.forEach {
-            val proxied = getProxiedInstance(it)
-            invokeMethod(proxied, it.initMethod, it.initMethodName)
+        infos.values.forEach { info ->
+            val proxied = getProxiedInstance(info)
+            invokeMethod(proxied, info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
-                val processed = postProcessor.afterInitialization(it.instance!!, it.beanName)
-                if (processed !== it.instance!!) {
+                val processed = postProcessor.afterInitialization(info.instance!!, info.beanName)
+                if (processed !== info.instance!!) {
                     logger.atDebug().log(
                         "BeanPostProcessor {} return different bean from {} to {}.",
-                        postProcessor.javaClass.name, it.instance!!.javaClass.name, processed.javaClass.name
+                        postProcessor.javaClass.name, info.instance!!.javaClass.name, processed.javaClass.name
                     )
-                    it.instance = processed
+                    info.instance = processed
                 }
             }
         }
@@ -262,7 +262,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -282,7 +282,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                        "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }
