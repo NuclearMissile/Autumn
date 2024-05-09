@@ -1,7 +1,6 @@
 package org.example.autumn.jdbc
 
 import org.example.autumn.annotation.Transactional
-import org.example.autumn.annotation.WithTransaction
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.exception.TransactionException
 import org.slf4j.LoggerFactory
@@ -30,7 +29,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
         val txs = transactionStatus.get()
         // join current tx
-        if (txs != null || !method.isAnnotationPresent(WithTransaction::class.java))
+        if (txs != null)
             return method.invoke(proxy, *(args ?: emptyArray()))
 
         dataSource.connection.use { conn ->
@@ -45,9 +44,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 return ret
             } catch (e: InvocationTargetException) {
                 val target = e.targetException
-                logger.warn(
-                    "will rollback transaction for exception: $e", e
-                )
+                logger.warn("rollback transaction for exception: $e", e)
                 val txe = TransactionException("Exception thrown in tx context.", target)
                 try {
                     conn.rollback()

@@ -2,11 +2,11 @@ package org.example.autumn.jdbc.tx
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
-import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.jdbc.JdbcConfiguration
 import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.jdbc.JdbcTestBase
 import org.slf4j.LoggerFactory
+import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 
 @ComponentScan
@@ -15,20 +15,24 @@ import java.lang.reflect.Method
 class JdbcTxApplication
 
 @Configuration
-class BeforeApplication {
+class AroundProxyConfig {
     @Bean
     fun createAroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
         return AroundProxyBeanPostProcessor()
     }
 }
 
+@Order(100)
 @Component
-class LogInvocationHandler : BeforeInvocationHandlerAdapter() {
+class AroundLogInvocationHandler : InvocationHandler {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun before(proxy: Any, method: Method, args: Array<Any>?) {
-        if (method.isAnnotationPresent(WithTransaction::class.java))
-            logger.info("[Before] {}()", method.name)
+    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
+        logger.info("**Before**: {}()", method.name)
+        val ret = method.invoke(proxy, *(args ?: emptyArray()))
+        logger.info("**Result**: {}", ret)
+        logger.info("**After**: {}()", method.name)
+        return ret
     }
 }
 
@@ -43,7 +47,7 @@ class User(var id: Int = 0, var name: String? = null, var age: Int? = null)
 
 @Component
 @Transactional
-// @Around("logInvocationHandler")
+@Around("aroundLogInvocationHandler")
 class AddressService {
     @Autowired
     var userService: UserService? = null
@@ -51,7 +55,6 @@ class AddressService {
     @Autowired
     var jdbcTemplate: JdbcTemplate? = null
 
-    @WithTransaction
     fun addAddress(vararg addresses: Address) {
         for (address in addresses) {
             // check if userId exists:
@@ -60,12 +63,10 @@ class AddressService {
         }
     }
 
-    @WithTransaction
     fun getAddresses(userId: Int): List<Address> {
         return jdbcTemplate!!.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, Address::class.java, userId)
     }
 
-    @WithTransaction
     fun deleteAddress(userId: Int) {
         jdbcTemplate!!.update(JdbcTestBase.DELETE_ADDRESS_BY_USERID, userId)
         if (userId == 1) {
@@ -76,6 +77,7 @@ class AddressService {
 
 @Component
 @Transactional
+@Around("aroundLogInvocationHandler")
 class UserService {
     @Autowired
     var addressService: AddressService? = null
@@ -83,7 +85,6 @@ class UserService {
     @Autowired
     var jdbcTemplate: JdbcTemplate? = null
 
-    @WithTransaction
     fun createUser(name: String?, age: Int): User {
         val id: Number = jdbcTemplate!!.updateWithGeneratedKey(JdbcTestBase.INSERT_USER, name, age)
         val user = User()
@@ -93,17 +94,14 @@ class UserService {
         return user
     }
 
-    @WithTransaction
     fun getUser(userId: Int): User {
         return jdbcTemplate!!.queryRequiredObject(JdbcTestBase.SELECT_USER, User::class.java, userId)
     }
 
-    @WithTransaction
     fun updateUser(user: User) {
         jdbcTemplate!!.update(JdbcTestBase.UPDATE_USER, user.name, user.age, user.id)
     }
 
-    @WithTransaction
     fun deleteUser(user: User) {
         jdbcTemplate!!.update(JdbcTestBase.DELETE_USER, user.id)
         addressService!!.deleteAddress(user.id)

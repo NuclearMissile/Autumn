@@ -145,12 +145,6 @@ annotation class Around(
 @Inherited
 annotation class Transactional(val value: String = "transactionManager")
 
-@AllOpen
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class WithTransaction
-
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
