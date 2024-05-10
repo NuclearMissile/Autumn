@@ -149,14 +149,17 @@ class AutumnServer {
             val user = System.getProperty("user.name")
             val pwd = Paths.get("").toAbsolutePath().toString()
             logger.info(
-                "Starting using Java {} with PID {} (started by {} in {})", javaVersion, pid, user, pwd
+                "starting using Java {} with PID {} (started by {} in {})", javaVersion, pid, user, pwd
             )
 
-            val executor = if (config.getRequired("server.enable-virtual-thread", Boolean::class.java))
-                Executors.newVirtualThreadPerTaskExecutor() else ThreadPoolExecutor(
+            val enableVirtualThread = config.getRequired("server.enable-virtual-thread", Boolean::class.java)
+                && Runtime.version().feature() >= 21
+            if (enableVirtualThread) logger.info("virtual thread is enabled")
+            val executor = if (enableVirtualThread) Executors.newVirtualThreadPerTaskExecutor() else ThreadPoolExecutor(
                 5, config.getRequired("server.thread-pool-size", Int::class.java),
                 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
+
             try {
                 HttpConnector(config, classLoader, webRoot, executor, annoClasses).use {
                     it.start()
@@ -164,7 +167,7 @@ class AutumnServer {
                     val endTime = System.currentTimeMillis()
                     val appTime = "%.3f".format((endTime - startTime) / 1000.0)
                     val jvmTime = "%.3f".format(ManagementFactory.getRuntimeMXBean().uptime / 1000.0)
-                    logger.info("Started in {} s (process running for {} s)", appTime, jvmTime)
+                    logger.info("started in {} s (process running for {} s)", appTime, jvmTime)
                     while (true) {
                         try {
                             Thread.sleep(1000)
