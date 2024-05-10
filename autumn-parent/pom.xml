@@ -28,7 +28,7 @@
         <jakarta.persistence-api.verion>3.1.0</jakarta.persistence-api.verion>
         <freemarker.version>2.3.32</freemarker.version>
         <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.17.1</jackson.version>
         <spring.version>6.1.6</spring.version>
         <commons-cli.version>1.7.0</commons-cli.version>
 
@@ -115,19 +115,16 @@
                 <groupId>org.xerial</groupId>
                 <artifactId>sqlite-jdbc</artifactId>
                 <version>${sqlite.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-test</artifactId>
                 <version>${spring.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-web</artifactId>
                 <version>${spring.version}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -2,23 +2,25 @@
 
 # Autumn
 
-Yet another toy web application framework imitating Spring with homemade http server in Kotlin.
+_Yet another toy web application framework imitating Spring with homemade http server in Kotlin._
+
 ![](screenshot.png)
 
 ## Features
 
-- [x] DI + AOP + MVC web framework + Homemade Jakarta EE 6.0 http server 
+- [x] DI + AOP + MVC web framework
+- [x] Homemade Jakarta Servlet 6.0 http server
 - [x] JdbcTemplate and naive ORM, support @Transactional annotation
 - [x] Standard .war packaging
-- [ ] Demo webapp
-- [ ] ......
+- [x] Demo webapp
 
 ## Demo
 
-Please refer to app-autumn (WIP) and hello-autumn.
+Please refer to hello-autumn.
 
 ### Example: hello-autumn (user login demo)
-Use Autumn just like Spring.
+
+Write Autumn just like Spring.
 
 ```kotlin
 @Controller("/")
@@ -76,7 +78,8 @@ class IndexController(@Autowired private val userService: UserService) {
 }
 
 ```
-_email for test: test@test.com, password: test_
+
+test account: _test@test.com: test_
 
 ![](login-demo.png)
 
