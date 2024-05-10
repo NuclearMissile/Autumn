@@ -21,7 +21,7 @@ interface PropertyResolver {
     fun getMap(): Map<String, String>
 }
 
-open class Config(props: Properties) : PropertyResolver {
+class Config(props: Properties) : PropertyResolver {
     companion object {
         private const val CONFIG_YML: String = "/config.yml"
         private val logger = LoggerFactory.getLogger(Companion::class.java)
