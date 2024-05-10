@@ -144,20 +144,27 @@ class AutumnServer {
             if (showBanner) logger.info(readStringFromClassPath("/banner.txt"))
             // start info:
             val startTime = System.currentTimeMillis()
-            val javaVersion = Runtime.version().feature()
+            val jvmVersion = Runtime.version().feature()
             val pid = ManagementFactory.getRuntimeMXBean().pid
             val user = System.getProperty("user.name")
             val pwd = Paths.get("").toAbsolutePath().toString()
+            val enableVirtualThread = config.getRequired("server.enable-virtual-thread", Boolean::class.java)
             logger.info(
-                "starting using Java {} with PID {} (started by {} in {})", javaVersion, pid, user, pwd
+                "starting using Java {} with PID {} (started by {} in {})", jvmVersion, pid, user, pwd
             )
 
-            val enableVirtualThread = config.getRequired("server.enable-virtual-thread", Boolean::class.java)
-                && Runtime.version().feature() >= 21
-            if (enableVirtualThread) logger.info("virtual thread is enabled")
-            val executor = if (enableVirtualThread) Executors.newVirtualThreadPerTaskExecutor() else ThreadPoolExecutor(
-                5, config.getRequired("server.thread-pool-size", Int::class.java),
-                10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
+            // virtual thread related check
+            if (enableVirtualThread && jvmVersion < 21) {
+                logger.warn(
+                    "cannot enable virtual thread, jvm version >= 21 required, current: $jvmVersion, fallback to thread pool executor"
+                )
+            }
+            val executor = if (enableVirtualThread && jvmVersion >= 21) {
+                logger.info("virtual thread executor enabled")
+                Executors.newVirtualThreadPerTaskExecutor()
+            } else ThreadPoolExecutor(
+                5, config.getRequired("server.thread-pool-size", Int::class.java), 10L,
+                TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
 
             try {
