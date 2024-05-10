@@ -3,7 +3,10 @@ package org.example.autumn.orm
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.annotation.*
+import org.example.autumn.jdbc.DataSourceTransactionManager
 import org.example.autumn.jdbc.JdbcTemplate
+import org.example.autumn.jdbc.TransactionManager
+import org.example.autumn.jdbc.TransactionalBeanPostProcessor
 import javax.sql.DataSource
 
 @ComponentScan
@@ -42,5 +45,15 @@ class OrmTestApplication {
         @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
     ): DbTemplate {
         return DbTemplate(jdbcTemplate, entityPackagePath)
+    }
+
+    @Bean
+    fun transactionalBeanPostProcessor(): TransactionalBeanPostProcessor {
+        return TransactionalBeanPostProcessor()
+    }
+
+    @Bean
+    fun transactionManager(@Autowired dataSource: DataSource): TransactionManager {
+        return DataSourceTransactionManager(dataSource)
     }
 }

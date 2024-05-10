@@ -22,7 +22,7 @@ class OrmTest {
             "CREATE TABLE password_auths (userId INTEGER PRIMARY KEY AUTOINCREMENT, random TEXT NOT NULL, passwd TEXT NOT NULL);"
     }
 
-    val propertyResolver = Config(
+    private val propertyResolver = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
             "autumn.datasource.username" to "sa",

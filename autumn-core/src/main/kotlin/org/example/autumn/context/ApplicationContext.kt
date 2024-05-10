@@ -10,6 +10,8 @@ import org.example.autumn.utils.ClassUtils.getNamedMethod
 import org.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.javaConstructor
 
 object ApplicationContextHolder {
     var applicationContext: ApplicationContext? = null
@@ -136,17 +138,8 @@ class AnnotationConfigApplicationContext(
     private fun Method.isPrimary() = this.isAnnotationPresent(Primary::class.java)
 
     private fun selectConstructor(clazz: Class<*>): Constructor<*> {
-        var ctors = clazz.constructors
-        if (ctors.isEmpty()) {
-            ctors = clazz.declaredConstructors
-            if (ctors.size != 1) {
-                throw BeanDefinitionException("More than 1 constructor found in class: ${clazz.name}.")
-            }
-        }
-        if (ctors.size != 1) {
-            throw BeanDefinitionException("More than 1 public constructor found in class: ${clazz.name}.")
-        }
-        return ctors.single()
+        return clazz.kotlin.primaryConstructor?.javaConstructor
+            ?: throw BeanDefinitionException("No primary constructor found in class: ${clazz.name}.")
     }
 
     /**
@@ -262,7 +255,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -282,7 +275,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                        "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }

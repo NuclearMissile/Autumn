@@ -183,8 +183,10 @@
                     <compilerPlugins>
                         <plugin>all-open</plugin>
                         <plugin>jpa</plugin>
+                        <plugin>no-arg</plugin>
                     </compilerPlugins>
                     <pluginOptions>
+                        <option>no-arg:annotation=org.example.autumn.annotation.Component</option>
                         <option>all-open:annotation=org.example.autumn.annotation.AllOpen</option>
                     </pluginOptions>
                 </configuration>
