@@ -54,7 +54,7 @@ class ServletContextImpl(
     private var defaultServlet: Servlet? = null
 
     internal val sessionManager = SessionManager(
-        this, config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
+        this, config.getRequired("server.web-app.session-timeout", Int::class.java)
     )
 
     fun init(scannedClasses: List<Class<*>>) {
@@ -113,7 +113,7 @@ class ServletContextImpl(
             }
         }
         if (defaultServlet == null &&
-            config.getRequiredProperty("server.web-app.default-servlet", Boolean::class.java)
+            config.getRequired("server.web-app.default-servlet", Boolean::class.java)
         ) {
             logger.info("no default servlet. auto register {}...", DefaultServlet::class.java.name)
             defaultServlet = DefaultServlet()
@@ -293,10 +293,10 @@ class ServletContextImpl(
     }
 
     override fun getMimeType(file: String): String {
-        val default = config.getRequiredProperty("server.mime-default")
+        val default = config.getRequired("server.mime-default")
         val n = file.lastIndexOf(".")
         return if (n < 0)
-            default else config.getProperty("server.mime-types${file.substring(n).lowercase()}", default)
+            default else config.get("server.mime-types${file.substring(n).lowercase()}", default)
     }
 
     override fun getResourcePaths(path: String): MutableSet<String>? {
@@ -349,7 +349,7 @@ class ServletContextImpl(
     }
 
     override fun getServerInfo(): String {
-        return config.getRequiredProperty("server.name")
+        return config.getRequired("server.name")
     }
 
     override fun getInitParameter(name: String): String? {
@@ -400,7 +400,7 @@ class ServletContextImpl(
     }
 
     override fun getServletContextName(): String {
-        return config.getRequiredProperty("server.web-app.name")
+        return config.getRequired("server.web-app.name")
     }
 
     override fun addServlet(servletName: String, className: String): ServletRegistration.Dynamic {
@@ -550,39 +550,39 @@ class ServletContextImpl(
     }
 
     override fun getVirtualServerName(): String {
-        return config.getRequiredProperty("server.web-app.virtual-server-name")
+        return config.getRequired("server.web-app.virtual-server-name")
     }
 
     override fun getSessionTimeout(): Int {
-        return config.getRequiredProperty("server.web-app.session-timeout", Int::class.java)
+        return config.getRequired("server.web-app.session-timeout", Int::class.java)
     }
 
     override fun setSessionTimeout(sessionTimeout: Int) {
         require(!initialized) {
             throw IllegalStateException("setSessionTimeout after initialization.")
         }
-        config.setProperty("server.web-app.session-timeout", sessionTimeout.toString())
+        config.set("server.web-app.session-timeout", sessionTimeout.toString())
     }
 
     override fun getRequestCharacterEncoding(): String {
-        return config.getRequiredProperty("server.request-encoding")
+        return config.getRequired("server.request-encoding")
     }
 
     override fun setRequestCharacterEncoding(encoding: String) {
         require(!initialized) {
             throw IllegalStateException("setRequestCharacterEncoding after initialization.")
         }
-        config.setProperty("server.request-encoding", encoding)
+        config.set("server.request-encoding", encoding)
     }
 
     override fun getResponseCharacterEncoding(): String {
-        return config.getRequiredProperty("server.response-encoding")
+        return config.getRequired("server.response-encoding")
     }
 
     override fun setResponseCharacterEncoding(encoding: String) {
         require(!initialized) {
             throw IllegalStateException("setResponseCharacterEncoding after initialization.")
         }
-        config.setProperty("server.response-encoding", encoding)
+        config.set("server.response-encoding", encoding)
     }
 }

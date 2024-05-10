@@ -7,18 +7,18 @@ class SessionCookieConfigImpl(
     private val config: PropertyResolver
 ) : SessionCookieConfig {
     private val attributes = mutableMapOf<String, String>()
-    private var maxAge = config.getRequiredProperty("server.web-app.session-timeout", Int::class.java) * 60
+    private var maxAge = config.getRequired("server.web-app.session-timeout", Int::class.java) * 60
     private var httpOnly = true
     private var secure = false
     private var domain: String? = null
     private var path: String? = null
 
     override fun setName(name: String) {
-        config.setProperty("server.web-app.session-cookie-name", name)
+        config.set("server.web-app.session-cookie-name", name)
     }
 
     override fun getName(): String {
-        return config.getRequiredProperty("server.web-app.session-cookie-name")
+        return config.getRequired("server.web-app.session-cookie-name")
     }
 
     override fun setDomain(domain: String) {

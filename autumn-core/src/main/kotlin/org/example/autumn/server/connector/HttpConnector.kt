@@ -8,6 +8,7 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
+import org.example.autumn.utils.ClassUtils.useClassLoader
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.util.concurrent.Executor
@@ -22,19 +23,16 @@ class HttpConnector(
     private lateinit var httpServer: HttpServer
 
     fun start() {
-        val host = config.getRequiredProperty("server.host")
-        val port = config.getRequiredProperty("server.port", Int::class.java)
-        val backlog = config.getRequiredProperty("server.backlog", Int::class.java)
+        val host = config.getRequired("server.host")
+        val port = config.getRequired("server.port", Int::class.java)
+        val backlog = config.getRequired("server.backlog", Int::class.java)
 
         // init servlet context:
-        try {
-            Thread.currentThread().contextClassLoader = classLoader
+        useClassLoader(classLoader) {
             servletContext = ServletContextImpl(classLoader, config, webRoot)
             servletContext.setAttribute("config", config)
             initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
             servletContext.init(scannedClasses)
-        } finally {
-            Thread.currentThread().contextClassLoader = null
         }
 
         // start http server

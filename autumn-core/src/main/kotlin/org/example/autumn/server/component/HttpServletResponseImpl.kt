@@ -19,7 +19,7 @@ class HttpServletResponseImpl(
     private var status = 200
     private var bufferSize = 1024
     private var contentType = "text/html"
-    private var charset = Charset.forName(config.getRequiredProperty("server.response-encoding"))
+    private var charset = Charset.forName(config.getRequired("server.response-encoding"))
     private var contentLength = 0L
     private var locale = Locale.getDefault()
     private var isCommitted = false

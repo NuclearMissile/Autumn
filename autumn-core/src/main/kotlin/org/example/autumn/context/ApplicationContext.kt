@@ -242,7 +242,7 @@ class AnnotationConfigApplicationContext(
         @Suppress("KotlinConstantConditions")
         when {
             valueAnno != null -> {
-                val propValue = configPropertyResolver.getRequiredProperty(valueAnno.value, accessibleType)
+                val propValue = configPropertyResolver.getRequired(valueAnno.value, accessibleType)
                 if (field != null) {
                     logger.atDebug()
                         .log("Field injection: {}.{} = {}", info.beanClass.name, accessibleName, propValue)
@@ -389,7 +389,7 @@ class AnnotationConfigApplicationContext(
             val type = param.type
             when {
                 paramValueAnno != null -> {
-                    args[i] = configPropertyResolver.getRequiredProperty(paramValueAnno.value, type)
+                    args[i] = configPropertyResolver.getRequired(paramValueAnno.value, type)
                 }
 
                 paramAutowiredAnno != null -> {

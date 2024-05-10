@@ -149,4 +149,14 @@ object ClassUtils {
     fun <T> createInstance(clazz: Class<T>): T {
         return clazz.getConstructor().newInstance()
     }
+
+    fun <T> useClassLoader(classLoader: ClassLoader, func: () -> T): T {
+        val original = Thread.currentThread().contextClassLoader
+        return try {
+            Thread.currentThread().contextClassLoader = classLoader
+            func.invoke()
+        } finally {
+            Thread.currentThread().contextClassLoader = original
+        }
+    }
 }

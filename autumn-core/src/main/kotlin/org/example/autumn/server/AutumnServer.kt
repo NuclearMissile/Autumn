@@ -11,6 +11,7 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
+import org.example.autumn.utils.ClassUtils.useClassLoader
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
 import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
@@ -68,20 +69,14 @@ class AutumnServer {
                 require(customConfig.endsWith(".yml")) { "customConfigPath must be .yml file" }
             }
 
-            // show banner
-            logger.info(readStringFromClassPath("/banner.txt"))
-
             val (classesPath, libPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
             logger.info("set webRoot as {}", webRoot)
 
             val classLoader = WebAppClassLoader(classesPath, libPath)
-            val config: PropertyResolver
-
-            try {
-                Thread.currentThread().contextClassLoader = classLoader
+            val config = useClassLoader(classLoader) {
+                // load correct logger config
                 try {
-                    // load correct logger config
                     readInputStreamFromClassPath("logback.xml") {
                         val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
                         loggerContext.reset()
@@ -93,11 +88,12 @@ class AutumnServer {
                     logger.info("logback.xml not found, using default logging config")
                 }
                 // load config
-                config = if (customConfig == null) Config.load() else
+                if (customConfig == null) Config.load() else
                     Config.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
-            } finally {
-                Thread.currentThread().contextClassLoader = null
             }
+
+            // show banner
+            logger.info(readStringFromClassPath("/banner.txt"))
 
             // scan class:
             val classSet = mutableSetOf<Class<*>>()
@@ -156,9 +152,9 @@ class AutumnServer {
                 "Starting using Java {} with PID {} (started by {} in {})", javaVersion, pid, user, pwd
             )
 
-            val executor = if (config.getRequiredProperty("server.enable-virtual-thread", Boolean::class.java))
+            val executor = if (config.getRequired("server.enable-virtual-thread", Boolean::class.java))
                 Executors.newVirtualThreadPerTaskExecutor() else ThreadPoolExecutor(
-                5, config.getRequiredProperty("server.thread-pool-size", Int::class.java),
+                5, config.getRequired("server.thread-pool-size", Int::class.java),
                 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
             try {

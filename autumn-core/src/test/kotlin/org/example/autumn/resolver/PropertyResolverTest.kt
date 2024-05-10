@@ -18,12 +18,12 @@ class PropertyResolverTest {
     @Test
     fun testConfigLoad() {
         val config = Config.loadYaml("/config.yml")
-        assertEquals("Autumn Webapp", config.getRequiredProperty("server.web-app.name"))
-        config.setProperty("server.web-app.name", "dummy")
-        assertEquals("dummy", config.getRequiredProperty("server.web-app.name"))
+        assertEquals("Autumn Webapp", config.getRequired("server.web-app.name"))
+        config.set("server.web-app.name", "dummy")
+        assertEquals("dummy", config.getRequired("server.web-app.name"))
 
         val test = Config.loadYaml("/test.yml")
-        assertThrows<IllegalArgumentException> { test.getRequiredProperty("other.list") }
+        assertThrows<IllegalArgumentException> { test.getRequired("other.list") }
     }
 
     @Test
@@ -42,37 +42,37 @@ class PropertyResolverTest {
                 "scheduler.cleanup" to "P2DT8H21M",
             ).toProperties()
         )
-        assertEquals("Autumn Framework", cpr.getProperty("app.title"))
-        assertEquals("v1.0", cpr.getProperty("app.version"))
-        assertEquals("v1.0", cpr.getProperty("app.version", "unknown"))
+        assertEquals("Autumn Framework", cpr.get("app.title"))
+        assertEquals("v1.0", cpr.get("app.version"))
+        assertEquals("v1.0", cpr.get("app.version", "unknown"))
 
-        assertNull(cpr.getProperty("dummy"))
-        assertEquals("test_dummy", cpr.getProperty("dummy", "test_dummy"))
-        cpr.setProperty("dummy", "test_dummy_2")
-        assertEquals("test_dummy_2", cpr.getRequiredProperty("dummy"))
+        assertNull(cpr.get("dummy"))
+        assertEquals("test_dummy", cpr.get("dummy", "test_dummy"))
+        cpr.set("dummy", "test_dummy_2")
+        assertEquals("test_dummy_2", cpr.getRequired("dummy"))
 
-        assertEquals(true, cpr.getProperty("jdbc.auto-commit", Boolean::class.java))
-        assertTrue(cpr.getProperty("jdbc.auto-commit", Boolean::class.java)!!)
-        assertTrue(cpr.getProperty("jdbc.detect-leak", true, Boolean::class.java))
+        assertEquals(true, cpr.get("jdbc.auto-commit", Boolean::class.java))
+        assertTrue(cpr.get("jdbc.auto-commit", Boolean::class.java)!!)
+        assertTrue(cpr.get("jdbc.detect-leak", true, Boolean::class.java))
 
-        assertEquals(20, cpr.getProperty("jdbc.pool-size", Int::class.java))
-        assertEquals(20, cpr.getProperty("jdbc.pool-size", 999, Int::class.java))
-        assertEquals(5, cpr.getProperty("jdbc.idle", 5, Int::class.java))
+        assertEquals(20, cpr.get("jdbc.pool-size", Int::class.java))
+        assertEquals(20, cpr.get("jdbc.pool-size", 999, Int::class.java))
+        assertEquals(5, cpr.get("jdbc.idle", 5, Int::class.java))
 
         assertEquals(
             LocalDateTime.parse("2023-03-29T21:45:01"),
-            cpr.getProperty("scheduler.started-at", LocalDateTime::class.java)
+            cpr.get("scheduler.started-at", LocalDateTime::class.java)
         )
         assertEquals(
-            LocalTime.parse("03:05:10"), cpr.getProperty("scheduler.backup-at", LocalTime::class.java)
+            LocalTime.parse("03:05:10"), cpr.get("scheduler.backup-at", LocalTime::class.java)
         )
         assertEquals(
             LocalTime.parse("23:59:59"),
-            cpr.getProperty("scheduler.restart-at", LocalTime.parse("23:59:59"), LocalTime::class.java)
+            cpr.get("scheduler.restart-at", LocalTime.parse("23:59:59"), LocalTime::class.java)
         )
         assertEquals(
             Duration.ofMinutes(((2 * 24 + 8) * 60 + 21).toLong()),
-            cpr.getProperty("scheduler.cleanup", Duration::class.java)
+            cpr.get("scheduler.cleanup", Duration::class.java)
         )
     }
 
@@ -84,7 +84,7 @@ class PropertyResolverTest {
 
         val cpr = Config(props)
         assertThrows<IllegalArgumentException> {
-            cpr.getRequiredProperty("not.exist")
+            cpr.getRequired("not.exist")
         }
     }
 
@@ -98,19 +98,19 @@ class PropertyResolverTest {
         props.setProperty("app.title", "Autumn Framework")
 
         val cpr = Config(props)
-        assertEquals("Autumn Framework", cpr.getProperty("\${app.title}"))
+        assertEquals("Autumn Framework", cpr.get("\${app.title}"))
         assertThrows<IllegalArgumentException> {
-            cpr.getProperty("\${app.version}")
+            cpr.get("\${app.version}")
         }
-        assertEquals("v1.0", cpr.getProperty("\${app.version:v1.0}"))
-        assertEquals(1, cpr.getProperty("\${app.version:1}", Int::class.java))
+        assertEquals("v1.0", cpr.get("\${app.version:v1.0}"))
+        assertEquals(1, cpr.get("\${app.version:1}", Int::class.java))
         assertThrows<IllegalArgumentException> {
-            cpr.getProperty("\${app.version:x}", Int::class.java)
+            cpr.get("\${app.version:x}", Int::class.java)
         }
 
-        assertEquals(home, cpr.getProperty("\${app.path:\${HOME}}"))
-        assertEquals(home, cpr.getProperty("\${app.path:\${app.home:\${HOME}}}"))
-        assertEquals("/not-exist", cpr.getProperty("\${app.path:\${app.home:\${ENV_NOT_EXIST:/not-exist}}}"))
+        assertEquals(home, cpr.get("\${app.path:\${HOME}}"))
+        assertEquals(home, cpr.get("\${app.path:\${app.home:\${HOME}}}"))
+        assertEquals("/not-exist", cpr.get("\${app.path:\${app.home:\${ENV_NOT_EXIST:/not-exist}}}"))
     }
 
     @Test
@@ -119,6 +119,6 @@ class PropertyResolverTest {
         val os = System.getenv("OS")
         println("env OS=$os")
         val cpr = Config(Properties())
-        assertEquals("Windows_NT", cpr.getProperty("\${app.os:\${OS}}"))
+        assertEquals("Windows_NT", cpr.get("\${app.os:\${OS}}"))
     }
 }

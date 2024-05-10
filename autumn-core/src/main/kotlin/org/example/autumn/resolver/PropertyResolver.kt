@@ -9,14 +9,14 @@ data class PropertyExpr(val key: String, val defaultValue: String?)
 
 interface PropertyResolver {
     fun contains(key: String): Boolean
-    fun setProperty(key: String, value: String)
-    fun addProperties(map: Map<String, String>)
-    fun getProperty(key: String): String?
-    fun getProperty(key: String, defaultValue: String): String
-    fun <T> getProperty(key: String, clazz: Class<T>): T?
-    fun <T> getProperty(key: String, default: T, clazz: Class<T>): T
-    fun getRequiredProperty(key: String): String
-    fun <T> getRequiredProperty(key: String, clazz: Class<T>): T
+    fun set(key: String, value: String)
+    fun addAll(map: Map<String, String>)
+    fun get(key: String): String?
+    fun get(key: String, defaultValue: String): String
+    fun <T> get(key: String, clazz: Class<T>): T?
+    fun <T> get(key: String, default: T, clazz: Class<T>): T
+    fun getRequired(key: String): String
+    fun <T> getRequired(key: String, clazz: Class<T>): T
     fun merge(other: PropertyResolver): PropertyResolver
     fun getMap(): Map<String, String>
 }
@@ -78,45 +78,45 @@ open class Config(props: Properties) : PropertyResolver {
 
     override fun contains(key: String) = properties.containsKey(key)
 
-    override fun setProperty(key: String, value: String) {
+    override fun set(key: String, value: String) {
         properties[key] = value
     }
 
-    override fun addProperties(map: Map<String, String>) {
+    override fun addAll(map: Map<String, String>) {
         properties += map
     }
 
-    override fun getProperty(key: String): String? {
+    override fun get(key: String): String? {
         val keyExpr = parsePropertyExpr(key)
         if (keyExpr != null) {
             return if (keyExpr.defaultValue != null) {
-                getProperty(keyExpr.key, keyExpr.defaultValue)
+                get(keyExpr.key, keyExpr.defaultValue)
             } else {
-                getRequiredProperty(keyExpr.key)
+                getRequired(keyExpr.key)
             }
         }
         val value = properties[key]
         return if (value != null) parseValue(value) else null
     }
 
-    override fun getProperty(key: String, defaultValue: String): String {
-        return getProperty(key) ?: parseValue(defaultValue)
+    override fun get(key: String, defaultValue: String): String {
+        return get(key) ?: parseValue(defaultValue)
     }
 
-    override fun <T> getProperty(key: String, clazz: Class<T>): T? {
-        val value = getProperty(key) ?: return null
+    override fun <T> get(key: String, clazz: Class<T>): T? {
+        val value = get(key) ?: return null
         return getConverter(clazz).invoke(value)
     }
 
-    override fun <T> getProperty(key: String, default: T, clazz: Class<T>): T {
-        return getProperty(key, clazz) ?: default
+    override fun <T> get(key: String, default: T, clazz: Class<T>): T {
+        return get(key, clazz) ?: default
     }
 
-    override fun getRequiredProperty(key: String) =
-        getProperty(key) ?: throw IllegalArgumentException("key: $key not found")
+    override fun getRequired(key: String) =
+        get(key) ?: throw IllegalArgumentException("key: $key not found")
 
-    override fun <T> getRequiredProperty(key: String, clazz: Class<T>) =
-        getProperty(key, clazz) ?: throw IllegalArgumentException("key: $key not found")
+    override fun <T> getRequired(key: String, clazz: Class<T>) =
+        get(key, clazz) ?: throw IllegalArgumentException("key: $key not found")
 
     private fun <T> getConverter(clazz: Class<T>): (String) -> T {
         @Suppress("UNCHECKED_CAST")
@@ -126,9 +126,9 @@ open class Config(props: Properties) : PropertyResolver {
     private fun parseValue(value: String): String {
         val expr = parsePropertyExpr(value) ?: return value
         return if (expr.defaultValue != null) {
-            getProperty(expr.key, expr.defaultValue)
+            get(expr.key, expr.defaultValue)
         } else {
-            getRequiredProperty(expr.key)
+            getRequired(expr.key)
         }
     }
 
