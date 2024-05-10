@@ -16,7 +16,7 @@ import java.util.concurrent.Executor
 class HttpConnector(
     private val config: PropertyResolver, private val classLoader: ClassLoader,
     private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>
-) : HttpHandler, AutoCloseable {
+) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val initializers = mutableMapOf<ServletContainerInitializer, Set<Class<*>>>()
     private lateinit var servletContext: ServletContextImpl
@@ -36,7 +36,27 @@ class HttpConnector(
         }
 
         // start http server
-        httpServer = HttpServer.create(InetSocketAddress(host, port), backlog, "/", this)
+        httpServer = HttpServer.create(InetSocketAddress(host, port), backlog)
+        httpServer.createContext("/") { exchange ->
+            val adapter = HttpExchangeAdapter(exchange)
+            val resp = HttpServletResponseImpl(config, adapter)
+            val req = HttpServletRequestImpl(config, servletContext, adapter, resp)
+            try {
+                Thread.currentThread().contextClassLoader = classLoader
+                servletContext.process(req, resp)
+            } catch (e: Throwable) {
+                // fall-over error handling
+                logger.error("unhandled exception caught:", e)
+                try {
+                    resp.sendError(500)
+                } catch (e: IllegalStateException) {
+                    logger.error("the response has already been committed.")
+                }
+            } finally {
+                Thread.currentThread().contextClassLoader = null
+                resp.cleanup()
+            }
+        }
         httpServer.executor = executor
         httpServer.start()
         logger.info("Autumn server started at http://{}:{}...", host, port)
@@ -44,27 +64,6 @@ class HttpConnector(
 
     fun addServletContainerInitializer(sci: ServletContainerInitializer, classes: Set<Class<*>>) {
         initializers[sci] = classes
-    }
-
-    override fun handle(exchange: HttpExchange) {
-        val adapter = HttpExchangeAdapter(exchange)
-        val resp = HttpServletResponseImpl(config, adapter)
-        val req = HttpServletRequestImpl(config, servletContext, adapter, resp)
-        try {
-            Thread.currentThread().contextClassLoader = classLoader
-            servletContext.process(req, resp)
-        } catch (e: Throwable) {
-            // fall-over error handling
-            logger.error("unhandled exception caught:", e)
-            try {
-                resp.sendError(500)
-            } catch (e: IllegalStateException) {
-                logger.error("the response has already been committed.")
-            }
-        } finally {
-            Thread.currentThread().contextClassLoader = null
-            resp.cleanup()
-        }
     }
 
     override fun close() {
