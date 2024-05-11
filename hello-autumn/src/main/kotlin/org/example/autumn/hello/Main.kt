@@ -97,7 +97,7 @@ class HelloController {
     }
 }
 
-@Controller("/")
+@Controller
 class IndexController(@Autowired private val userService: UserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"

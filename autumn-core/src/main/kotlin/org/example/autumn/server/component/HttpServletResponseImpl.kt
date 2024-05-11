@@ -18,7 +18,7 @@ class HttpServletResponseImpl(
 
     private var status = 200
     private var bufferSize = 1024
-    private var contentType = "text/html"
+    private var contentType = config.getRequiredString("server.mime-default")
     private var charset = Charset.forName(config.getRequiredString("server.response-encoding"))
     private var contentLength = 0L
     private var locale = Locale.getDefault()
