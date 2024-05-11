@@ -38,7 +38,7 @@ class BeanMetaInfo private constructor(
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, beanCtor: Constructor<*>,
-        initMethodName: String?, destroyMethodName: String?, initMethod: Method?, destroyMethod: Method?
+        initMethod: Method?, destroyMethod: Method?
     ) : this(beanName, beanClass, order, isPrimary) {
         beanCtor.isAccessible = true
         this.beanCtor = beanCtor
@@ -47,8 +47,7 @@ class BeanMetaInfo private constructor(
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, factoryName: String,
-        factoryMethod: Method, initMethodName: String?, destroyMethodName: String?,
-        initMethod: Method?, destroyMethod: Method?
+        factoryMethod: Method, initMethodName: String?, destroyMethodName: String?
     ) : this(beanName, beanClass, order, isPrimary) {
         this.factoryName = factoryName
         factoryMethod.isAccessible = true

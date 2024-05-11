@@ -43,9 +43,8 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 conn.commit()
                 return ret
             } catch (e: InvocationTargetException) {
-                val target = e.targetException
                 logger.warn("rollback transaction for exception: $e", e)
-                val txe = TransactionException("Exception thrown in tx context.", target)
+                val txe = TransactionException("Exception thrown in tx context.", e.targetException)
                 try {
                     conn.rollback()
                 } catch (sqle: SQLException) {

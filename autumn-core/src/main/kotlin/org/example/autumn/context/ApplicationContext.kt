@@ -113,8 +113,8 @@ class AnnotationConfigApplicationContext(
 
             val beanName = getBeanName(clazz)
             val info = BeanMetaInfo(
-                beanName, clazz, clazz.getOrder(), clazz.isPrimary(), selectConstructor(clazz),
-                null, null, findAnnotationMethod(clazz, PostConstruct::class.java),
+                beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.primaryCtor(),
+                findAnnotationMethod(clazz, PostConstruct::class.java),
                 findAnnotationMethod(clazz, PreDestroy::class.java)
             )
             if (infos.put(info.beanName, info) != null) {
@@ -136,11 +136,8 @@ class AnnotationConfigApplicationContext(
     private fun Method.getOrder() = this.getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
     private fun Class<*>.isPrimary() = this.isAnnotationPresent(Primary::class.java)
     private fun Method.isPrimary() = this.isAnnotationPresent(Primary::class.java)
-
-    private fun selectConstructor(clazz: Class<*>): Constructor<*> {
-        return clazz.kotlin.primaryConstructor?.javaConstructor
-            ?: throw BeanDefinitionException("No primary constructor found in class: ${clazz.name}.")
-    }
+    private fun Class<*>.primaryCtor() = this.kotlin.primaryConstructor?.javaConstructor
+        ?: throw BeanDefinitionException("No primary constructor found in class: ${this.name}.")
 
     /**
      * Scan factory method that annotated with @Bean:
@@ -174,8 +171,7 @@ class AnnotationConfigApplicationContext(
                 throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return void")
             val info = BeanMetaInfo(
                 getBeanName(method), beanClass, method.getOrder(), method.isPrimary(),
-                factoryBeanName, method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null },
-                null, null
+                factoryBeanName, method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
             )
             if (infos.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
