@@ -16,11 +16,15 @@ _Yet another toy web application framework imitating Spring with homemade http s
 
 ## Demo
 
-Please refer to hello-autumn.
+hello-autumn (user login demo):
 
-### Example: hello-autumn (user login demo)
+_test account: test@test.com: test_
 
-Write Autumn just like Spring.
+![](login-demo.png)
+
+<details>
+
+<summary>Code</summary>
 
 ```kotlin
 @Controller("/")
@@ -43,16 +47,12 @@ class IndexController(@Autowired private val userService: UserService) {
 
     @Post("/register")
     fun register(
-        @RequestParam email: String,
-        @RequestParam name: String,
-        @RequestParam password: String
+        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String
     ): ModelAndView {
-        return try {
-            userService.createUser(email, name, password)
+        return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
-        } catch (e: Exception) {
+        else
             ModelAndView("/register.ftl", mapOf("error" to "$email already registered"))
-        }
     }
 
     @Get("/login")
@@ -62,10 +62,8 @@ class IndexController(@Autowired private val userService: UserService) {
 
     @Post("/login")
     fun login(@RequestParam email: String, @RequestParam password: String, session: HttpSession): ModelAndView {
-        val user = userService.getUser(email)
-        if (user == null || user.password != password) {
-            return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
-        }
+        val user = userService.login(email, password)
+            ?: return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         session.setAttribute(USER_SESSION_KEY, user)
         return ModelAndView("redirect:/")
     }
@@ -77,10 +75,63 @@ class IndexController(@Autowired private val userService: UserService) {
     }
 }
 
+@Entity
+@Table(name = "users")
+data class User(
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+@Column(nullable = false, updatable = false)
+var id: Long,
+@Column(nullable = false, unique = true)
+var email: String,
+@Column(nullable = false)
+var name: String,
+@Column(name = "pwd_salt", nullable = false)
+val pwdSalt: String,
+@Column(name = "pwd_hash", nullable = false)
+val pwdHash: String,
+)
+
+@Component
+class UserService(@Autowired val dbTemplate: DbTemplate) {
+companion object {
+const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+    "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+}
+
+    @PostConstruct
+    fun init() {
+        dbTemplate.jdbcTemplate.update(CREATE_USERS)
+        register("test@test.com", "test", "test")
+    }
+
+    fun getUserByEmail(email: String): User? {
+        return dbTemplate.selectFrom<User>().where("email = ?", email).first()
+    }
+
+    fun register(email: String, name: String, password: String): User? {
+        val pwdSalt = SecureRandomUtil.genRandomString(32)
+        val pwdHash = HashUtil.hmacSha256(password, pwdSalt)
+        val user = User(-1, email, name, pwdSalt, pwdHash)
+        return try {
+            dbTemplate.insert(user)
+            user
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun login(email: String, password: String): User? {
+        val user = getUserByEmail(email) ?: return null
+        val pwdHash = HashUtil.hmacSha256(password, user.pwdSalt)
+        return if (pwdHash == user.pwdHash) user else null
+    }
+}
+
 ```
+</details>
 
-test account: _test@test.com: test_
 
-![](login-demo.png)
+
 
 
