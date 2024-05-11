@@ -1,18 +1,18 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import jakarta.persistence.Entity
+import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.jdbc.JdbcTemplate
 import org.example.autumn.utils.ClassUtils.findAnnotation
-import org.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
 
-class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: String) {
+class DbTemplate(val jdbcTemplate: JdbcTemplate) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {
-        scanClassNames(listOf(entityPackagePath))
+        ApplicationContextHolder.applicationContext!!.scannedClassNames
             .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
             .filter { findAnnotation(it, Entity::class.java) != null }
             .associateWith { Mapper(it) }
@@ -49,12 +49,20 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
         jdbcTemplate.update(mapper.deleteSQL, id)
     }
 
+    inline fun <reified T> delete(entity: T) {
+        delete(T::class.java, entity)
+    }
+
     fun <T> deleteById(clazz: Class<T>, id: Any) {
         val mapper = mapperOf(clazz)
         if (logger.isDebugEnabled) {
             logger.debug("deleteById SQL: {}, args: {}", mapper.deleteSQL, id)
         }
         jdbcTemplate.update(mapper.deleteSQL, id)
+    }
+
+    inline fun <reified T> deleteById(id: Any) {
+        deleteById(T::class.java, id)
     }
 
     fun <T> update(clazz: Class<T>, entity: T) {
@@ -67,10 +75,13 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
         jdbcTemplate.update(mapper.updateSQL, *args.toTypedArray())
     }
 
+    inline fun <reified T> update(entity: T) {
+        update(T::class.java, entity)
+    }
 
-    fun <T> batchInsert(clazz: Class<T>, entities: List<T>, ignore: Boolean = false) {
+    fun <T> batchInsert(clazz: Class<T>, entities: List<T>) {
         val mapper = mapperOf(clazz)
-        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
+        val sql = mapper.insertSQL
         logger.atDebug().log("batch insert SQL: {}, count: {}", sql, entities.size)
         entities.forEach { entity ->
             val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
@@ -83,7 +94,7 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
         }
 
 //        val mapper = mapperOf(clazz)
-//        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
+//        val sql = mapper.insertSQL
 //        val args = entities.flatMap { entity -> mapper.insertableProperties.map { it[entity as Any] } }.toTypedArray()
 //        logger.atDebug().log("batch insert SQL: {}, count: {}", sql, entities.size)
 //
@@ -95,10 +106,14 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
 //        }
     }
 
-    fun <T> insert(clazz: Class<T>, entity: T, ignore: Boolean = false) {
+    inline fun <reified T> batchInsert(entities: List<T>) {
+        batchInsert(T::class.java, entities)
+    }
+
+    fun <T> insert(clazz: Class<T>, entity: T) {
         val mapper = mapperOf(clazz)
         val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
-        val sql = if (ignore) mapper.insertIgnoreSQL else mapper.insertSQL
+        val sql = mapper.insertSQL
         logger.atDebug().log("insert SQL: {}, args: {}", sql, args)
         if (mapper.id.isGeneratedId) {
             val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
@@ -106,5 +121,9 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate, private val entityPackagePath: 
         } else {
             jdbcTemplate.update(sql, *args)
         }
+    }
+
+    inline fun <reified T> insert(entity: T) {
+        insert(T::class.java, entity)
     }
 }

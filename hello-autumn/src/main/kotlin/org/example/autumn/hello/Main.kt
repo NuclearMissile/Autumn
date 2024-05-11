@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.ResponseErrorException
+import org.example.autumn.jdbc.JdbcConfiguration
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
@@ -31,7 +32,7 @@ object Main {
 
 @ComponentScan
 @Configuration
-@Import(WebMvcConfiguration::class)
+@Import(WebMvcConfiguration::class, JdbcConfiguration::class)
 class HelloConfiguration
 
 @WebListener
@@ -116,16 +117,12 @@ class IndexController(@Autowired private val userService: UserService) {
 
     @Post("/register")
     fun register(
-        @RequestParam email: String,
-        @RequestParam name: String,
-        @RequestParam password: String
+        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String
     ): ModelAndView {
-        return try {
-            userService.createUser(email, name, password)
+        return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
-        } catch (e: Exception) {
+        else
             ModelAndView("/register.ftl", mapOf("error" to "$email already registered"))
-        }
     }
 
     @Get("/login")
@@ -135,10 +132,8 @@ class IndexController(@Autowired private val userService: UserService) {
 
     @Post("/login")
     fun login(@RequestParam email: String, @RequestParam password: String, session: HttpSession): ModelAndView {
-        val user = userService.getUser(email)
-        if (user == null || user.password != password) {
-            return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
-        }
+        val user = userService.login(email, password)
+            ?: return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         session.setAttribute(USER_SESSION_KEY, user)
         return ModelAndView("redirect:/")
     }

@@ -1,4 +1,4 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import jakarta.persistence.*
 import org.example.autumn.annotation.Autowired
@@ -7,6 +7,7 @@ import org.example.autumn.annotation.Transactional
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.exception.TransactionException
 import org.example.autumn.jdbc.JdbcTemplate
+import org.example.autumn.jdbc.orm.DbTemplate
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -29,7 +30,6 @@ class OrmTxTest {
             "autumn.datasource.username" to "sa",
             "autumn.datasource.password" to "",
             "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
-            "autumn.db-template.entity-package-path" to "org.example.autumn.orm",
         ).toProperties()
     )
 
@@ -81,11 +81,11 @@ class UserService(@Autowired val dbTemplate: DbTemplate) {
 
     fun insertUser(email: String, name: String, password: String): User {
         val user = User(-1, email, name, password)
-        dbTemplate.insert(User::class.java, user)
+        dbTemplate.insert(user)
         return user
     }
 
     fun insertUsers(users: List<User>) {
-        users.forEach { user -> dbTemplate.insert(User::class.java, user) }
+        users.forEach { user -> dbTemplate.insert(user) }
     }
 }

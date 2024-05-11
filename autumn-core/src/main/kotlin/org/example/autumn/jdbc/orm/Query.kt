@@ -1,4 +1,4 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import jakarta.persistence.NoResultException
 import jakarta.persistence.NonUniqueResultException

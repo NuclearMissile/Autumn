@@ -1,4 +1,4 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -40,11 +40,8 @@ class OrmTestApplication {
     }
 
     @Bean
-    fun dbTemplate(
-        @Autowired jdbcTemplate: JdbcTemplate,
-        @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
-    ): DbTemplate {
-        return DbTemplate(jdbcTemplate, entityPackagePath)
+    fun dbTemplate(@Autowired jdbcTemplate: JdbcTemplate): DbTemplate {
+        return DbTemplate(jdbcTemplate)
     }
 
     @Bean

@@ -27,10 +27,11 @@ class AnnotationConfigApplicationContext(
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
+    override val scannedClassNames = scanClassNamesOnConfigClass(configClass)
+
     init {
         ApplicationContextHolder.applicationContext = this
-        val classNameSet = scanClassNamesOnConfigClass(configClass)
-        infos += createBeanMetaInfos(classNameSet)
+        infos += createBeanMetaInfos(scannedClassNames)
         infos.values.filter { it.isConfiguration }.sorted().forEach(::createEarlySingleton)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
             createEarlySingleton(it) as BeanPostProcessor
@@ -65,7 +66,7 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
+    private fun scanClassNamesOnConfigClass(configClass: Class<*>): List<String> {
         val scanAnno = ClassUtils.findAnnotation(configClass, ComponentScan::class.java)
         val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
             arrayOf(configClass.packageName) else scanAnno.value).toList()
@@ -84,12 +85,12 @@ class AnnotationConfigApplicationContext(
                 classNameSet.add(importClassName)
             }
         }
-        return classNameSet
+        return classNameSet.toList()
     }
 
-    private fun createBeanMetaInfos(classNameSet: Set<String>): Map<String, BeanMetaInfo> {
+    private fun createBeanMetaInfos(classNames: List<String>): Map<String, BeanMetaInfo> {
         val infos = mutableMapOf<String, BeanMetaInfo>()
-        for (className in classNameSet) {
+        for (className in classNames) {
             // 获取Class:
             val clazz = try {
                 Class.forName(className, true, Thread.currentThread().contextClassLoader)
@@ -524,6 +525,8 @@ class AnnotationConfigApplicationContext(
 }
 
 interface ApplicationContext : AutoCloseable {
+    val scannedClassNames: List<String>
+
     fun contains(name: String): Boolean
 
     fun <T> getBean(name: String): T

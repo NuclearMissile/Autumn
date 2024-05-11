@@ -1,4 +1,4 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import jakarta.persistence.*
 import java.lang.reflect.Field
@@ -108,7 +108,6 @@ class Mapper<T>(private val entityClass: Class<T>) {
             List(insertableProperties.count()) { "?" }.joinToString()
         })"
     }
-    val insertIgnoreSQL by lazy { insertSQL.replace("INSERT INTO", "INSERT IGNORE INTO") }
     val updateSQL by lazy {
         "UPDATE $tableName SET ${updatableProperties.joinToString { "${it.colName} = ?" }} WHERE ${id.colName} = ?"
     }

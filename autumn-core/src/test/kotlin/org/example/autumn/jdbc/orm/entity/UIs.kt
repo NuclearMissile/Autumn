@@ -1,8 +1,8 @@
-package org.example.autumn.orm.entity
+package org.example.autumn.jdbc.orm.entity
 
 import jakarta.persistence.*
-import org.example.autumn.orm.entity.EntityMixin.Companion.VAR_CHAR_100
-import org.example.autumn.orm.entity.EntityMixin.Companion.VAR_ENUM
+import org.example.autumn.jdbc.orm.entity.EntityMixin.Companion.VAR_CHAR_100
+import org.example.autumn.jdbc.orm.entity.EntityMixin.Companion.VAR_ENUM
 
 @Entity
 @Table(name = "api_key_auths")

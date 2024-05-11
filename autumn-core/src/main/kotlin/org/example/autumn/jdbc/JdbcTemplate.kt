@@ -7,7 +7,7 @@ import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.annotation.Value
 import org.example.autumn.exception.DataAccessException
-import org.example.autumn.orm.DbTemplate
+import org.example.autumn.jdbc.orm.DbTemplate
 import java.sql.*
 import javax.sql.DataSource
 
@@ -41,11 +41,8 @@ class JdbcConfiguration {
     }
 
     @Bean
-    fun dbTemplate(
-        @Autowired jdbcTemplate: JdbcTemplate,
-        @Value("\${autumn.db-template.entity-package-path:}") entityPackagePath: String,
-    ): DbTemplate {
-        return DbTemplate(jdbcTemplate, entityPackagePath)
+    fun dbTemplate(@Autowired jdbcTemplate: JdbcTemplate): DbTemplate {
+        return DbTemplate(jdbcTemplate)
     }
 
     @Bean

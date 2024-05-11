@@ -1,10 +1,10 @@
-package org.example.autumn.orm
+package org.example.autumn.jdbc.orm
 
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.orm.entity.EventEntity
-import org.example.autumn.orm.entity.PasswordAuthEntity
-import org.example.autumn.orm.entity.UserEntity
+import org.example.autumn.jdbc.orm.entity.EventEntity
+import org.example.autumn.jdbc.orm.entity.PasswordAuthEntity
+import org.example.autumn.jdbc.orm.entity.UserEntity
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -28,7 +28,6 @@ class OrmTest {
             "autumn.datasource.username" to "sa",
             "autumn.datasource.password" to "",
             "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
-            "autumn.db-template.entity-package-path" to "org.example.autumn.orm.entity",
         ).toProperties()
     )
 
@@ -59,7 +58,7 @@ class OrmTest {
             val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(UserEntity::class.java, user)
+            dbTemplate.insert(user)
             assertNotEquals(-1, user.id)
             val selected = dbTemplate.selectById<UserEntity>(user.id)!!
             assertEquals(timestamp, selected.createdAt)
@@ -71,7 +70,7 @@ class OrmTest {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
             val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
             val users = (0 until 1000).map { UserEntity(-1, it, it.toLong()) }
-            dbTemplate.batchInsert(UserEntity::class.java, users)
+            dbTemplate.batchInsert(users)
             val usersResult = dbTemplate.selectFrom<UserEntity>().orderBy("id").query()
             assertContentEquals(usersResult.map { it.id }, users.map { it.id })
             assertEquals(1000, usersResult.count())
@@ -79,7 +78,7 @@ class OrmTest {
             assertEquals(0, usersResult.first().type)
 
             val events = (0 until 1000L).map { EventEntity(it, it, "test", it) }
-            dbTemplate.batchInsert(EventEntity::class.java, events)
+            dbTemplate.batchInsert(events)
             val eventsResult = dbTemplate.selectFrom<EventEntity>()
                 .where("events.data = ?", "test")
                 .query()
@@ -97,8 +96,8 @@ class OrmTest {
                     it.toLong(), if (it % 2 == 0) "1" else "2", it.toString()
                 )
             }
-            dbTemplate.batchInsert(UserEntity::class.java, users)
-            dbTemplate.batchInsert(PasswordAuthEntity::class.java, paes)
+            dbTemplate.batchInsert(users)
+            dbTemplate.batchInsert(paes)
 
             val result0 = dbTemplate.selectFrom<UserEntity>()
                 .orderBy("id", true)
@@ -142,16 +141,16 @@ class OrmTest {
             val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(UserEntity::class.java, user)
+            dbTemplate.insert(user)
             assertNotEquals(-1, user.id)
             val timestamp2 = System.currentTimeMillis()
             user.createdAt = timestamp2
-            assertThrows<IllegalArgumentException> { dbTemplate.update(UserEntity::class.java, user) }
+            assertThrows<IllegalArgumentException> { dbTemplate.update(user) }
 
             val pae = PasswordAuthEntity(999, "-1", "foo")
-            dbTemplate.insert(PasswordAuthEntity::class.java, pae)
+            dbTemplate.insert(pae)
             pae.passwd = "bar"
-            dbTemplate.update(PasswordAuthEntity::class.java, pae)
+            dbTemplate.update(pae)
             assertEquals("bar", dbTemplate.selectById<PasswordAuthEntity>(999)!!.passwd)
         }
     }
@@ -162,10 +161,10 @@ class OrmTest {
             val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(UserEntity::class.java, user)
+            dbTemplate.insert(user)
             assertNotEquals(-1, user.id)
             assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
-            dbTemplate.delete(UserEntity::class.java, user)
+            dbTemplate.delete(user)
             assertNull(dbTemplate.selectById<UserEntity>(user.id))
         }
     }
@@ -177,10 +176,10 @@ class OrmTest {
             val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(UserEntity::class.java, user)
+            dbTemplate.insert(user)
             assertNotEquals(-1, user.id)
             assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
-            dbTemplate.deleteById(UserEntity::class.java, user.id)
+            dbTemplate.deleteById<UserEntity>(user.id)
             assertNull(dbTemplate.selectById<UserEntity>(user.id))
         }
     }

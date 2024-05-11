@@ -1,4 +1,4 @@
-package org.example.autumn.orm.entity
+package org.example.autumn.jdbc.orm.entity
 
 interface EntityMixin {
     companion object {
