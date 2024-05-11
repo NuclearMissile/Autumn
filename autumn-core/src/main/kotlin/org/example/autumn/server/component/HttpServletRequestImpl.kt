@@ -29,7 +29,7 @@ class HttpServletRequestImpl(
 
     private var inputStream: ServletInputStream? = null
     private var reader: BufferedReader? = null
-    private var charset = Charset.forName(config.getRequired("server.request-encoding"))
+    private var charset = Charset.forName(config.getRequiredString("server.request-encoding"))
     private val params = HttpReqParams(exchangeReq, charset)
 
     override fun getAttribute(name: String): Any? {
@@ -91,7 +91,7 @@ class HttpServletRequestImpl(
 
     override fun getScheme(): String {
         var scheme = "http"
-        val forwarded = config.getRequired("server.forwarded-headers.forwarded-proto")
+        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-proto")
         if (forwarded.isNotEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
@@ -103,7 +103,7 @@ class HttpServletRequestImpl(
 
     override fun getServerName(): String {
         var serverName = getHeader("Host")
-        val forwarded = config.getRequired("server.forwarded-headers.forwarded-host")
+        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-host")
         if (forwarded.isNotEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
@@ -127,7 +127,7 @@ class HttpServletRequestImpl(
 
     override fun getRemoteAddr(): String {
         var addr: String? = null
-        val forwarded = config.getRequired("server.forwarded-headers.forwarded-for")
+        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-for")
         if (forwarded.isNotEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
@@ -340,7 +340,7 @@ class HttpServletRequestImpl(
         val cookies = cookies
         if (cookies != null) {
             for (cookie in cookies) {
-                if (cookie.name == config.getRequired("server.web-app.session-cookie-name")) {
+                if (cookie.name == config.getRequiredString("server.web-app.session-cookie-name")) {
                     sessionId = cookie.value
                     break
                 }
@@ -352,7 +352,7 @@ class HttpServletRequestImpl(
                 throw IllegalStateException("cannot create session for response committed ")
             }
             sessionId = UUID.randomUUID().toString()
-            val cookieValue = config.getRequired("server.web-app.session-cookie-name") +
+            val cookieValue = config.getRequiredString("server.web-app.session-cookie-name") +
                     "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
             resp.addHeader("Set-Cookie", cookieValue)
         }

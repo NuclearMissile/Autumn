@@ -300,7 +300,7 @@ class DispatcherServletTest {
     fun init() {
         ctx = createMockServletContext()
         WebMvcConfiguration.servletContext = ctx
-        val propertyResolver = Config(
+        val config = Config(
             mapOf(
                 "app.title" to "Scan App",
                 "app.version" to "v1.0",
@@ -310,7 +310,7 @@ class DispatcherServletTest {
                 "jdbc.password" to "",
             ).toProperties()
         )
-        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, propertyResolver)
+        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, config)
         dispatcherServlet = DispatcherServlet()
         dispatcherServlet.init()
     }

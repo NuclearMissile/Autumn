@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
 import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
@@ -148,7 +149,7 @@ class AutumnServer {
             val pid = ManagementFactory.getRuntimeMXBean().pid
             val user = System.getProperty("user.name")
             val pwd = Paths.get("").toAbsolutePath().toString()
-            val enableVirtualThread = config.getRequired("server.enable-virtual-thread", Boolean::class.java)
+            val enableVirtualThread = config.getRequired<Boolean>("server.enable-virtual-thread")
             logger.info(
                 "starting using Java {} with PID {} (started by {} in {})", jvmVersion, pid, user, pwd
             )
@@ -156,14 +157,14 @@ class AutumnServer {
             // virtual thread related check
             if (enableVirtualThread && jvmVersion < 21) {
                 logger.warn(
-                    "cannot enable virtual thread, jvm version >= 21 required, current: $jvmVersion, fallback to thread pool executor"
+                    "to enable virtual thread executor, jvm version >= 21 required, current: $jvmVersion, fallback to thread pool executor"
                 )
             }
             val executor = if (enableVirtualThread && jvmVersion >= 21) {
                 logger.info("virtual thread executor enabled")
                 Executors.newVirtualThreadPerTaskExecutor()
             } else ThreadPoolExecutor(
-                5, config.getRequired("server.thread-pool-size", Int::class.java), 10L,
+                5, config.getRequired("server.thread-pool-size"), 10L,
                 TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
 

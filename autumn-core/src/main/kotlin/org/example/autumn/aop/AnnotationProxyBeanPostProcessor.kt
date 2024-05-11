@@ -7,7 +7,6 @@ import net.bytebuddy.matcher.ElementMatchers
 import org.example.autumn.annotation.Around
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
-import org.example.autumn.context.ConfigurableApplicationContext
 import org.example.autumn.exception.AopConfigException
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
@@ -55,7 +54,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         } catch (e: ReflectiveOperationException) {
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
         } as String
-        val ctx = ApplicationContextHolder.requiredApplicationContext as ConfigurableApplicationContext
+        val ctx = ApplicationContextHolder.requiredApplicationContext
         val handlerInfo = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
         )

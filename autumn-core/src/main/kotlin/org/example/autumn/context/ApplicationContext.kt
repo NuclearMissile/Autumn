@@ -20,8 +20,8 @@ object ApplicationContextHolder {
 }
 
 class AnnotationConfigApplicationContext(
-    configClass: Class<*>, private val configPropertyResolver: PropertyResolver
-) : ConfigurableApplicationContext {
+    configClass: Class<*>, private val config: PropertyResolver
+) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val infos = mutableMapOf<String, BeanMetaInfo>()
     private val postProcessors = mutableListOf<BeanPostProcessor>()
@@ -232,7 +232,7 @@ class AnnotationConfigApplicationContext(
         @Suppress("KotlinConstantConditions")
         when {
             valueAnno != null -> {
-                val propValue = configPropertyResolver.getRequired(valueAnno.value, accessibleType)
+                val propValue = config.getRequired(valueAnno.value, accessibleType)
                 if (field != null) {
                     logger.atDebug()
                         .log("Field injection: {}.{} = {}", info.beanClass.name, accessibleName, propValue)
@@ -379,7 +379,7 @@ class AnnotationConfigApplicationContext(
             val type = param.type
             when {
                 paramValueAnno != null -> {
-                    args[i] = configPropertyResolver.getRequired(paramValueAnno.value, type)
+                    args[i] = config.getRequired(paramValueAnno.value, type)
                 }
 
                 paramAutowiredAnno != null -> {
@@ -434,8 +434,8 @@ class AnnotationConfigApplicationContext(
         return info.instance!!
     }
 
-    override fun getPropertyResolver(): PropertyResolver {
-        return configPropertyResolver
+    override fun getConfig(): PropertyResolver {
+        return config
     }
 
     override fun contains(name: String): Boolean {
@@ -543,10 +543,6 @@ interface ApplicationContext : AutoCloseable {
 
     fun <T> tryGetBean(clazz: Class<T>): T?
 
-    override fun close()
-}
-
-interface ConfigurableApplicationContext : ApplicationContext {
     fun findBeanMetaInfos(type: Class<*>): List<BeanMetaInfo>
 
     fun findBeanMetaInfo(type: Class<*>): BeanMetaInfo?
@@ -557,5 +553,7 @@ interface ConfigurableApplicationContext : ApplicationContext {
 
     fun createEarlySingleton(info: BeanMetaInfo): Any
 
-    fun getPropertyResolver(): PropertyResolver
+    fun getConfig(): PropertyResolver
+
+    override fun close()
 }

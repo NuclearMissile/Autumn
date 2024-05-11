@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet
 import jakarta.servlet.descriptor.JspConfigDescriptor
 import jakarta.servlet.http.*
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.component.servlet.DefaultServlet
 import org.example.autumn.server.component.support.FilterMapping
 import org.example.autumn.server.component.support.ServletMapping
@@ -54,7 +55,7 @@ class ServletContextImpl(
     private var defaultServlet: Servlet? = null
 
     internal val sessionManager = SessionManager(
-        this, config.getRequired("server.web-app.session-timeout", Int::class.java)
+        this, config.getRequired("server.web-app.session-timeout")
     )
 
     fun init(scannedClasses: List<Class<*>>) {
@@ -112,9 +113,7 @@ class ServletContextImpl(
                 logger.error("init servlet failed: $name: ${servletReg.servlet.javaClass.name}", e)
             }
         }
-        if (defaultServlet == null &&
-            config.getRequired("server.web-app.default-servlet", Boolean::class.java)
-        ) {
+        if (defaultServlet == null && config.getRequired("server.web-app.default-servlet")) {
             logger.info("no default servlet. auto register {}...", DefaultServlet::class.java.name)
             defaultServlet = DefaultServlet()
             try {
@@ -293,10 +292,10 @@ class ServletContextImpl(
     }
 
     override fun getMimeType(file: String): String {
-        val default = config.getRequired("server.mime-default")
+        val default = config.getRequiredString("server.mime-default")
         val n = file.lastIndexOf(".")
         return if (n < 0)
-            default else config.get("server.mime-types${file.substring(n).lowercase()}", default)
+            default else config.getString("server.mime-types${file.substring(n).lowercase()}", default)
     }
 
     override fun getResourcePaths(path: String): MutableSet<String>? {
@@ -349,7 +348,7 @@ class ServletContextImpl(
     }
 
     override fun getServerInfo(): String {
-        return config.getRequired("server.name")
+        return config.getRequiredString("server.name")
     }
 
     override fun getInitParameter(name: String): String? {
@@ -400,7 +399,7 @@ class ServletContextImpl(
     }
 
     override fun getServletContextName(): String {
-        return config.getRequired("server.web-app.name")
+        return config.getRequiredString("server.web-app.name")
     }
 
     override fun addServlet(servletName: String, className: String): ServletRegistration.Dynamic {
@@ -550,11 +549,11 @@ class ServletContextImpl(
     }
 
     override fun getVirtualServerName(): String {
-        return config.getRequired("server.web-app.virtual-server-name")
+        return config.getRequiredString("server.web-app.virtual-server-name")
     }
 
     override fun getSessionTimeout(): Int {
-        return config.getRequired("server.web-app.session-timeout", Int::class.java)
+        return config.getRequired("server.web-app.session-timeout")
     }
 
     override fun setSessionTimeout(sessionTimeout: Int) {
@@ -565,7 +564,7 @@ class ServletContextImpl(
     }
 
     override fun getRequestCharacterEncoding(): String {
-        return config.getRequired("server.request-encoding")
+        return config.getRequiredString("server.request-encoding")
     }
 
     override fun setRequestCharacterEncoding(encoding: String) {
@@ -576,7 +575,7 @@ class ServletContextImpl(
     }
 
     override fun getResponseCharacterEncoding(): String {
-        return config.getRequired("server.response-encoding")
+        return config.getRequiredString("server.response-encoding")
     }
 
     override fun setResponseCharacterEncoding(encoding: String) {

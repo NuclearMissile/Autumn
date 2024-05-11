@@ -7,7 +7,6 @@ import org.example.autumn.annotation.Transactional
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.exception.TransactionException
 import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.jdbc.orm.DbTemplate
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -24,7 +23,7 @@ class OrmTxTest {
             "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL);"
     }
 
-    private val propertyResolver = Config(
+    private val config = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_orm_tx.db",
             "autumn.datasource.username" to "sa",
@@ -36,14 +35,14 @@ class OrmTxTest {
     @BeforeEach
     fun setUp() {
         Files.deleteIfExists(Path("test_orm_tx.db"))
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
             ctx.getBean<JdbcTemplate>("jdbcTemplate").update(CREATE_USERS)
         }
     }
 
     @Test
     fun testOrmWithTx() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, propertyResolver).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
             val userService = ctx.getBean<UserService>("userService")
             // proxied:
             assertNotSame(UserService::class.java, userService.javaClass)

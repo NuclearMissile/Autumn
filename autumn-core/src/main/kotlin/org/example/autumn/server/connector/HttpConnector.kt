@@ -1,10 +1,9 @@
 package org.example.autumn.server.connector
 
-import com.sun.net.httpserver.HttpExchange
-import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import jakarta.servlet.ServletContainerInitializer
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
@@ -23,9 +22,9 @@ class HttpConnector(
     private lateinit var httpServer: HttpServer
 
     fun start() {
-        val host = config.getRequired("server.host")
-        val port = config.getRequired("server.port", Int::class.java)
-        val backlog = config.getRequired("server.backlog", Int::class.java)
+        val host = config.getRequiredString("server.host")
+        val port = config.getRequired<Int>("server.port")
+        val backlog = config.getRequired<Int>("server.backlog")
 
         // init servlet context:
         useClassLoader(classLoader) {

@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
-import org.example.autumn.context.ConfigurableApplicationContext
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
@@ -35,13 +34,12 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val applicationContext =
-        ApplicationContextHolder.requiredApplicationContext as ConfigurableApplicationContext
-    private val propertyResolver = applicationContext.getPropertyResolver()
+    private val applicationContext = ApplicationContextHolder.requiredApplicationContext
+    private val config = applicationContext.getConfig()
     private val viewResolver = applicationContext.getBean(ViewResolver::class.java)
-    private val resourcePath = propertyResolver
-        .get("\${autumn.web.static-path:/static/}")!!.removeSuffix("/") + "/"
-    private val faviconPath = propertyResolver.getRequired("\${autumn.web.favicon-path:/favicon.ico}")
+    private val resourcePath = config
+        .getString("\${autumn.web.static-path:/static/}")!!.removeSuffix("/") + "/"
+    private val faviconPath = config.getRequiredString("\${autumn.web.favicon-path:/favicon.ico}")
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
 

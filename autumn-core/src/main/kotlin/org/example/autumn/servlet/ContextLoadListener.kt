@@ -22,10 +22,10 @@ open class ContextLoadListener : ServletContextListener {
         WebMvcConfiguration.servletContext = servletContext
 
         val config = servletContext.getAttribute("config") as PropertyResolver
-        val encoding = config.getRequired("\${autumn.web.character-encoding:UTF-8}")
+        val encoding = config.getRequiredString("\${autumn.web.character-encoding:UTF-8}")
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
-        val configClassName = config.getRequired("autumn.config-class-path")
+        val configClassName = config.getRequiredString("autumn.config-class-path")
         val applicationContext = createApplicationContext(configClassName, config)
         logger.info("Application context created: {}", applicationContext)
 

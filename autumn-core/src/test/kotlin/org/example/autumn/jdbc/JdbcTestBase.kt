@@ -27,7 +27,7 @@ open class JdbcTestBase {
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"
     }
 
-    val propertyResolver = Config(
+    val config = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_jdbc.db",
             "autumn.datasource.username" to "sa",

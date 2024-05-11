@@ -2,12 +2,13 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.SessionCookieConfig
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.resolver.getRequired
 
 class SessionCookieConfigImpl(
     private val config: PropertyResolver
 ) : SessionCookieConfig {
     private val attributes = mutableMapOf<String, String>()
-    private var maxAge = config.getRequired("server.web-app.session-timeout", Int::class.java) * 60
+    private var maxAge = config.getRequired<Int>("server.web-app.session-timeout") * 60
     private var httpOnly = true
     private var secure = false
     private var domain: String? = null
@@ -18,7 +19,7 @@ class SessionCookieConfigImpl(
     }
 
     override fun getName(): String {
-        return config.getRequired("server.web-app.session-cookie-name")
+        return config.getRequiredString("server.web-app.session-cookie-name")
     }
 
     override fun setDomain(domain: String) {
@@ -37,9 +38,11 @@ class SessionCookieConfigImpl(
         return path
     }
 
+    @Suppress("removal")
     override fun setComment(comment: String) {
     }
 
+    @Suppress("removal")
     override fun getComment(): String? {
         return null
     }

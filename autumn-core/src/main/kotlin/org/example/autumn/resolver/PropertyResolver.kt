@@ -1,7 +1,6 @@
 package org.example.autumn.resolver
 
 import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
-import org.slf4j.LoggerFactory
 import java.time.*
 import java.util.*
 
@@ -11,20 +10,31 @@ interface PropertyResolver {
     fun contains(key: String): Boolean
     fun set(key: String, value: String)
     fun addAll(map: Map<String, String>)
-    fun get(key: String): String?
-    fun get(key: String, defaultValue: String): String
+    fun getString(key: String): String?
+    fun getString(key: String, defaultValue: String): String
     fun <T> get(key: String, clazz: Class<T>): T?
     fun <T> get(key: String, default: T, clazz: Class<T>): T
-    fun getRequired(key: String): String
+    fun getRequiredString(key: String): String
     fun <T> getRequired(key: String, clazz: Class<T>): T
     fun merge(other: PropertyResolver): PropertyResolver
     fun getMap(): Map<String, String>
 }
 
+inline fun <reified T> PropertyResolver.get(key: String): T? {
+    return get(key, T::class.java)
+}
+
+inline fun <reified T> PropertyResolver.get(key: String, default: T): T {
+    return get(key, default, T::class.java)
+}
+
+inline fun <reified T> PropertyResolver.getRequired(key: String): T {
+    return getRequired(key, T::class.java)
+}
+
 class Config(props: Properties) : PropertyResolver {
     companion object {
         private const val CONFIG_YML: String = "/config.yml"
-        private val logger = LoggerFactory.getLogger(Companion::class.java)
 
         fun load(): PropertyResolver {
             return loadYaml(CONFIG_YML)
@@ -86,25 +96,25 @@ class Config(props: Properties) : PropertyResolver {
         properties += map
     }
 
-    override fun get(key: String): String? {
+    override fun getString(key: String): String? {
         val keyExpr = parsePropertyExpr(key)
         if (keyExpr != null) {
             return if (keyExpr.defaultValue != null) {
-                get(keyExpr.key, keyExpr.defaultValue)
+                getString(keyExpr.key, keyExpr.defaultValue)
             } else {
-                getRequired(keyExpr.key)
+                getRequiredString(keyExpr.key)
             }
         }
         val value = properties[key]
         return if (value != null) parseValue(value) else null
     }
 
-    override fun get(key: String, defaultValue: String): String {
-        return get(key) ?: parseValue(defaultValue)
+    override fun getString(key: String, defaultValue: String): String {
+        return getString(key) ?: parseValue(defaultValue)
     }
 
     override fun <T> get(key: String, clazz: Class<T>): T? {
-        val value = get(key) ?: return null
+        val value = getString(key) ?: return null
         return getConverter(clazz).invoke(value)
     }
 
@@ -112,8 +122,8 @@ class Config(props: Properties) : PropertyResolver {
         return get(key, clazz) ?: default
     }
 
-    override fun getRequired(key: String) =
-        get(key) ?: throw IllegalArgumentException("key: $key not found")
+    override fun getRequiredString(key: String) =
+        getString(key) ?: throw IllegalArgumentException("key: $key not found")
 
     override fun <T> getRequired(key: String, clazz: Class<T>) =
         get(key, clazz) ?: throw IllegalArgumentException("key: $key not found")
@@ -126,9 +136,9 @@ class Config(props: Properties) : PropertyResolver {
     private fun parseValue(value: String): String {
         val expr = parsePropertyExpr(value) ?: return value
         return if (expr.defaultValue != null) {
-            get(expr.key, expr.defaultValue)
+            getString(expr.key, expr.defaultValue)
         } else {
-            getRequired(expr.key)
+            getRequiredString(expr.key)
         }
     }
 
