@@ -1,15 +1,81 @@
-package org.example.autumn.jdbc.tx
+package org.example.autumn.db.tx
 
+import org.example.autumn.annotation.*
 import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.db.*
 import org.example.autumn.exception.TransactionException
-import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.jdbc.JdbcTestBase
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+
+@ComponentScan
+@Configuration
+@Import(DbConfiguration::class)
+class JdbcTxApplication
+
+@Component
+@Transactional
+class AddressService(
+    @Autowired val jdbcTemplate: JdbcTemplate,
+) {
+    @Autowired
+    lateinit var userService: UserService
+
+    fun addAddress(vararg addresses: Address) {
+        for (address in addresses) {
+            // check if userId exists:
+            userService.getUser(address.userId)
+            jdbcTemplate.update(JdbcTestBase.INSERT_ADDRESS, address.userId, address.address, address.zipcode)
+        }
+    }
+
+    fun getAddresses(userId: Int): List<Address> {
+        return jdbcTemplate.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, Address::class.java, userId)
+    }
+
+    fun deleteAddress(userId: Int) {
+        jdbcTemplate.update(JdbcTestBase.DELETE_ADDRESS_BY_USERID, userId)
+        if (userId == 1) {
+            throw RuntimeException("Rollback delete for user id = 1")
+        }
+    }
+}
+
+@Component
+@Transactional
+@Around("aroundLogInvocationHandler")
+class UserService(
+    @Autowired val jdbcTemplate: JdbcTemplate,
+) {
+    @Autowired
+    lateinit var addressService: AddressService
+
+    fun createUser(name: String?, age: Int): User {
+        val id: Number = jdbcTemplate.updateWithGeneratedKey(JdbcTestBase.INSERT_USER, name, age)
+        val user = User()
+        user.id = id.toInt()
+        user.name = name
+        user.age = age
+        return user
+    }
+
+    fun getUser(userId: Int): User {
+        return jdbcTemplate.queryRequiredObject(JdbcTestBase.SELECT_USER, User::class.java, userId)
+    }
+
+    fun updateUser(user: User) {
+        jdbcTemplate.update(JdbcTestBase.UPDATE_USER, user.name, user.age, user.id)
+    }
+
+    fun deleteUser(user: User) {
+        jdbcTemplate.update(JdbcTestBase.DELETE_USER, user.id)
+        addressService.deleteAddress(user.id)
+    }
+}
+
 
 class JdbcTxTest : JdbcTestBase() {
     @Test

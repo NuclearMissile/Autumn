@@ -1,4 +1,4 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db.orm
 
 import jakarta.persistence.NoResultException
 import jakarta.persistence.NonUniqueResultException
@@ -15,7 +15,7 @@ interface Query<T> {
  *
  * @param <T> Entity type.
  */
-class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper<T>) : Query<T> {
+class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>) : Query<T> {
     private val logger = LoggerFactory.getLogger(javaClass)
     val joinParams = mutableListOf<Any>()
     val whereParams = mutableListOf<Any>()
@@ -53,7 +53,7 @@ class Criteria<T>(private val dbTemplate: DbTemplate, private val mapper: Mapper
         }
         val querySql = sql()
         val start = System.currentTimeMillis()
-        return dbTemplate.jdbcTemplate.query(querySql, mapper.resultSetExtractor, *queryParams.toTypedArray())!!.also {
+        return naiveOrm.jdbcTemplate.query(querySql, mapper.resultSetExtractor, *queryParams.toTypedArray())!!.also {
             logger.trace(
                 "querySql: {}, queryParams: {}, time: {}ms", querySql, queryParams, System.currentTimeMillis() - start
             )

@@ -1,4 +1,4 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db.orm
 
 import jakarta.persistence.*
 import java.lang.reflect.Field

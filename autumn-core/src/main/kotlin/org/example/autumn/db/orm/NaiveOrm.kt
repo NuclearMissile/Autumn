@@ -1,14 +1,14 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db.orm
 
 import jakarta.persistence.Entity
 import org.example.autumn.context.ApplicationContextHolder
-import org.example.autumn.jdbc.JdbcTemplate
+import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
 
-class DbTemplate(val jdbcTemplate: JdbcTemplate) {
+class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {

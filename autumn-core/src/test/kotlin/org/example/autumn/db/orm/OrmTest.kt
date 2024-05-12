@@ -1,10 +1,10 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db.orm
 
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.jdbc.orm.entity.EventEntity
-import org.example.autumn.jdbc.orm.entity.PasswordAuthEntity
-import org.example.autumn.jdbc.orm.entity.UserEntity
+import org.example.autumn.db.JdbcTemplate
+import org.example.autumn.db.orm.entity.EventEntity
+import org.example.autumn.db.orm.entity.PasswordAuthEntity
+import org.example.autumn.db.orm.entity.UserEntity
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -45,8 +45,8 @@ class OrmTest {
     @Test
     fun testExportDDL() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
-            val ddl = dbTemplate.exportDDL()
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
+            val ddl = naiveOrm.exportDDL()
             println(ddl.slice(0 until 500))
             assertTrue(ddl.startsWith("CREATE TABLE api_key_auths ("))
         }
@@ -55,12 +55,12 @@ class OrmTest {
     @Test
     fun testInsert() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             assertNotEquals(-1, user.id)
-            val selected = dbTemplate.selectById<UserEntity>(user.id)!!
+            val selected = naiveOrm.selectById<UserEntity>(user.id)!!
             assertEquals(timestamp, selected.createdAt)
         }
     }
@@ -68,18 +68,18 @@ class OrmTest {
     @Test
     fun testBatchInsert() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, it, it.toLong()) }
-            dbTemplate.batchInsert(users)
-            val usersResult = dbTemplate.selectFrom<UserEntity>().orderBy("id").query()
+            naiveOrm.batchInsert(users)
+            val usersResult = naiveOrm.selectFrom<UserEntity>().orderBy("id").query()
             assertContentEquals(usersResult.map { it.id }, users.map { it.id })
             assertEquals(1000, usersResult.count())
             assertEquals(999, usersResult.last().id - usersResult.first().id)
             assertEquals(0, usersResult.first().type)
 
             val events = (0 until 1000L).map { EventEntity(it, it, "test", it) }
-            dbTemplate.batchInsert(events)
-            val eventsResult = dbTemplate.selectFrom<EventEntity>()
+            naiveOrm.batchInsert(events)
+            val eventsResult = naiveOrm.selectFrom<EventEntity>()
                 .where("events.data = ?", "test")
                 .query()
             assertEquals(1000, eventsResult.count())
@@ -89,45 +89,45 @@ class OrmTest {
     @Test
     fun testQueries() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, 1, it.toLong()) }
             val paes = (1000 until 2000).map {
                 PasswordAuthEntity(
                     it.toLong(), if (it % 2 == 0) "1" else "2", it.toString()
                 )
             }
-            dbTemplate.batchInsert(users)
-            dbTemplate.batchInsert(paes)
+            naiveOrm.batchInsert(users)
+            naiveOrm.batchInsert(paes)
 
-            val result0 = dbTemplate.selectFrom<UserEntity>()
+            val result0 = naiveOrm.selectFrom<UserEntity>()
                 .orderBy("id", true)
                 .first()!!
             assertEquals(1000, result0.id)
 
-            val result1 = dbTemplate.selectFrom<PasswordAuthEntity>()
+            val result1 = naiveOrm.selectFrom<PasswordAuthEntity>()
                 .where("random = ?", "1")
                 .query()
             assertEquals(500, result1.count())
 
-            val result2 = dbTemplate.selectFrom<UserEntity>()
+            val result2 = naiveOrm.selectFrom<UserEntity>()
                 .limit(Long.MAX_VALUE, 950)
                 .query()
             assertEquals(50, result2.count())
 
-            val result3 = dbTemplate.selectFrom<PasswordAuthEntity>()
+            val result3 = naiveOrm.selectFrom<PasswordAuthEntity>()
                 .orderBy("random")
                 .limit(501)
                 .query()
             result3.slice(0 until 500).forEach { assertEquals("1", it.random) }
             assertEquals("2", result3.last().random)
 
-            val result4 = dbTemplate.selectFrom<PasswordAuthEntity>()
+            val result4 = naiveOrm.selectFrom<PasswordAuthEntity>()
                 .join("users ON users.type = password_auths.random AND users.id % 2 = ?", 0)
                 .where("users.type = password_auths.random")
                 .query()
             result4.forEach { assertEquals("1", it.random) }
 
-            val result5 = dbTemplate.selectFrom<PasswordAuthEntity>()
+            val result5 = naiveOrm.selectFrom<PasswordAuthEntity>()
                 .join("users ON users.type = password_auths.random AND users.id % 2 = ?", 0)
                 .where("users.type = ?", "a")
                 .query()
@@ -138,34 +138,34 @@ class OrmTest {
     @Test
     fun testUpdate() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             assertNotEquals(-1, user.id)
             val timestamp2 = System.currentTimeMillis()
             user.createdAt = timestamp2
-            assertThrows<IllegalArgumentException> { dbTemplate.update(user) }
+            assertThrows<IllegalArgumentException> { naiveOrm.update(user) }
 
             val pae = PasswordAuthEntity(999, "-1", "foo")
-            dbTemplate.insert(pae)
+            naiveOrm.insert(pae)
             pae.passwd = "bar"
-            dbTemplate.update(pae)
-            assertEquals("bar", dbTemplate.selectById<PasswordAuthEntity>(999)!!.passwd)
+            naiveOrm.update(pae)
+            assertEquals("bar", naiveOrm.selectById<PasswordAuthEntity>(999)!!.passwd)
         }
     }
 
     @Test
     fun testDelete() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             assertNotEquals(-1, user.id)
-            assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
-            dbTemplate.delete(user)
-            assertNull(dbTemplate.selectById<UserEntity>(user.id))
+            assertTrue(naiveOrm.selectById<UserEntity>(user.id) != null)
+            naiveOrm.delete(user)
+            assertNull(naiveOrm.selectById<UserEntity>(user.id))
         }
     }
 
@@ -173,14 +173,14 @@ class OrmTest {
     @Test
     fun testDeleteById() {
         AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
-            val dbTemplate = ctx.getBean<DbTemplate>("dbTemplate")
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             assertNotEquals(-1, user.id)
-            assertTrue(dbTemplate.selectById<UserEntity>(user.id) != null)
-            dbTemplate.deleteById<UserEntity>(user.id)
-            assertNull(dbTemplate.selectById<UserEntity>(user.id))
+            assertTrue(naiveOrm.selectById<UserEntity>(user.id) != null)
+            naiveOrm.deleteById<UserEntity>(user.id)
+            assertNull(naiveOrm.selectById<UserEntity>(user.id))
         }
     }
 }

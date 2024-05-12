@@ -1,9 +1,18 @@
-package org.example.autumn.jdbc
+package org.example.autumn.db
 
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 import kotlin.io.path.Path
+
+class Address(
+    var id: Int = 0,
+    var userId: Int = 0,
+    var address: String? = null,
+    var zipcode: Int = 0
+)
+
+class User(var id: Int = 0, var name: String? = null, var age: Int? = null)
 
 open class JdbcTestBase {
     companion object {

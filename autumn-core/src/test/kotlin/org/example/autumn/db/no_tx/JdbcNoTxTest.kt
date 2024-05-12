@@ -1,13 +1,49 @@
-package org.example.autumn.jdbc.no_tx
+package org.example.autumn.db.no_tx
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import org.example.autumn.annotation.*
 import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.db.JdbcTemplate
+import org.example.autumn.db.JdbcTestBase
+import org.example.autumn.db.User
 import org.example.autumn.exception.DataAccessException
-import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.jdbc.JdbcTestBase
 import org.junit.jupiter.api.assertThrows
+import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+
+@ComponentScan
+@Configuration
+class JdbcNoTxApplication {
+    @Bean(destroyMethod = "close")
+    fun dataSource( // properties:
+        @Value("\${autumn.datasource.url}") url: String?,
+        @Value("\${autumn.datasource.username}") username: String?,
+        @Value("\${autumn.datasource.password}") password: String?,
+        @Value("\${autumn.datasource.driver-class-name:}") driver: String?,
+        @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
+        @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
+        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int
+    ): DataSource {
+        return HikariDataSource(HikariConfig().also { config ->
+            config.isAutoCommit = false
+            config.jdbcUrl = url
+            config.username = username
+            config.password = password
+            config.driverClassName = driver
+            config.maximumPoolSize = maximumPoolSize
+            config.minimumIdle = minimumPoolSize
+            config.connectionTimeout = connTimeout.toLong()
+        })
+    }
+
+    @Bean
+    fun jdbcTemplate(@Autowired dataSource: DataSource): JdbcTemplate {
+        return JdbcTemplate(dataSource)
+    }
+}
 
 class JdbcNoTxTest : JdbcTestBase() {
     @Test

@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.ResponseErrorException
-import org.example.autumn.jdbc.JdbcConfiguration
+import org.example.autumn.db.DbConfiguration
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
@@ -32,7 +32,7 @@ object Main {
 
 @ComponentScan
 @Configuration
-@Import(WebMvcConfiguration::class, JdbcConfiguration::class)
+@Import(WebMvcConfiguration::class, DbConfiguration::class)
 class HelloConfiguration
 
 @WebListener

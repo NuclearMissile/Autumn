@@ -1,4 +1,4 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db.orm
 
 import jakarta.persistence.*
 import org.example.autumn.annotation.Autowired
@@ -6,7 +6,7 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.exception.TransactionException
-import org.example.autumn.jdbc.JdbcTemplate
+import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -73,18 +73,18 @@ data class User(
 
 @Component
 @Transactional
-class UserService(@Autowired val dbTemplate: DbTemplate) {
+class UserService(@Autowired val naiveOrm: NaiveOrm) {
     fun getAllUser(): List<User> {
-        return dbTemplate.selectFrom<User>().query()
+        return naiveOrm.selectFrom<User>().query()
     }
 
     fun insertUser(email: String, name: String, password: String): User {
         val user = User(-1, email, name, password)
-        dbTemplate.insert(user)
+        naiveOrm.insert(user)
         return user
     }
 
     fun insertUsers(users: List<User>) {
-        users.forEach { user -> dbTemplate.insert(user) }
+        users.forEach { user -> naiveOrm.insert(user) }
     }
 }

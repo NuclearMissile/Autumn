@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.PostConstruct
-import org.example.autumn.jdbc.orm.DbTemplate
+import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.utils.HashUtil
 import org.example.autumn.utils.SecureRandomUtil
 
@@ -26,7 +26,7 @@ data class User(
 )
 
 @Component
-class UserService(@Autowired val dbTemplate: DbTemplate) {
+class UserService(@Autowired val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
@@ -34,12 +34,12 @@ class UserService(@Autowired val dbTemplate: DbTemplate) {
 
     @PostConstruct
     fun init() {
-        dbTemplate.jdbcTemplate.update(CREATE_USERS)
+        naiveOrm.jdbcTemplate.update(CREATE_USERS)
         register("test@test.com", "test", "test")
     }
 
     fun getUserByEmail(email: String): User? {
-        return dbTemplate.selectFrom<User>().where("email = ?", email).first()
+        return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
     fun register(email: String, name: String, password: String): User? {
@@ -47,7 +47,7 @@ class UserService(@Autowired val dbTemplate: DbTemplate) {
         val pwdHash = HashUtil.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
         return try {
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             user
         } catch (e: Exception) {
             null

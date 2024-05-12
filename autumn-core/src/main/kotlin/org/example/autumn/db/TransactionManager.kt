@@ -1,4 +1,4 @@
-package org.example.autumn.jdbc
+package org.example.autumn.db
 
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor

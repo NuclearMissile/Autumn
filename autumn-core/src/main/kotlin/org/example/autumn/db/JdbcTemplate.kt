@@ -1,60 +1,9 @@
-package org.example.autumn.jdbc
+package org.example.autumn.db
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import org.example.autumn.annotation.Autowired
-import org.example.autumn.annotation.Bean
-import org.example.autumn.annotation.Configuration
-import org.example.autumn.annotation.Value
 import org.example.autumn.exception.DataAccessException
-import org.example.autumn.jdbc.orm.DbTemplate
+import org.slf4j.LoggerFactory
 import java.sql.*
 import javax.sql.DataSource
-
-@Configuration
-class JdbcConfiguration {
-    @Bean(destroyMethod = "close")
-    fun dataSource(
-        @Value("\${autumn.datasource.url}") url: String,
-        @Value("\${autumn.datasource.username}") username: String,
-        @Value("\${autumn.datasource.password}") password: String,
-        @Value("\${autumn.datasource.driver-class-name:}") driver: String,
-        @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
-        @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
-        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int,
-    ): DataSource {
-        return HikariDataSource(HikariConfig().also { config ->
-            config.isAutoCommit = false
-            config.jdbcUrl = url
-            config.username = username
-            config.password = password
-            config.driverClassName = driver
-            config.maximumPoolSize = maximumPoolSize
-            config.minimumIdle = minimumPoolSize
-            config.connectionTimeout = connTimeout.toLong()
-        })
-    }
-
-    @Bean
-    fun jdbcTemplate(@Autowired dataSource: DataSource): JdbcTemplate {
-        return JdbcTemplate(dataSource)
-    }
-
-    @Bean
-    fun dbTemplate(@Autowired jdbcTemplate: JdbcTemplate): DbTemplate {
-        return DbTemplate(jdbcTemplate)
-    }
-
-    @Bean
-    fun transactionalBeanPostProcessor(): TransactionalBeanPostProcessor {
-        return TransactionalBeanPostProcessor()
-    }
-
-    @Bean
-    fun transactionManager(@Autowired dataSource: DataSource): TransactionManager {
-        return DataSourceTransactionManager(dataSource)
-    }
-}
 
 class JdbcTemplate(private val dataSource: DataSource) {
     fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
@@ -205,4 +154,78 @@ fun interface PreparedStatementCreator {
 
 fun interface ResultSetExtractor<T> {
     fun extractData(rs: ResultSet): T?
+}
+
+class BeanRowMapper<T>(private val clazz: Class<T>) : ResultSetExtractor<T> {
+    private val logger = LoggerFactory.getLogger(javaClass)
+    private val fields = clazz.fields.associateBy {
+        logger.atDebug().log("Add row mapping for {}", it.name)
+        it.name
+    }
+    private val setters = clazz.methods
+        .filter { it.parameters.size == 1 && it.name.length >= 4 && it.name.startsWith("set") }
+        .associateBy {
+            val name = it.name
+            val prop = name[3].lowercaseChar() + name.substring(4)
+            logger.atDebug()
+                .log("Add row mapping: {} to {}({})", prop, name, it.parameters.single().type.simpleName)
+            prop
+        }
+    private val ctor = try {
+        clazz.getConstructor()
+    } catch (e: ReflectiveOperationException) {
+        throw DataAccessException(
+            "No public default constructor found for class ${clazz.name} when build BeanRowMapper.", e
+        )
+    }
+
+    override fun extractData(rs: ResultSet): T? {
+        return ctor.newInstance().also { bean ->
+            try {
+                val meta = rs.metaData
+                for (i in 1..meta.columnCount) {
+                    val label = meta.getColumnLabel(i)
+                    val setter = setters[label]
+                    if (setter != null) {
+                        setter.invoke(bean, rs.getObject(label))
+                    } else {
+                        val field = fields[label]
+                        field?.set(bean, rs.getObject(label))
+                    }
+                }
+            } catch (e: ReflectiveOperationException) {
+                throw DataAccessException("Could not map result set to class ${clazz.name}", e)
+            }
+        }
+    }
+}
+
+class StringRowMapper : ResultSetExtractor<String> {
+    companion object {
+        val instance = StringRowMapper()
+    }
+
+    override fun extractData(rs: ResultSet): String? {
+        return rs.getString(1)
+    }
+}
+
+class BooleanRowMapper : ResultSetExtractor<Boolean> {
+    companion object {
+        val instance = BooleanRowMapper()
+    }
+
+    override fun extractData(rs: ResultSet): Boolean {
+        return rs.getBoolean(1)
+    }
+}
+
+class NumberRowMapper : ResultSetExtractor<Number> {
+    companion object {
+        val instance = NumberRowMapper()
+    }
+
+    override fun extractData(rs: ResultSet): Number? {
+        return rs.getObject(1) as? Number
+    }
 }

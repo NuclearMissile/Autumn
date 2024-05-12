@@ -1,26 +1,25 @@
-package org.example.autumn.jdbc.orm
+package org.example.autumn.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.example.autumn.annotation.*
-import org.example.autumn.jdbc.DataSourceTransactionManager
-import org.example.autumn.jdbc.JdbcTemplate
-import org.example.autumn.jdbc.TransactionManager
-import org.example.autumn.jdbc.TransactionalBeanPostProcessor
+import org.example.autumn.annotation.Autowired
+import org.example.autumn.annotation.Bean
+import org.example.autumn.annotation.Configuration
+import org.example.autumn.annotation.Value
+import org.example.autumn.db.orm.NaiveOrm
 import javax.sql.DataSource
 
-@ComponentScan
 @Configuration
-class OrmTestApplication {
+class DbConfiguration {
     @Bean(destroyMethod = "close")
-    fun dataSource( // properties:
+    fun dataSource(
         @Value("\${autumn.datasource.url}") url: String,
         @Value("\${autumn.datasource.username}") username: String,
         @Value("\${autumn.datasource.password}") password: String,
         @Value("\${autumn.datasource.driver-class-name:}") driver: String,
         @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
         @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
-        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int
+        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int,
     ): DataSource {
         return HikariDataSource(HikariConfig().also { config ->
             config.isAutoCommit = false
@@ -40,8 +39,8 @@ class OrmTestApplication {
     }
 
     @Bean
-    fun dbTemplate(@Autowired jdbcTemplate: JdbcTemplate): DbTemplate {
-        return DbTemplate(jdbcTemplate)
+    fun naiveOrm(@Autowired jdbcTemplate: JdbcTemplate): NaiveOrm {
+        return NaiveOrm(jdbcTemplate)
     }
 
     @Bean

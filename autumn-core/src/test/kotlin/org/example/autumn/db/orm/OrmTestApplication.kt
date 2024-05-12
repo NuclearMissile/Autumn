@@ -1,20 +1,23 @@
-package org.example.autumn.jdbc.no_tx
+package org.example.autumn.db.orm
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.annotation.*
-import org.example.autumn.jdbc.JdbcTemplate
+import org.example.autumn.db.DataSourceTransactionManager
+import org.example.autumn.db.JdbcTemplate
+import org.example.autumn.db.TransactionManager
+import org.example.autumn.db.TransactionalBeanPostProcessor
 import javax.sql.DataSource
 
 @ComponentScan
 @Configuration
-class JdbcNoTxApplication {
+class OrmTestApplication {
     @Bean(destroyMethod = "close")
     fun dataSource( // properties:
-        @Value("\${autumn.datasource.url}") url: String?,
-        @Value("\${autumn.datasource.username}") username: String?,
-        @Value("\${autumn.datasource.password}") password: String?,
-        @Value("\${autumn.datasource.driver-class-name:}") driver: String?,
+        @Value("\${autumn.datasource.url}") url: String,
+        @Value("\${autumn.datasource.username}") username: String,
+        @Value("\${autumn.datasource.password}") password: String,
+        @Value("\${autumn.datasource.driver-class-name:}") driver: String,
         @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
         @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
         @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int
@@ -35,13 +38,19 @@ class JdbcNoTxApplication {
     fun jdbcTemplate(@Autowired dataSource: DataSource): JdbcTemplate {
         return JdbcTemplate(dataSource)
     }
+
+    @Bean
+    fun naiveOrm(@Autowired jdbcTemplate: JdbcTemplate): NaiveOrm {
+        return NaiveOrm(jdbcTemplate)
+    }
+
+    @Bean
+    fun transactionalBeanPostProcessor(): TransactionalBeanPostProcessor {
+        return TransactionalBeanPostProcessor()
+    }
+
+    @Bean
+    fun transactionManager(@Autowired dataSource: DataSource): TransactionManager {
+        return DataSourceTransactionManager(dataSource)
+    }
 }
-
-data class Address(
-    var id: Int = 0,
-    var userId: Int = 0,
-    var address: String? = null,
-    var zipcode: Int = 0
-)
-
-data class User(var id: Int = 0, var name: String? = null, var age: Int? = null)
