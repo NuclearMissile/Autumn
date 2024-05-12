@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.PostConstruct
+import org.example.autumn.annotation.Transactional
 import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.utils.HashUtil
 import org.example.autumn.utils.SecureRandomUtil
@@ -26,6 +27,7 @@ data class User(
 )
 
 @Component
+@Transactional
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +

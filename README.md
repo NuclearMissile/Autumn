@@ -9,6 +9,7 @@ _Yet another toy web application framework imitating Spring with homemade http s
 ## Features
 
 - [x] DI + AOP + MVC web framework
+  - [ ] Resolve circular dependency in ctor injection 
 - [x] Homemade Jakarta Servlet 6.0 http server
 - [x] JdbcTemplate and naive ORM, support @Transactional annotation
 - [x] Standard .war packaging
@@ -27,10 +28,16 @@ _test account: test@test.com: test_
 <summary>Code</summary>
 
 ```kotlin
-@Controller("/")
+@Controller
 class IndexController(@Autowired private val userService: UserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
+    }
+
+    @PostConstruct
+    fun init() {
+      // @Transactional proxy of UserService injected
+      assert(userService.javaClass != UserService::class.java)
     }
 
     @Get("/")
@@ -93,20 +100,21 @@ data class User(
 )
 
 @Component
-class UserService(@Autowired val dbTemplate: DbTemplate) {
+@Transactional
+class UserService(@Autowired val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+                "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
     @PostConstruct
     fun init() {
-        dbTemplate.jdbcTemplate.update(CREATE_USERS)
+        naiveOrm.jdbcTemplate.update(CREATE_USERS)
         register("test@test.com", "test", "test")
     }
 
     fun getUserByEmail(email: String): User? {
-        return dbTemplate.selectFrom<User>().where("email = ?", email).first()
+        return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
     fun register(email: String, name: String, password: String): User? {
@@ -114,7 +122,7 @@ class UserService(@Autowired val dbTemplate: DbTemplate) {
         val pwdHash = HashUtil.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
         return try {
-            dbTemplate.insert(user)
+            naiveOrm.insert(user)
             user
         } catch (e: Exception) {
             null
@@ -130,6 +138,12 @@ class UserService(@Autowired val dbTemplate: DbTemplate) {
 
 ```
 </details>
+
+## Ref:
+
+- https://github.com/michaelliao/summer-framework
+- https://github.com/zzzzbw/doodle
+- https://github.com/fuzhengwei/small-spring
 
 
 

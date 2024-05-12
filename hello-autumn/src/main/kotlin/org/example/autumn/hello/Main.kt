@@ -103,6 +103,12 @@ class IndexController(@Autowired private val userService: UserService) {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
 
+    @PostConstruct
+    fun init() {
+        // @Transactional proxy of UserService injected
+        assert(userService.javaClass != UserService::class.java)
+    }
+
     @Get("/")
     fun index(session: HttpSession): ModelAndView {
         val user = session.getAttribute(USER_SESSION_KEY)
