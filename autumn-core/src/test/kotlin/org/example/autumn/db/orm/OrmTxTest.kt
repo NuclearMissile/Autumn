@@ -5,8 +5,8 @@ import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.exception.TransactionException
 import org.example.autumn.db.JdbcTemplate
+import org.example.autumn.exception.DataAccessException
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
@@ -50,7 +50,7 @@ class OrmTxTest {
             assertNotEquals(-1, user_0.id)
             val user_1 = User(-1, "test_1", "test_1", "test_1")
             val user_2 = User(-1, "test_2", "test_2", "test_2")
-            assertThrows<TransactionException> { userService.insertUsers(listOf(user_1, user_2, user_0)) }
+            assertThrows<DataAccessException> { userService.insertUsers(listOf(user_1, user_2, user_0)) }
             assertEquals(1, userService.getAllUser().size)
         }
     }

@@ -3,7 +3,7 @@ package org.example.autumn.db.tx
 import org.example.autumn.annotation.*
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.db.*
-import org.example.autumn.exception.TransactionException
+import org.example.autumn.exception.DataAccessException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -107,7 +107,7 @@ class JdbcTxTest : JdbcTestBase() {
             val addr2 = Address(0, bob.id, "Fifth Avenue, New York", 10080)
             // user not exist for addr3:
             val addr3 = Address(0, bob.id + 1, "Ocean Drive, Miami, Florida", 33411)
-            assertThrows<TransactionException> {
+            assertThrows<DataAccessException> {
                 addressService.addAddress(addr1, addr2, addr3)
             }
 
@@ -119,7 +119,7 @@ class JdbcTxTest : JdbcTestBase() {
             assertEquals(2, addressService.getAddresses(bob.id).size)
 
             // now delete bob will cause rollback:
-            assertThrows<TransactionException> {
+            assertThrows<RuntimeException> {
                 userService.deleteUser(bob)
             }
 

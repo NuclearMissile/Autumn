@@ -2,14 +2,12 @@ package org.example.autumn.db
 
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
-import org.example.autumn.exception.TransactionException
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.sql.Connection
-import java.sql.SQLException
 import javax.sql.DataSource
 
 interface TransactionManager
@@ -45,14 +43,13 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 return ret
             } catch (e: InvocationTargetException) {
                 val target = e.extractTarget()
-                logger.warn("rollback transaction for exception", target)
-                val txe = TransactionException("Exception thrown in tx context.", target)
+                logger.warn("rollback transaction for the following exception:", target)
                 try {
                     conn.rollback()
-                } catch (sqle: SQLException) {
-                    txe.addSuppressed(sqle)
+                } catch (e: Exception) {
+                    target.addSuppressed(e)
                 }
-                throw txe
+                throw target
             } finally {
                 transactionStatus.remove()
                 if (autoCommit) {

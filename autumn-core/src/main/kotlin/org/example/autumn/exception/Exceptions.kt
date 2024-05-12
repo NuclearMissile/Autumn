@@ -23,9 +23,6 @@ class AopConfigException(message: String, cause: Throwable? = null) :
 class DataAccessException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
-class TransactionException(message: String, cause: Throwable? = null) :
-    AutumnException(message, cause)
-
 class NotFoundException(message: String, responseBody: String? = null, cause: Throwable? = null) :
     ResponseErrorException(404, message, responseBody, cause)
 
