@@ -17,9 +17,9 @@ _Yet another toy web application framework imitating Spring with homemade http s
 
 ## Demo
 
-hello-autumn (user login demo):
+hello-autumn (user login demo), use Autumn just like Spring
 
-_test account: test@test.com: test_
+_test account: test@test.com; test_
 
 ![](login-demo.png)
 
@@ -141,7 +141,7 @@ class UserService(@Autowired val naiveOrm: NaiveOrm) {
 ```
 </details>
 
-## Ref:
+## Ref
 
 - https://github.com/michaelliao/summer-framework
 - https://github.com/zzzzbw/doodle
