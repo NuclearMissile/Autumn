@@ -12,7 +12,7 @@ class DbTemplate(val jdbcTemplate: JdbcTemplate) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {
-        ApplicationContextHolder.applicationContext!!.scannedClassNames
+        ApplicationContextHolder.applicationContext!!.managedClassNames
             .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
             .filter { findAnnotation(it, Entity::class.java) != null }
             .associateWith { Mapper(it) }

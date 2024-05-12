@@ -78,26 +78,26 @@ class IndexController(@Autowired private val userService: UserService) {
 @Entity
 @Table(name = "users")
 data class User(
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-@Column(nullable = false, updatable = false)
-var id: Long,
-@Column(nullable = false, unique = true)
-var email: String,
-@Column(nullable = false)
-var name: String,
-@Column(name = "pwd_salt", nullable = false)
-val pwdSalt: String,
-@Column(name = "pwd_hash", nullable = false)
-val pwdHash: String,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false, updatable = false)
+    var id: Long,
+    @Column(nullable = false, unique = true)
+    var email: String,
+    @Column(nullable = false)
+    var name: String,
+    @Column(name = "pwd_salt", nullable = false)
+    val pwdSalt: String,
+    @Column(name = "pwd_hash", nullable = false)
+    val pwdHash: String,
 )
 
 @Component
 class UserService(@Autowired val dbTemplate: DbTemplate) {
-companion object {
-const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-    "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
-}
+    companion object {
+        const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+    }
 
     @PostConstruct
     fun init() {

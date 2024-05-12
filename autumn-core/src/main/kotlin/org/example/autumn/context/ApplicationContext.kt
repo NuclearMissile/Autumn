@@ -27,11 +27,11 @@ class AnnotationConfigApplicationContext(
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
-    override val scannedClassNames = scanClassNamesOnConfigClass(configClass)
+    override val managedClassNames = scanClassNamesOnConfigClass(configClass)
 
     init {
         ApplicationContextHolder.applicationContext = this
-        infos += createBeanMetaInfos(scannedClassNames)
+        infos += createBeanMetaInfos(managedClassNames)
         infos.values.filter { it.isConfiguration }.sorted().forEach(::createEarlySingleton)
         postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
             createEarlySingleton(it) as BeanPostProcessor
@@ -525,7 +525,7 @@ class AnnotationConfigApplicationContext(
 }
 
 interface ApplicationContext : AutoCloseable {
-    val scannedClassNames: List<String>
+    val managedClassNames: List<String>
 
     fun contains(name: String): Boolean
 
