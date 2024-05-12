@@ -100,8 +100,10 @@ class IndexController(@Autowired private val userService: UserService) {
     }
 
     @Get("/register")
-    fun register(): ModelAndView {
-        return ModelAndView("/register.ftl")
+    fun register(session: HttpSession): ModelAndView {
+        val user = session.getAttribute(USER_SESSION_KEY)
+        return if (user == null)
+            ModelAndView("/register.ftl") else ModelAndView("redirect:/")
     }
 
     @Post("/register")
@@ -115,8 +117,10 @@ class IndexController(@Autowired private val userService: UserService) {
     }
 
     @Get("/login")
-    fun login(): ModelAndView {
-        return ModelAndView("/login.ftl")
+    fun login(session: HttpSession): ModelAndView {
+        val user = session.getAttribute(USER_SESSION_KEY)
+        return if (user == null)
+            ModelAndView("/login.ftl") else ModelAndView("redirect:/")
     }
 
     @Post("/login")
