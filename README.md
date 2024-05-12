@@ -45,7 +45,7 @@ class IndexController(@Autowired private val userService: UserService) {
     fun index(session: HttpSession): ModelAndView {
         val user = session.getAttribute(USER_SESSION_KEY)
         return if (user == null)
-            ModelAndView("redirect:/register") else ModelAndView("/index.ftl", mapOf("user" to user))
+            ModelAndView("redirect:/login") else ModelAndView("/index.ftl", mapOf("user" to user))
     }
 
     @Get("/register")
