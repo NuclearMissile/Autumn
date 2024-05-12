@@ -12,6 +12,7 @@ import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
+import org.example.autumn.utils.ClassUtils.extractTarget
 import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
@@ -300,7 +301,7 @@ class DispatcherServlet : HttpServlet() {
             return try {
                 handlerMethod.invoke(controller, *args.toTypedArray())
             } catch (e: InvocationTargetException) {
-                throw e.targetException
+                throw e.extractTarget()
             }
         }
 

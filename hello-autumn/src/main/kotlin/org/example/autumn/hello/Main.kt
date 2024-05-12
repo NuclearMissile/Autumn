@@ -6,11 +6,12 @@ import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
-import org.example.autumn.exception.ResponseErrorException
+import org.example.autumn.aop.AroundAopConfiguration
+import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.db.DbConfiguration
+import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
@@ -18,8 +19,8 @@ import org.example.autumn.servlet.FilterRegistrationBean
 import org.example.autumn.servlet.ModelAndView
 import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.JsonUtils.toJson
-import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
+import java.lang.reflect.Method
 
 object Main {
     @JvmStatic
@@ -32,8 +33,17 @@ object Main {
 
 @ComponentScan
 @Configuration
-@Import(WebMvcConfiguration::class, DbConfiguration::class)
+@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class)
 class HelloConfiguration
+
+@Component
+class BeforeLogInvocationHandler : BeforeInvocationHandlerAdapter() {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun before(proxy: Any, method: Method, args: Array<Any>?) {
+        logger.info("[Before] ${method.declaringClass}.${method.name}")
+    }
+}
 
 @WebListener
 class HelloContextLoadListener : ContextLoadListener()
@@ -48,33 +58,6 @@ class LogFilter : FilterRegistrationBean() {
             val httpReq = req as HttpServletRequest
             logger.info("{}: {}", httpReq.method, httpReq.requestURI)
             chain.doFilter(req, resp)
-        }
-    }
-}
-
-@Order(200)
-@Component
-class ApiErrorFilter : FilterRegistrationBean() {
-    override val urlPatterns = listOf("/api/*")
-    override val filter = object : Filter {
-        private val logger = LoggerFactory.getLogger(javaClass)
-        override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
-            try {
-                chain.doFilter(req, resp)
-            } catch (e: Throwable) {
-                req as HttpServletRequest
-                resp as HttpServletResponse
-                logger.warn("api error when handling {}: {}", req.method, req.requestURI)
-                if (!resp.isCommitted) {
-                    resp.apply {
-                        reset()
-                        status = 400
-                        writer.writeJson(
-                            mapOf("message" to e.message, "type" to (e.cause ?: e).javaClass.simpleName)
-                        ).flush()
-                    }
-                }
-            }
         }
     }
 }
@@ -151,6 +134,7 @@ class IndexController(@Autowired private val userService: UserService) {
     }
 }
 
+@Around("beforeLogInvocationHandler")
 @RestController("/api")
 class RestApiController {
     @Get("/hello/{name}")

@@ -4,6 +4,7 @@ import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
 import org.example.autumn.resolver.ResourceResolver
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 object ClassUtils {
@@ -158,5 +159,12 @@ object ClassUtils {
         } finally {
             Thread.currentThread().contextClassLoader = original
         }
+    }
+
+    fun InvocationTargetException.extractTarget(): Throwable {
+        return if (targetException!! !is InvocationTargetException)
+            targetException
+        else
+            (targetException as InvocationTargetException).extractTarget()
     }
 }

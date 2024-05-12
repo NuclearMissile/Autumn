@@ -1,5 +1,6 @@
 package org.example.autumn.server.classloader
 
+import org.example.autumn.utils.ClassUtils.extractTarget
 import org.junit.jupiter.api.assertThrows
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -36,8 +37,9 @@ class WebAppClassLoaderTest {
         try {
             errorMethod.invoke(restInstance)
         } catch (e: InvocationTargetException) {
-            assertIs<AssertionError>(e.targetException)
-            assertEquals("test error", e.targetException.message)
+            val target = e.extractTarget()
+            assertIs<AssertionError>(target)
+            assertEquals("test error", target.message)
         }
 
         val servletClass = Class.forName(
