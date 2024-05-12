@@ -41,14 +41,14 @@ class AnnotationConfigApplicationContext(
         // 通过字段和set方法注入依赖:
         infos.values.forEach {
             try {
-                injectProperties(it, it.beanClass, getProxiedInstance(it))
+                injectProperties(it, it.beanClass, getOriginalInstance(it))
             } catch (e: ReflectiveOperationException) {
                 throw BeanCreationException("Error while injectBean for $it", e)
             }
         }
         // call init method
         infos.values.forEach { info ->
-            val proxied = getProxiedInstance(info)
+            val proxied = getOriginalInstance(info)
             invokeMethod(proxied, info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
                 val processed = postProcessor.afterInitialization(info.instance!!, info.beanName)
@@ -480,23 +480,23 @@ class AnnotationConfigApplicationContext(
     override fun close() {
         logger.info("Closing {}...", this.javaClass.name)
         infos.values.forEach {
-            invokeMethod(getProxiedInstance(it), it.destroyMethod, it.destroyMethodName)
+            invokeMethod(getOriginalInstance(it), it.destroyMethod, it.destroyMethodName)
         }
         infos.clear()
         logger.info("{} closed.", this.javaClass.name)
         ApplicationContextHolder.applicationContext = null
     }
 
-    private fun getProxiedInstance(info: BeanMetaInfo): Any {
+    private fun getOriginalInstance(info: BeanMetaInfo): Any {
         var beanInstance = info.instance!!
         // 如果Proxy改变了原始Bean，又希望注入到原始Bean，则由BeanPostProcessor指定原始Bean:
         postProcessors.reversed().forEach {
             val restoredInstance = it.beforePropertySet(beanInstance, info.beanName)
             if (restoredInstance !== beanInstance) {
                 logger.atDebug().log(
-                    "BeanPostProcessor {} specified injection from {} to {}.",
-                    it.javaClass.simpleName,
+                    "Get original bean instance for {}, processed by: {}, original: {}.",
                     beanInstance.javaClass.simpleName,
+                    it.javaClass.simpleName,
                     restoredInstance.javaClass.simpleName
                 )
                 beanInstance = restoredInstance

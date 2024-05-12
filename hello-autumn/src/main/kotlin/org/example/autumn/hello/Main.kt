@@ -41,7 +41,7 @@ class BeforeLogInvocationHandler : BeforeInvocationHandlerAdapter() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(proxy: Any, method: Method, args: Array<Any>?) {
-        logger.info("[Before] ${method.declaringClass}.${method.name}")
+        logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
 }
 
