@@ -8,7 +8,7 @@ _Yet another toy web application framework imitating Spring with homemade http s
 
 ## Features
 
-- [x] DI + AOP + MVC web framework
+- [x] DI + AOP + EventBus + MVC web framework
     - [ ] Resolve circular dependency in ctor injection
 - [x] Homemade Jakarta Servlet 6.0 http server
 - [x] JdbcTemplate and naive ORM, support @Transactional annotation
