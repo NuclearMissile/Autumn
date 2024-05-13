@@ -89,8 +89,8 @@ class AutumnServer {
                     logger.info("logback.xml not found, using default logging config")
                 }
                 // load config
-                if (customConfig == null) Config.load() else
-                    Config.load().merge(Config.loadYaml(Paths.get(customConfig).toString(), false))
+                if (customConfig == null)
+                    Config.load() else Config.load().merge(Config.loadYaml(customConfig, false))
             }
 
             // show banner

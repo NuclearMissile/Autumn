@@ -35,13 +35,15 @@ inline fun <reified T> PropertyResolver.getRequired(key: String): T {
 class Config(props: Properties) : PropertyResolver {
     companion object {
         private const val CONFIG_YML: String = "/config.yml"
+        private const val DEFAULT_CONFIG_YML: String = "/default-config.yml"
 
         fun load(): PropertyResolver {
-            return loadYaml(CONFIG_YML)
+            return loadYaml(DEFAULT_CONFIG_YML).merge(loadYaml(CONFIG_YML))
         }
 
-        fun loadYaml(yamlPath: String, isClassPath: Boolean = true): PropertyResolver {
-            val yamlMap = loadYamlAsPlainMap(yamlPath, isClassPath).filter { it.value is String } as Map<String, String>
+        fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): PropertyResolver {
+            val yamlMap =
+                loadYamlAsPlainMap(yamlPath, fromClassPath).filter { it.value is String } as Map<String, String>
             return Config(yamlMap.toProperties())
         }
     }
