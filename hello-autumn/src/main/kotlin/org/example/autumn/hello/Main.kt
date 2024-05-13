@@ -1,7 +1,5 @@
 package org.example.autumn.hello
 
-import com.google.common.eventbus.EventBus
-import com.google.common.eventbus.Subscribe
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
@@ -13,7 +11,10 @@ import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundAopConfiguration
 import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.db.DbConfiguration
+import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventBusConfig
+import org.example.autumn.eventbus.Subscribe
+import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
@@ -68,9 +69,14 @@ class LogFilter : FilterRegistrationBean() {
 class LoginEventListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onLoginEvent(e: LoginEvent) {
-        logger.info("[Login] ${e.user}")
+        logger.info("sync event: [Login] ${e.user}")
+    }
+
+    @Subscribe
+    fun onLoginEventAsync(e: LoginEvent) {
+        logger.info("async event: [Login] ${e.user}")
     }
 }
 
