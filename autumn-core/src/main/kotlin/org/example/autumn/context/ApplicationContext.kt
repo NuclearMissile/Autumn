@@ -48,8 +48,7 @@ class AnnotationConfigApplicationContext(
         }
         // call init method
         infos.values.forEach { info ->
-            val proxied = getOriginalInstance(info)
-            invokeMethod(proxied, info.initMethod, info.initMethodName)
+            invokeMethod(getOriginalInstance(info), info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
                 val processed = postProcessor.afterInitialization(info.instance!!, info.beanName)
                 if (processed !== info.instance!!) {

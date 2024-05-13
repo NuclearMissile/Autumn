@@ -1,10 +1,7 @@
 package org.example.autumn.hello
 
 import jakarta.persistence.*
-import org.example.autumn.annotation.Autowired
-import org.example.autumn.annotation.Component
-import org.example.autumn.annotation.PostConstruct
-import org.example.autumn.annotation.Transactional
+import org.example.autumn.annotation.*
 import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.utils.HashUtil
 import org.example.autumn.utils.SecureRandomUtil
@@ -26,6 +23,7 @@ data class User(
     val pwdHash: String,
 )
 
+@Around("beforeLogInvocationHandler")
 @Component
 @Transactional
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
