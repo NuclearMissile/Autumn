@@ -5,7 +5,7 @@ import org.example.autumn.annotation.Configuration
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
 import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 import java.util.concurrent.Executors
 
 @Configuration
@@ -44,18 +44,22 @@ class EventBus private constructor() : AutoCloseable {
         val instance by lazy { EventBus() }
     }
 
-    private val subMap = ConcurrentHashMap<Any, ArrayList<Method>>()
+    private val subMap = Collections.synchronizedMap(WeakHashMap<Any, ArrayList<Method>>())
     private val executor = Executors.newCachedThreadPool()
 
+    fun isRegistered(subscriber: Any): Boolean {
+        return subMap.contains(subscriber)
+    }
+
     fun register(subscriber: Any) {
-        if (!subMap.containsKey(subscriber)) {
-            subMap[subscriber] = ArrayList()
-        }
-        val methods = subMap[subscriber]!!
+        val methods = ArrayList<Method>()
         for (method in subscriber.javaClass.methods) {
             if (method.annotations.map { it.annotationClass }.contains(Subscribe::class)) {
                 methods.add(method)
             }
+        }
+        if (methods.isNotEmpty()) {
+            subMap[subscriber] = methods
         }
     }
 
