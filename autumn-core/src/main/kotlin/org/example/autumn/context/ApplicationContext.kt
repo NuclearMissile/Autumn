@@ -3,6 +3,7 @@ package org.example.autumn.context
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.ClassUtils
 import org.example.autumn.utils.ClassUtils.findAnnotationMethod
 import org.example.autumn.utils.ClassUtils.getBeanName
@@ -65,7 +66,7 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    private fun scanClassNamesOnConfigClass(configClass: Class<*>): List<String> {
+    private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
         val scanAnno = ClassUtils.findAnnotation(configClass, ComponentScan::class.java)
         val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
             arrayOf(configClass.packageName) else scanAnno.value).toList()
@@ -75,19 +76,22 @@ class AnnotationConfigApplicationContext(
             logger.atDebug().log("class found by component scan: {}", it)
         }.toMutableSet()
 
+        // import WebMvcConfiguration by default
+        classNameSet += WebMvcConfiguration::class.java.name
+
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name
             if (classNameSet.contains(importClassName)) {
-                logger.warn("ignore import: $importClassName for it is already been scanned.")
+                logger.warn("ignore import: $importClassName, already imported.")
             } else {
                 logger.debug("class found by import: {}", importClassName)
                 classNameSet.add(importClassName)
             }
         }
-        return classNameSet.toList()
+        return classNameSet
     }
 
-    private fun createBeanMetaInfos(classNames: List<String>): Map<String, BeanMetaInfo> {
+    private fun createBeanMetaInfos(classNames: Collection<String>): Map<String, BeanMetaInfo> {
         val infos = mutableMapOf<String, BeanMetaInfo>()
         for (className in classNames) {
             // 获取Class:
@@ -525,7 +529,7 @@ class AnnotationConfigApplicationContext(
 }
 
 interface ApplicationContext : AutoCloseable {
-    val managedClassNames: List<String>
+    val managedClassNames: Set<String>
 
     fun contains(name: String): Boolean
 

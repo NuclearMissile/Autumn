@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 
 @Configuration
-@Import(WebMvcConfiguration::class)
 class ControllerConfiguration
 
 class FileObj(

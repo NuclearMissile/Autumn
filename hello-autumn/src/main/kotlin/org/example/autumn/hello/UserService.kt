@@ -21,7 +21,11 @@ data class User(
     val pwdSalt: String,
     @Column(name = "pwd_hash", nullable = false)
     val pwdHash: String,
-)
+) {
+    override fun toString(): String {
+        return "User(id=$id, email='$email', name='$name')"
+    }
+}
 
 @Around("beforeLogInvocationHandler")
 @Component

@@ -1,5 +1,7 @@
 package org.example.autumn.hello
 
+import com.google.common.eventbus.EventBus
+import com.google.common.eventbus.Subscribe
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
@@ -11,13 +13,13 @@ import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundAopConfiguration
 import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.db.DbConfiguration
+import org.example.autumn.eventbus.EventBusConfig
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.ContextLoadListener
 import org.example.autumn.servlet.FilterRegistrationBean
 import org.example.autumn.servlet.ModelAndView
-import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.JsonUtils.toJson
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
@@ -31,9 +33,12 @@ object Main {
     }
 }
 
+@WebListener
+class HelloContextLoadListener : ContextLoadListener()
+
 @ComponentScan
 @Configuration
-@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class)
+@Import(DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
 class HelloConfiguration
 
 @Component
@@ -44,9 +49,6 @@ class BeforeLogInvocationHandler : BeforeInvocationHandlerAdapter() {
         logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
 }
-
-@WebListener
-class HelloContextLoadListener : ContextLoadListener()
 
 @Order(100)
 @Component
@@ -61,6 +63,18 @@ class LogFilter : FilterRegistrationBean() {
         }
     }
 }
+
+@Component
+class LoginEventListener {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    @Subscribe
+    fun onLoginEvent(e: LoginEvent) {
+        logger.info("[Login] ${e.user}")
+    }
+}
+
+data class LoginEvent(val user: User)
 
 @Controller("/hello")
 class HelloController {
@@ -81,7 +95,10 @@ class HelloController {
 }
 
 @Controller
-class IndexController(@Autowired private val userService: UserService) {
+class IndexController(
+    @Autowired private val userService: UserService,
+    @Autowired private val eventBus: EventBus,
+) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
@@ -128,6 +145,7 @@ class IndexController(@Autowired private val userService: UserService) {
         val user = userService.login(email, password)
             ?: return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         session.setAttribute(USER_SESSION_KEY, user)
+        eventBus.post(LoginEvent(user))
         return ModelAndView("redirect:/")
     }
 

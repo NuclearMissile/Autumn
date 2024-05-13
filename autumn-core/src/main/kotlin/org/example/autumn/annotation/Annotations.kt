@@ -5,10 +5,6 @@ import kotlin.reflect.KClass
 
 const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.ANNOTATION_CLASS)
-annotation class AllOpen
-
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
@@ -19,7 +15,6 @@ annotation class PostConstruct
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class PreDestroy
 
-@AllOpen
 @Target(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
@@ -41,7 +36,6 @@ annotation class Autowired(
     val name: String = "",
 )
 
-@AllOpen
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
@@ -54,7 +48,6 @@ annotation class Bean(
     val destroyMethod: String = "",
 )
 
-@AllOpen
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
@@ -75,7 +68,6 @@ annotation class ComponentScan(
     vararg val value: String = []
 )
 
-@AllOpen
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
