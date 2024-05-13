@@ -21,7 +21,7 @@ annotation class Polite
 
 @Component
 class PoliteInvocationHandler : InvocationHandler {
-    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
+    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         // 拦截标记了@Polite的方法返回值:
         val ret = method.invoke(proxy, *(args ?: emptyArray()))
         method.getAnnotation(Polite::class.java) ?: return ret

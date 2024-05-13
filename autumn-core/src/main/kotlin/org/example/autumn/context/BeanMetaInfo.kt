@@ -17,6 +17,10 @@ class BeanMetaInfo private constructor(
             }
             field = value
         }
+    val requiredInstance: Any
+        get() = instance ?: throw BeanCreationException(
+            "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
+        )
     var beanCtor: Constructor<*>? = null
         private set
     var factoryName: String? = null
@@ -53,12 +57,6 @@ class BeanMetaInfo private constructor(
         factoryMethod.isAccessible = true
         this.factoryMethod = factoryMethod
         setInitAndDestroyMethods(initMethodName, destroyMethodName, initMethod, destroyMethod)
-    }
-
-    fun getRequiredInstance(): Any {
-        return instance ?: throw BeanCreationException(
-            "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
-        )
     }
 
     private fun setInitAndDestroyMethods(

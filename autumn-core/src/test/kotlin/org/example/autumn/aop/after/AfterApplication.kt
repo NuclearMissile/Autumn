@@ -28,7 +28,7 @@ class GreetingBean {
 
 @Component
 class PoliteInvocationHandler : AfterInvocationHandlerAdapter() {
-    override fun after(proxy: Any, returnValue: Any, method: Method, args: Array<Any>?): Any {
+    override fun after(proxy: Any, returnValue: Any, method: Method, args: Array<Any?>?): Any {
         if (returnValue is String) {
             if (returnValue.endsWith(".")) {
                 return returnValue.substring(0, returnValue.length - 1) + "!"

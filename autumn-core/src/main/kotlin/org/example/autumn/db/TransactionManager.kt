@@ -25,7 +25,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
+    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         val txs = transactionStatus.get()
         // join current tx
         if (txs != null)

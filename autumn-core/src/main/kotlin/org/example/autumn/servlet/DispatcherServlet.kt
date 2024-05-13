@@ -49,7 +49,7 @@ class DispatcherServlet : HttpServlet() {
         // scan @Controller and @RestController:
         for (info in applicationContext.findBeanMetaInfos(Any::class.java)) {
             val beanClass = info.beanClass
-            val bean = info.getRequiredInstance()
+            val bean = info.requiredInstance
             val controllerAnno = beanClass.getAnnotation(Controller::class.java)
             val restControllerAnno = beanClass.getAnnotation(RestController::class.java)
             if (controllerAnno != null && restControllerAnno != null) {

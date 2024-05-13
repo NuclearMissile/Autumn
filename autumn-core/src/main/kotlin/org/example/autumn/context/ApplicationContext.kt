@@ -37,7 +37,7 @@ class AnnotationConfigApplicationContext(
             createEarlySingleton(it) as BeanPostProcessor
         }
         // 创建其他普通Bean:
-        infos.values.sorted().forEach { if (it.instance == null) createEarlySingleton(it) }
+        infos.values.sorted().forEach { it.instance ?: createEarlySingleton(it) }
         // 通过字段和set方法注入依赖:
         infos.values.forEach {
             try {
@@ -50,11 +50,11 @@ class AnnotationConfigApplicationContext(
         infos.values.forEach { info ->
             invokeMethod(getOriginalInstance(info), info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
-                val processed = postProcessor.afterInitialization(info.instance!!, info.beanName)
-                if (processed !== info.instance!!) {
+                val processed = postProcessor.afterInitialization(info.requiredInstance, info.beanName)
+                if (processed !== info.requiredInstance) {
                     logger.atDebug().log(
                         "BeanPostProcessor {} return different bean from {} to {}.",
-                        postProcessor.javaClass.name, info.instance!!.javaClass.name, processed.javaClass.name
+                        postProcessor.javaClass.name, info.requiredInstance.javaClass.name, processed.javaClass.name
                     )
                     info.instance = processed
                 }
@@ -424,13 +424,13 @@ class AnnotationConfigApplicationContext(
         }
 
         postProcessors.forEach {
-            val proceed = it.beforeInitialization(info.instance!!, info.beanName)
+            val proceed = it.beforeInitialization(info.requiredInstance, info.beanName)
             if (info.instance !== proceed) {
                 logger.atDebug().log("Bean {} was replaced by post processor {}", info.beanName, it.javaClass.name)
                 info.instance = proceed
             }
         }
-        return info.instance!!
+        return info.requiredInstance
     }
 
     override fun getConfig(): PropertyResolver {
@@ -458,22 +458,22 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun <T> getBeans(clazz: Class<T>): List<T> {
-        return findBeanMetaInfos(clazz).map { it.getRequiredInstance() as T }
+        return findBeanMetaInfos(clazz).map { it.requiredInstance as T }
     }
 
     override fun <T> tryGetBean(name: String): T? {
         val info = findBeanMetaInfo(name) ?: return null
-        return info.getRequiredInstance() as T
+        return info.requiredInstance as T
     }
 
     override fun <T> tryGetBean(name: String, clazz: Class<T>): T? {
         val info = findBeanMetaInfo(name, clazz) ?: return null
-        return info.getRequiredInstance() as T
+        return info.requiredInstance as T
     }
 
     override fun <T> tryGetBean(clazz: Class<T>): T? {
         val info = findBeanMetaInfo(clazz) ?: return null
-        return info.getRequiredInstance() as T
+        return info.requiredInstance as T
     }
 
     override fun close() {
@@ -487,21 +487,22 @@ class AnnotationConfigApplicationContext(
     }
 
     private fun getOriginalInstance(info: BeanMetaInfo): Any {
-        var beanInstance = info.instance!!
+        var ret = info.requiredInstance
         // 如果Proxy改变了原始Bean，又希望注入到原始Bean，则由BeanPostProcessor指定原始Bean:
         postProcessors.reversed().forEach {
-            val restoredInstance = it.beforePropertySet(beanInstance, info.beanName)
-            if (restoredInstance !== beanInstance) {
-                logger.atDebug().log(
-                    "Get original bean instance for {}, processed by: {}, original: {}.",
-                    beanInstance.javaClass.simpleName,
-                    it.javaClass.simpleName,
-                    restoredInstance.javaClass.simpleName
-                )
-                beanInstance = restoredInstance
+            val restoredInstance = it.beforePropertySet(ret, info.beanName)
+            if (restoredInstance !== ret) {
+                ret = restoredInstance
             }
         }
-        return beanInstance
+        if (info.requiredInstance !== ret) {
+            logger.atDebug().log(
+                "Get original bean instance for {}, original: {}.",
+                info.requiredInstance.javaClass.simpleName,
+                ret.javaClass.simpleName
+            )
+        }
+        return ret
     }
 
     private fun invokeMethod(beanInstance: Any, method: Method?, methodName: String?) {

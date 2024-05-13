@@ -35,7 +35,7 @@ class BusinessBean {
 class LogInvocationHandler : BeforeInvocationHandlerAdapter() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun before(proxy: Any, method: Method, args: Array<Any>?) {
+    override fun before(proxy: Any, method: Method, args: Array<Any?>?) {
         logger.info("[Before] {}()", method.name)
     }
 }
