@@ -26,7 +26,7 @@ class EventSubscribeBeanPostProcessor : BeanPostProcessor {
     override fun afterInitialization(bean: Any, beanName: String): Any {
         val eventBus = ApplicationContextHolder.requiredApplicationContext.getBean(EventBus::class.java)
         for (method in bean.javaClass.methods) {
-            if (method.annotations.map { it.annotationClass }.contains(Subscribe::class)) {
+            if (method.getAnnotation(Subscribe::class.java) != null) {
                 eventBus.register(bean)
                 return bean
             }
@@ -52,7 +52,7 @@ class EventBus private constructor() : AutoCloseable {
     fun register(subscriber: Any) {
         val methods = ArrayList<Method>()
         for (method in subscriber.javaClass.methods) {
-            if (method.annotations.map { it.annotationClass }.contains(Subscribe::class)) {
+            if (method.getAnnotation(Subscribe::class.java) != null) {
                 methods.add(method)
             }
         }
@@ -69,8 +69,7 @@ class EventBus private constructor() : AutoCloseable {
         for ((subscriber, methods) in subMap) {
             for (method in methods) {
                 if (method.genericParameterTypes.singleOrNull() == event.javaClass) {
-                    val anno = method.getAnnotation(Subscribe::class.java)
-                    if (anno.eventMode == EventMode.ASYNC) {
+                    if (method.getAnnotation(Subscribe::class.java).eventMode == EventMode.ASYNC) {
                         executor.submit { method.invoke(subscriber, event) }
                     } else {
                         method.invoke(subscriber, event)
