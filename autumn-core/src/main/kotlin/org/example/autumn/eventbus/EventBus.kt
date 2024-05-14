@@ -37,6 +37,8 @@ class EventSubscribeBeanPostProcessor : BeanPostProcessor {
 
 enum class EventMode { ASYNC, SYNC }
 
+interface Event
+
 class EventBus internal constructor() : AutoCloseable {
     private val subMap = ConcurrentHashMap<Any, ArrayList<Method>>()
     private val executor = Executors.newCachedThreadPool()
@@ -61,7 +63,7 @@ class EventBus internal constructor() : AutoCloseable {
         subMap.remove(subscriber)
     }
 
-    fun post(event: Any) {
+    fun post(event: Event) {
         for ((subscriber, methods) in subMap) {
             for (method in methods) {
                 if (method.genericParameterTypes.singleOrNull() == event.javaClass) {

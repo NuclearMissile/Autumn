@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.BeforeInvocationHandlerAdapter
+import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.ResponseErrorException
@@ -76,7 +77,7 @@ class LoginEventListener {
     }
 }
 
-data class LoginEvent(val user: User)
+data class LoginEvent(val user: User) : Event
 
 @Controller("/hello")
 class HelloController {

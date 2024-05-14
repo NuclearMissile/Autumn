@@ -17,9 +17,9 @@ import kotlin.test.assertTrue
 @Import(EventBusConfiguration::class)
 class EventBusTestConfiguration
 
-data class TestEventSync(val message: String)
-data class TestEventAsync(val message: String)
-data class TestEventUnregister(val message: String)
+data class TestEventSync(val message: String) : Event
+data class TestEventAsync(val message: String) : Event
+data class TestEventUnregister(val message: String) : Event
 
 var testEventMessageSync = ""
 var testEventMessageAsync = ""
