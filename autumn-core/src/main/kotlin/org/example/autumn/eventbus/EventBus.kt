@@ -10,10 +10,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 @Configuration
-class EventBusConfig {
+class EventBusConfiguration {
     @Bean(destroyMethod = "close")
     fun eventBus(): EventBus {
-        return EventBus.instance
+        return EventBus()
     }
 
     @Bean
@@ -37,16 +37,12 @@ class EventSubscribeBeanPostProcessor : BeanPostProcessor {
 
 enum class EventMode { ASYNC, SYNC }
 
-class EventBus private constructor() : AutoCloseable {
-    companion object {
-        val instance by lazy { EventBus() }
-    }
-
+class EventBus internal constructor() : AutoCloseable {
     private val subMap = ConcurrentHashMap<Any, ArrayList<Method>>()
     private val executor = Executors.newCachedThreadPool()
 
     fun isRegistered(subscriber: Any): Boolean {
-        return subMap.contains(subscriber)
+        return subMap.containsKey(subscriber)
     }
 
     fun register(subscriber: Any) {

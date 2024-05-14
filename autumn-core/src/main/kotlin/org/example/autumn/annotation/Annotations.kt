@@ -203,4 +203,4 @@ annotation class RestController(
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class Subscribe(val eventMode: EventMode = EventMode.ASYNC)
+annotation class Subscribe(val eventMode: EventMode = EventMode.SYNC)
