@@ -11,7 +11,7 @@ import javax.sql.DataSource
 
 @ComponentScan
 @Configuration
-class OrmTestApplication {
+class OrmTestConfiguration {
     @Bean(destroyMethod = "close")
     fun dataSource( // properties:
         @Value("\${autumn.datasource.url}") url: String,

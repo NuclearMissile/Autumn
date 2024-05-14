@@ -7,4 +7,4 @@ import org.example.imported.ZonedDateConfiguration
 
 @ComponentScan
 @Import(LocalDateConfiguration::class, ZonedDateConfiguration::class)
-class ScanApplication
+class ScanConfiguration

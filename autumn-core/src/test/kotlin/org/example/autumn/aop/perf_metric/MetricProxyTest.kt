@@ -9,7 +9,7 @@ class MetricProxyTest {
     @Test
     fun testMetricProxy() {
         AnnotationConfigApplicationContext(
-            MetricApplication::class.java, Config(Properties())
+            MetricConfiguration::class.java, Config(Properties())
         ).use { ctx ->
             val worker = ctx.getBean(HashWorker::class.java)
             // proxy class, not origin class:

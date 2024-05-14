@@ -22,7 +22,7 @@ annotation class Metric(val value: String)
 
 @Configuration
 @ComponentScan
-class MetricApplication
+class MetricConfiguration
 
 @Component
 class MetricProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Metric>()

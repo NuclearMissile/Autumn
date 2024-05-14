@@ -8,7 +8,7 @@ import java.lang.reflect.Method
 
 @Configuration
 @ComponentScan
-class BeforeApplication {
+class BeforeAopConfiguration {
     @Bean
     fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
         return AroundProxyBeanPostProcessor()

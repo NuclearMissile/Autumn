@@ -8,7 +8,7 @@ class AroundProxyTest {
     @Test
     fun testAroundProxy() {
         AnnotationConfigApplicationContext(
-            AroundApplication::class.java,
+            AroundAopConfiguration::class.java,
             Config(mapOf("customer.name" to "Bob").toProperties())
         ).use { ctx ->
             val proxy = ctx.getBean(OriginBean::class.java)

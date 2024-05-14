@@ -10,7 +10,7 @@ class AfterProxyTest {
     @Test
     fun testAfterProxy() {
         AnnotationConfigApplicationContext(
-            AfterApplication::class.java, Config(Properties())
+            AfterAopConfiguration::class.java, Config(Properties())
         ).use { ctx ->
             val proxy: GreetingBean = ctx.getBean(GreetingBean::class.java)
             // should change return value:

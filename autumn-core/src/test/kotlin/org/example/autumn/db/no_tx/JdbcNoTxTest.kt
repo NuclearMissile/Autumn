@@ -16,7 +16,7 @@ import kotlin.test.assertNull
 
 @ComponentScan
 @Configuration
-class JdbcNoTxApplication {
+class JdbcNoTxConfiguration {
     @Bean(destroyMethod = "close")
     fun dataSource( // properties:
         @Value("\${autumn.datasource.url}") url: String?,
@@ -48,7 +48,7 @@ class JdbcNoTxApplication {
 class JdbcNoTxTest : JdbcTestBase() {
     @Test
     fun testJdbcNoTx() {
-        AnnotationConfigApplicationContext(JdbcNoTxApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER)
             jdbcTemplate.update(CREATE_ADDRESS)
@@ -77,7 +77,7 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(1, n2)
         }
 
-        AnnotationConfigApplicationContext(JdbcNoTxApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 1)
             assertEquals("Bob Jones", bob.name)

@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 @ComponentScan
 @Configuration
 @Import(DbConfiguration::class)
-class JdbcTxApplication
+class JdbcTxTestConfiguration
 
 @Component
 @Transactional
@@ -80,7 +80,7 @@ class UserService(
 class JdbcTxTest : JdbcTestBase() {
     @Test
     fun testJdbcWithTx() {
-        AnnotationConfigApplicationContext(JdbcTxApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER)
             jdbcTemplate.update(CREATE_ADDRESS)
@@ -128,7 +128,7 @@ class JdbcTxTest : JdbcTestBase() {
             assertEquals(2, addressService.getAddresses(bob.id).size)
         }
 
-        AnnotationConfigApplicationContext(JdbcTxApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
             val addressService: AddressService = ctx.getBean(AddressService::class.java)
             val addressesOfBob = addressService.getAddresses(1)
             assertEquals(2, addressesOfBob.size)

@@ -10,7 +10,7 @@ class BeforeProxyTest {
     @Test
     fun testBeforeProxy() {
         AnnotationConfigApplicationContext(
-            BeforeApplication::class.java, Config(Properties())
+            BeforeAopConfiguration::class.java, Config(Properties())
         ).use { ctx ->
             val proxy: BusinessBean = ctx.getBean(BusinessBean::class.java)
             // should print log:

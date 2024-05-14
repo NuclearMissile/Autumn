@@ -35,14 +35,14 @@ class OrmTxTest {
     @BeforeEach
     fun setUp() {
         Files.deleteIfExists(Path("test_orm_tx.db"))
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             ctx.getBean<JdbcTemplate>("jdbcTemplate").update(CREATE_USERS)
         }
     }
 
     @Test
     fun testOrmWithTx() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val userService = ctx.getBean<UserService>("userService")
             // proxied:
             assertNotSame(UserService::class.java, userService.javaClass)

@@ -13,7 +13,7 @@ import kotlin.test.*
 class AnnotationConfigApplicationContextTest {
     @Test
     fun testCustomAnnotation() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             assertNotNull(ctx.getBean(CustomAnnotationBean::class.java))
             assertNotNull(ctx.getBean("customAnnotation"))
         }
@@ -21,7 +21,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testInitMethod() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test @PostConstruct:
             val bean1 = ctx.getBean(AnnotationInitBean::class.java)
             val bean2 = ctx.getBean(SpecifyInitBean::class.java)
@@ -32,7 +32,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testImport() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             assertNotNull(ctx.getBean(LocalDateConfiguration::class.java))
             assertNotNull(ctx.getBean("startLocalDate"))
             assertNotNull(ctx.getBean("startLocalDateTime"))
@@ -45,7 +45,7 @@ class AnnotationConfigApplicationContextTest {
     fun testDestroyMethod() {
         var bean1: AnnotationDestroyBean
         var bean2: SpecifyDestroyBean
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test @PreDestroy:
             bean1 = ctx.getBean(AnnotationDestroyBean::class.java)
             bean2 = ctx.getBean(SpecifyDestroyBean::class.java)
@@ -58,7 +58,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testConverter() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             val bean = ctx.getBean(ValueConverterBean::class.java)
             assertNotNull(bean.injectedBoolean)
             assertTrue(bean.injectedBooleanPrimitive)
@@ -102,7 +102,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testNested() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             ctx.getBean(OuterBean::class.java)
             ctx.getBean(OuterBean.NestedBean::class.java)
         }
@@ -110,7 +110,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testPrimary() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             val person = ctx.getBean(PersonBean::class.java)
             assertEquals<Class<*>>(TeacherBean::class.java, person.javaClass)
             val dog = ctx.getBean(DogBean::class.java)
@@ -120,7 +120,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testProxy() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test proxy:
             val proxy = ctx.getBean(OriginBean::class.java)
             assertSame<Class<*>>(SecondProxyBean::class.java, proxy.javaClass)
@@ -144,7 +144,7 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testSub() {
-        AnnotationConfigApplicationContext(ScanApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             ctx.getBean(Sub1Bean::class.java)
             ctx.getBean(Sub2Bean::class.java)
             ctx.getBean(Sub3Bean::class.java)

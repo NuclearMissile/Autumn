@@ -34,7 +34,7 @@ class OrmTest {
     @BeforeEach
     fun setUp() {
         Files.deleteIfExists(Path("test_orm.db"))
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean<JdbcTemplate>("jdbcTemplate")
             jdbcTemplate.update(CREATE_USERS)
             jdbcTemplate.update(CREATE_EVENTS)
@@ -44,7 +44,7 @@ class OrmTest {
 
     @Test
     fun testExportDDL() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val ddl = naiveOrm.exportDDL()
             println(ddl.slice(0 until 500))
@@ -54,7 +54,7 @@ class OrmTest {
 
     @Test
     fun testInsert() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -67,7 +67,7 @@ class OrmTest {
 
     @Test
     fun testBatchInsert() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, it, it.toLong()) }
             naiveOrm.batchInsert(users)
@@ -88,7 +88,7 @@ class OrmTest {
 
     @Test
     fun testQueries() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, 1, it.toLong()) }
             val paes = (1000 until 2000).map {
@@ -137,7 +137,7 @@ class OrmTest {
 
     @Test
     fun testUpdate() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -157,7 +157,7 @@ class OrmTest {
 
     @Test
     fun testDelete() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -172,7 +172,7 @@ class OrmTest {
 
     @Test
     fun testDeleteById() {
-        AnnotationConfigApplicationContext(OrmTestApplication::class.java, config).use { ctx ->
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
