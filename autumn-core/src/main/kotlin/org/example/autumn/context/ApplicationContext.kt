@@ -3,7 +3,6 @@ package org.example.autumn.context
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.ClassUtils
 import org.example.autumn.utils.ClassUtils.findAnnotationMethod
 import org.example.autumn.utils.ClassUtils.getBeanName
@@ -21,7 +20,7 @@ object ApplicationContextHolder {
 }
 
 class AnnotationConfigApplicationContext(
-    configClass: Class<*>, private val config: PropertyResolver
+    configClass: Class<*>, private val config: PropertyResolver,
 ) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val infos = mutableMapOf<String, BeanMetaInfo>()
@@ -75,9 +74,6 @@ class AnnotationConfigApplicationContext(
         val classNameSet = scanClassNames(scanPackages).also {
             logger.atDebug().log("class found by component scan: {}", it)
         }.toMutableSet()
-
-        // import WebMvcConfiguration by default
-        classNameSet += WebMvcConfiguration::class.java.name
 
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name
@@ -140,8 +136,10 @@ class AnnotationConfigApplicationContext(
     private fun Method.getOrder() = this.getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
     private fun Class<*>.isPrimary() = this.isAnnotationPresent(Primary::class.java)
     private fun Method.isPrimary() = this.isAnnotationPresent(Primary::class.java)
-    private fun Class<*>.primaryCtor() = this.kotlin.primaryConstructor?.javaConstructor
-        ?: throw BeanDefinitionException("No primary constructor found in class: ${this.name}.")
+    private fun Class<*>.primaryCtor() =
+        this.kotlin.primaryConstructor?.javaConstructor
+            ?: this.declaredConstructors.firstOrNull { it.parameterCount == 0 }
+            ?: throw BeanDefinitionException("No primary constructor found in class: ${this.name}.")
 
     /**
      * Scan factory method that annotated with @Bean:
@@ -157,7 +155,7 @@ class AnnotationConfigApplicationContext(
      * </code>
      */
     private fun scanFactoryMethods(
-        factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>
+        factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>,
     ) {
         for (method in factoryClass.declaredMethods) {
             val bean = method.getAnnotation(Bean::class.java) ?: continue
@@ -255,7 +253,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -275,7 +273,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                        "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }

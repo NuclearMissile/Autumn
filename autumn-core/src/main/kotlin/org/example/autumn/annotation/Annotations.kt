@@ -56,7 +56,7 @@ annotation class Component(
     /**
      * Bean name. Default to simple class name with first-letter-lowercase.
      */
-    val value: String = ""
+    val value: String = "",
 )
 
 @Retention(AnnotationRetention.RUNTIME)
@@ -66,7 +66,7 @@ annotation class ComponentScan(
     /**
      * Package names to scan. Default to current package.
      */
-    vararg val value: String = []
+    vararg val value: String = [],
 )
 
 @Target(AnnotationTarget.CLASS)
@@ -77,7 +77,7 @@ annotation class Configuration(
     /**
      * Bean name. Default to simple class name with first-letter-lower-case.
      */
-    val value: String = ""
+    val value: String = "",
 )
 
 @Target(AnnotationTarget.CLASS)
@@ -124,7 +124,7 @@ annotation class Around(
     /**
      * Invocation handler bean name.
      */
-    val value: String
+    val value: String,
 )
 
 @Target(AnnotationTarget.CLASS)
@@ -141,21 +141,22 @@ annotation class Controller(
     /**
      * Bean name. Default to simple class name with first-letter-lowercase.
      */
-    val prefix: String = "", val value: String = ""
+    val prefix: String = "",
+    val value: String = "",
 )
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Get(
-    val value: String, val produce: String = ""
+    val value: String, val produce: String = "",
 )
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Post(
-    val value: String, val produce: String = ""
+    val value: String, val produce: String = "",
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
@@ -174,7 +175,7 @@ annotation class RequestBody
 annotation class RequestParam(
     val value: String = "",
     val required: Boolean = true,
-    val defaultValue: String = DUMMY_VALUE
+    val defaultValue: String = DUMMY_VALUE,
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
@@ -195,7 +196,8 @@ annotation class RestController(
     /**
      * Bean name. Default to simple class name with first-letter-lowercase.
      */
-    val prefix: String = "", val value: String = ""
+    val prefix: String = "",
+    val value: String = "",
 )
 
 @Target(AnnotationTarget.FUNCTION)

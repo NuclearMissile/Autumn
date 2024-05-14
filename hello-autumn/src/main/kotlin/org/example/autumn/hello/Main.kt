@@ -8,11 +8,8 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.AroundAopConfiguration
 import org.example.autumn.aop.BeforeInvocationHandlerAdapter
-import org.example.autumn.db.DbConfiguration
 import org.example.autumn.eventbus.EventBus
-import org.example.autumn.eventbus.EventBusConfig
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
@@ -36,10 +33,10 @@ object Main {
 @WebListener
 class HelloContextLoadListener : ContextLoadListener()
 
-@ComponentScan
-@Configuration
-@Import(DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
-class HelloConfiguration
+//@ComponentScan
+//@Configuration
+//@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
+//class HelloConfiguration
 
 @Component
 class BeforeLogInvocationHandler : BeforeInvocationHandlerAdapter() {
@@ -130,7 +127,7 @@ class IndexController(
 
     @Post("/register")
     fun register(
-        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String
+        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String,
     ): ModelAndView {
         return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
