@@ -170,7 +170,7 @@ class Mapper<T>(private val entityClass: Class<T>) {
     }
 
     private fun scanProperties(
-        clazz: Class<*>, foundProps: ArrayList<EntityProperty> = ArrayList(8)
+        clazz: Class<*>, foundProps: ArrayList<EntityProperty> = ArrayList(8),
     ): List<EntityProperty> {
         if (clazz == Any::class.java) {
             return foundProps.sortedWith { o1, o2 ->

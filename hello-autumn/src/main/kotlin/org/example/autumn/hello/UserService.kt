@@ -1,31 +1,30 @@
 package org.example.autumn.hello
 
-import jakarta.persistence.*
 import org.example.autumn.annotation.*
 import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.utils.HashUtil
 import org.example.autumn.utils.SecureRandomUtil
 
-@Entity
-@Table(name = "users")
-data class User(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, updatable = false)
-    var id: Long,
-    @Column(nullable = false, unique = true)
-    var email: String,
-    @Column(nullable = false)
-    var name: String,
-    @Column(name = "pwd_salt", nullable = false)
-    val pwdSalt: String,
-    @Column(name = "pwd_hash", nullable = false)
-    val pwdHash: String,
-) {
-    override fun toString(): String {
-        return "User(id=$id, email='$email', name='$name')"
-    }
-}
+//@Entity
+//@Table(name = "users")
+//data class User(
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Column(nullable = false, updatable = false)
+//    val id: Long,
+//    @Column(nullable = false, unique = true)
+//    val email: String,
+//    @Column(nullable = false)
+//    val name: String,
+//    @Column(name = "pwd_salt", nullable = false)
+//    val pwdSalt: String,
+//    @Column(name = "pwd_hash", nullable = false)
+//    val pwdHash: String,
+//) {
+//    override fun toString(): String {
+//        return "User(id=$id, email='$email', name='$name')"
+//    }
+//}
 
 @Around("beforeLogInvocationHandler")
 @Component
@@ -33,7 +32,7 @@ data class User(
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
     @PostConstruct
