@@ -139,7 +139,7 @@ class AutumnServer {
         // server entry point
         fun start(
             webRoot: String, config: PropertyResolver, classLoader: ClassLoader,
-            annoClasses: List<Class<*>>, showBanner: Boolean = true
+            annoClasses: List<Class<*>>, showBanner: Boolean = true,
         ) {
             // show banner in embedded mode
             if (showBanner) logger.info(readStringFromClassPath("/banner.txt"))
@@ -162,6 +162,7 @@ class AutumnServer {
             }
             val executor = if (enableVirtualThread && jvmVersion >= 21) {
                 logger.info("virtual thread executor enabled")
+                @Suppress("Since15")
                 Executors.newVirtualThreadPerTaskExecutor()
             } else ThreadPoolExecutor(
                 5, config.getRequired("server.thread-pool-size"), 10L,

@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.code.style>official</kotlin.code.style>
-        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
         <kotlin.compiler.apiVersion>1.9</kotlin.compiler.apiVersion>
