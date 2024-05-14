@@ -1,5 +1,6 @@
 package org.example.autumn.annotation
 
+import org.example.autumn.eventbus.EventMode
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -196,3 +197,8 @@ annotation class RestController(
      */
     val prefix: String = "", val value: String = ""
 )
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Subscribe(val eventMode: EventMode = EventMode.ASYNC)

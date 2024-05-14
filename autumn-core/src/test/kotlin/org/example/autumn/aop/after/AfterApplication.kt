@@ -9,7 +9,7 @@ import java.lang.reflect.Method
 @ComponentScan
 class AfterApplication {
     @Bean
-    fun createAroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
+    fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
         return AroundProxyBeanPostProcessor()
     }
 }

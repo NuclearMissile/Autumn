@@ -17,7 +17,7 @@ import java.lang.reflect.ParameterizedType
 @Configuration
 class AroundAopConfiguration {
     @Bean
-    fun createAroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
+    fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
         return AroundProxyBeanPostProcessor()
     }
 }

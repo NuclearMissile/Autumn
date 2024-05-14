@@ -13,7 +13,6 @@ import org.example.autumn.aop.BeforeInvocationHandlerAdapter
 import org.example.autumn.db.DbConfiguration
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventBusConfig
-import org.example.autumn.eventbus.Subscribe
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config

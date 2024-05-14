@@ -2,6 +2,7 @@ package org.example.autumn.eventbus
 
 import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
+import org.example.autumn.annotation.Subscribe
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
 import java.lang.reflect.Method
@@ -16,7 +17,7 @@ class EventBusConfig {
     }
 
     @Bean
-    fun createEventSubscribeBeanPostProcessor(): EventSubscribeBeanPostProcessor {
+    fun eventSubscribeBeanPostProcessor(): EventSubscribeBeanPostProcessor {
         return EventSubscribeBeanPostProcessor()
     }
 }
@@ -33,9 +34,6 @@ class EventSubscribeBeanPostProcessor : BeanPostProcessor {
         return bean
     }
 }
-
-@Target(AnnotationTarget.FUNCTION)
-annotation class Subscribe(val eventMode: EventMode = EventMode.ASYNC)
 
 enum class EventMode { ASYNC, SYNC }
 
