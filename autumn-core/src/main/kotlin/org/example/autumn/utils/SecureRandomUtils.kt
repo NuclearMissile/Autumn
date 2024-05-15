@@ -2,7 +2,7 @@ package org.example.autumn.utils
 
 import java.security.SecureRandom
 
-object SecureRandomUtil {
+object SecureRandomUtils {
     private val SECURE_RANDOM by lazy { SecureRandom() }
 
     // char ranges

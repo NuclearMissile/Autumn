@@ -114,7 +114,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun <T> executeWithTx(callback: ConnectionCallback<T>): T? {
-        val txConn = DataSourceTransactionManager.transactionConn
+        val txConn = DataSourceTransactionManager.connection
         return try {
             if (txConn != null)
                 callback.doInConnection(txConn)

@@ -18,15 +18,15 @@ class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transact
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
-        private val transactionStatus = ThreadLocal<TransactionStatus>()
-        val transactionConn: Connection?
-            get() = transactionStatus.get()?.conn
+        private val transactionStatusHolder = ThreadLocal<TransactionStatus>()
+        val connection: Connection?
+            get() = transactionStatusHolder.get()?.conn
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
-        val txs = transactionStatus.get()
+        val txs = transactionStatusHolder.get()
         // join current tx
         if (txs != null)
             return method.invoke(proxy, *(args ?: emptyArray()))
@@ -37,7 +37,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 conn.autoCommit = false
             }
             try {
-                transactionStatus.set(TransactionStatus(conn))
+                transactionStatusHolder.set(TransactionStatus(conn))
                 val ret = method.invoke(proxy, *(args ?: emptyArray()))
                 conn.commit()
                 return ret
@@ -51,7 +51,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 }
                 throw target
             } finally {
-                transactionStatus.remove()
+                transactionStatusHolder.remove()
                 if (autoCommit) {
                     conn.autoCommit = true
                 }

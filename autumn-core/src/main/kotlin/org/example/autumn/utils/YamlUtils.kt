@@ -10,7 +10,7 @@ import org.yaml.snakeyaml.representer.Representer
 import org.yaml.snakeyaml.resolver.Resolver
 import java.nio.file.Path
 
-object ConfigUtils {
+object YamlUtils {
     fun loadYamlAsPlainMap(path: String, fromClassPath: Boolean): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
         flatten(loadYaml(path, fromClassPath), "", result)

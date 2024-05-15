@@ -1,6 +1,6 @@
 package org.example.autumn.utils
 
-import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
+import org.example.autumn.utils.YamlUtils.loadYamlAsPlainMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

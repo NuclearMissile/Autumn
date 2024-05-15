@@ -5,7 +5,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 @OptIn(ExperimentalStdlibApi::class)
-object HashUtil {
+object HashUtils {
     /**
      * Generate SHA-256 as hex string (all lower-case).
      *

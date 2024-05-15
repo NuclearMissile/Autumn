@@ -2,8 +2,8 @@ package org.example.autumn.hello
 
 import org.example.autumn.annotation.*
 import org.example.autumn.db.orm.NaiveOrm
-import org.example.autumn.utils.HashUtil
-import org.example.autumn.utils.SecureRandomUtil
+import org.example.autumn.utils.HashUtils
+import org.example.autumn.utils.SecureRandomUtils
 
 //@Entity
 //@Table(name = "users")
@@ -46,8 +46,8 @@ class UserService(@Autowired val naiveOrm: NaiveOrm) {
     }
 
     fun register(email: String, name: String, password: String): User? {
-        val pwdSalt = SecureRandomUtil.genRandomString(32)
-        val pwdHash = HashUtil.hmacSha256(password, pwdSalt)
+        val pwdSalt = SecureRandomUtils.genRandomString(32)
+        val pwdHash = HashUtils.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
         return try {
             naiveOrm.insert(user)
@@ -59,7 +59,7 @@ class UserService(@Autowired val naiveOrm: NaiveOrm) {
 
     fun login(email: String, password: String): User? {
         val user = getUserByEmail(email) ?: return null
-        val pwdHash = HashUtil.hmacSha256(password, user.pwdSalt)
+        val pwdHash = HashUtils.hmacSha256(password, user.pwdSalt)
         return if (pwdHash == user.pwdHash) user else null
     }
 }

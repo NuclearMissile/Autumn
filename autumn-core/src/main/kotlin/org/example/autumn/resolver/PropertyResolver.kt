@@ -1,6 +1,6 @@
 package org.example.autumn.resolver
 
-import org.example.autumn.utils.ConfigUtils.loadYamlAsPlainMap
+import org.example.autumn.utils.YamlUtils.loadYamlAsPlainMap
 import java.time.*
 import java.util.*
 
