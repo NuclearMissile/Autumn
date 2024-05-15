@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
+import org.example.autumn.DUMMY_VALUE
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.NotFoundException
@@ -164,7 +165,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveError(
-        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean
+        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean,
     ) {
         logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $url)", e)
         if (resp.isCommitted) return
@@ -223,7 +224,7 @@ class DispatcherServlet : HttpServlet() {
         private val handlerMethod: Method,
         urlPattern: String,
         val produce: String,
-        val isRest: Boolean
+        val isRest: Boolean,
     ) {
         val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
         val isVoid = handlerMethod.returnType == Void.TYPE

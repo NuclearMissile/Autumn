@@ -7,7 +7,7 @@ import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
-import org.example.autumn.utils.ClassUtils.useClassLoader
+import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.util.concurrent.Executor
@@ -27,7 +27,7 @@ class HttpConnector(
         val backlog = config.getRequired<Int>("server.backlog")
 
         // init servlet context:
-        useClassLoader(classLoader) {
+        withClassLoader(classLoader) {
             servletContext = ServletContextImpl(classLoader, config, webRoot)
             servletContext.setAttribute("config", config)
             initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }

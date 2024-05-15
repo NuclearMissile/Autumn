@@ -2,6 +2,7 @@ package org.example.autumn.server.component
 
 import jakarta.servlet.*
 import jakarta.servlet.http.*
+import org.example.autumn.DEFAULT_LOCALE
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.server.component.support.HttpHeaders
 import org.example.autumn.server.component.support.HttpReqParams
@@ -18,7 +19,7 @@ class HttpServletRequestImpl(
     private val config: PropertyResolver,
     private val servletContext: ServletContextImpl,
     private val exchangeReq: HttpExchangeRequest,
-    private val resp: HttpServletResponse
+    private val resp: HttpServletResponse,
 ) : HttpServletRequest {
     private val method = exchangeReq.getRequestMethod()
     private val headers = HttpHeaders(exchangeReq.getRequestHeaders())
@@ -175,13 +176,13 @@ class HttpServletRequestImpl(
     }
 
     override fun getLocale(): Locale {
-        val langs = getHeader("Accept-Language") ?: return HttpUtils.DEFAULT_LOCALE
+        val langs = getHeader("Accept-Language") ?: return DEFAULT_LOCALE
         return HttpUtils.parseAcceptLanguages(langs).first()
     }
 
     override fun getLocales(): Enumeration<Locale> {
         val langs = getHeader("Accept-Language")
-            ?: return Collections.enumeration(listOf(HttpUtils.DEFAULT_LOCALE))
+            ?: return Collections.enumeration(listOf(DEFAULT_LOCALE))
         return Collections.enumeration(HttpUtils.parseAcceptLanguages(langs))
     }
 
@@ -353,7 +354,7 @@ class HttpServletRequestImpl(
             }
             sessionId = UUID.randomUUID().toString()
             val cookieValue = config.getRequiredString("server.web-app.session-cookie-name") +
-                    "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
+                "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
             resp.addHeader("Set-Cookie", cookieValue)
         }
 

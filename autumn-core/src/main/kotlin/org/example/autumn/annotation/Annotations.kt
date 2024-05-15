@@ -1,10 +1,9 @@
 package org.example.autumn.annotation
 
+import org.example.autumn.DUMMY_VALUE
 import org.example.autumn.eventbus.EventMode
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
-
-const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
 
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)

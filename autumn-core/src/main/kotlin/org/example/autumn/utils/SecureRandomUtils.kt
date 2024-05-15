@@ -6,11 +6,11 @@ object SecureRandomUtil {
     private val SECURE_RANDOM by lazy { SecureRandom() }
 
     // char ranges
-    const val ALPHABET_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    const val ALPHABET_LOWER = "abcdefghijklmnopqrstuvwxyz"
-    const val DIGITS = "0123456789"
-    const val HEX_DIGITS = "0123456789abcdef"
-    const val WORDS = ALPHABET_UPPER + ALPHABET_LOWER + DIGITS
+    private const val ALPHABET_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    private const val ALPHABET_LOWER = "abcdefghijklmnopqrstuvwxyz"
+    private const val DIGITS = "0123456789"
+    private const val HEX_DIGITS = "0123456789abcdef"
+    private const val WORDS = ALPHABET_UPPER + ALPHABET_LOWER + DIGITS
 
     /**
      * Create a random bytes with specific length.

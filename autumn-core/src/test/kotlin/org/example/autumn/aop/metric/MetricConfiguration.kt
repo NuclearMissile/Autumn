@@ -1,4 +1,4 @@
-package org.example.autumn.aop.perf_metric
+package org.example.autumn.aop.metric
 
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.ComponentScan
@@ -11,10 +11,7 @@ import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-@Target(
-    AnnotationTarget.CLASS,
-    AnnotationTarget.FUNCTION,
-)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @MustBeDocumented

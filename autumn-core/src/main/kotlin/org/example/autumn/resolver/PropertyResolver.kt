@@ -35,7 +35,7 @@ inline fun <reified T> PropertyResolver.getRequired(key: String): T {
 class Config(props: Properties) : PropertyResolver {
     companion object {
         private const val CONFIG_YML = "/config.yml"
-        private const val DEFAULT_CONFIG_YML = "/--default-config--.yml"
+        private const val DEFAULT_CONFIG_YML = "/__default-config__.yml"
 
         fun load(): PropertyResolver {
             return loadYaml(DEFAULT_CONFIG_YML).merge(loadYaml(CONFIG_YML))

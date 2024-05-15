@@ -12,7 +12,7 @@ import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
-import org.example.autumn.utils.ClassUtils.useClassLoader
+import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
 import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
@@ -75,7 +75,7 @@ class AutumnServer {
             logger.info("set webRoot as {}", webRoot)
 
             val classLoader = WebAppClassLoader(classesPath, libPath)
-            val config = useClassLoader(classLoader) {
+            val config = withClassLoader(classLoader) {
                 // load correct logger config
                 try {
                     readInputStreamFromClassPath("logback.xml") {

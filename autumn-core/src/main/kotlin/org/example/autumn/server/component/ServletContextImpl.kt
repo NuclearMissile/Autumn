@@ -13,13 +13,6 @@ import org.example.autumn.server.component.support.FilterMapping
 import org.example.autumn.server.component.support.ServletMapping
 import org.example.autumn.utils.ClassUtils.createInstance
 import org.example.autumn.utils.HttpUtils.escapeHtml
-import org.example.autumn.utils.J2EEAnnoUtils.getFilterDispatcherTypes
-import org.example.autumn.utils.J2EEAnnoUtils.getFilterInitParams
-import org.example.autumn.utils.J2EEAnnoUtils.getFilterName
-import org.example.autumn.utils.J2EEAnnoUtils.getFilterUrlPatterns
-import org.example.autumn.utils.J2EEAnnoUtils.getServletInitParams
-import org.example.autumn.utils.J2EEAnnoUtils.getServletName
-import org.example.autumn.utils.J2EEAnnoUtils.getServletUrlPatterns
 import org.slf4j.LoggerFactory
 import java.io.BufferedInputStream
 import java.io.FileInputStream
@@ -33,7 +26,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class ServletContextImpl(
-    private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String
+    private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String,
 ) : ServletContext, AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()
@@ -58,6 +51,45 @@ class ServletContextImpl(
         this, config.getRequired("server.web-app.session-timeout")
     )
 
+    companion object {
+        private fun Class<out Servlet>.getServletName(): String {
+            val w = getAnnotation(WebServlet::class.java)
+            return if (w != null && w.name.isNotEmpty())
+                w.name else name.replaceFirstChar { it.lowercase() }
+        }
+
+        private fun Class<out Filter>.getFilterName(): String {
+            val w = getAnnotation(WebFilter::class.java)
+            return if (w != null && w.filterName.isNotEmpty())
+                w.filterName else name.replaceFirstChar { it.lowercase() }
+        }
+
+        private fun Class<out Servlet>.getServletInitParams(): Map<String, String> {
+            val w = getAnnotation(WebServlet::class.java) ?: return emptyMap()
+            return w.initParams.associate { it.name to it.value }
+        }
+
+        private fun Class<out Filter>.getFilterInitParams(): Map<String, String> {
+            val w = getAnnotation(WebFilter::class.java) ?: return emptyMap()
+            return w.initParams.associate { it.name to it.value }
+        }
+
+        private fun Class<out Servlet>.getServletUrlPatterns(): Array<String> {
+            val w = getAnnotation(WebServlet::class.java) ?: return emptyArray()
+            return setOf(*(w.value + w.urlPatterns)).toTypedArray()
+        }
+
+        private fun Class<out Filter>.getFilterUrlPatterns(): Array<String> {
+            val w = getAnnotation(WebFilter::class.java) ?: return emptyArray()
+            return setOf(*(w.value + w.urlPatterns)).toTypedArray()
+        }
+
+        private fun Class<out Filter>.getFilterDispatcherTypes(): EnumSet<DispatcherType> {
+            val w = getAnnotation(WebFilter::class.java) ?: return EnumSet.of(DispatcherType.REQUEST)
+            return EnumSet.copyOf(listOf(*w.dispatcherTypes))
+        }
+    }
+
     fun init(scannedClasses: List<Class<*>>) {
         require(!initialized) {
             throw IllegalStateException("Cannot double initializing.")
@@ -72,18 +104,18 @@ class ServletContextImpl(
             if (it.isAnnotationPresent(WebServlet::class.java)) {
                 logger.atDebug().log("register @WebServlet: {}", it.name)
                 val clazz = it as Class<out Servlet>
-                val registration = addServlet(getServletName(clazz), clazz)
-                registration.addMapping(*getServletUrlPatterns(clazz))
-                registration.setInitParameters(getServletInitParams(clazz))
+                val registration = addServlet(clazz.getServletName(), clazz)
+                registration.addMapping(*clazz.getServletUrlPatterns())
+                registration.setInitParameters(clazz.getServletInitParams())
             }
             if (it.isAnnotationPresent(WebFilter::class.java)) {
                 logger.atDebug().log("register @WebFilter: {}", it.name)
                 val clazz = it as Class<out Filter>
-                val registration = addFilter(getFilterName(clazz), clazz)
+                val registration = addFilter(clazz.getFilterName(), clazz)
                 registration.addMappingForUrlPatterns(
-                    getFilterDispatcherTypes(clazz), true, *getFilterUrlPatterns(clazz)
+                    clazz.getFilterDispatcherTypes(), true, *clazz.getFilterUrlPatterns()
                 )
-                registration.setInitParameters(getFilterInitParams(clazz))
+                registration.setInitParameters(clazz.getFilterInitParams())
             }
         }
 

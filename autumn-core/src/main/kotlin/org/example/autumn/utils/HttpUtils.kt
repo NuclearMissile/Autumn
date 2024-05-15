@@ -2,6 +2,7 @@ package org.example.autumn.utils
 
 import com.sun.net.httpserver.Headers
 import jakarta.servlet.http.Cookie
+import org.example.autumn.DEFAULT_LOCALE
 import java.net.URLDecoder
 import java.nio.charset.Charset
 import java.util.*
@@ -9,7 +10,6 @@ import java.util.regex.Pattern
 
 object HttpUtils {
     private val QUERY_SPLIT = Pattern.compile("&")
-    val DEFAULT_LOCALE: Locale = Locale.getDefault()
 
     fun String.escapeHtml(): String {
         return this.replace("&", "&amp;")
