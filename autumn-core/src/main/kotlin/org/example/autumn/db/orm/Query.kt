@@ -4,31 +4,25 @@ import jakarta.persistence.NoResultException
 import jakarta.persistence.NonUniqueResultException
 import org.slf4j.LoggerFactory
 
-interface Query<T> {
-    fun query(): List<T>
-    fun first(): T?
-    fun unique(): T
-}
-
 /**
  * Hold criteria query information.
  *
  * @param <T> Entity type.
  */
-class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>) : Query<T> {
+class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>) {
     private val logger = LoggerFactory.getLogger(javaClass)
     val joinParams = mutableListOf<Any>()
     val whereParams = mutableListOf<Any>()
     val joinClauses = mutableListOf<String>()
     val orderBys = mutableListOf<String>()
-    var distinct = false
+    var selectClause = ""
     var whereClause = ""
     var limit = 0L
     var offset = 0L
 
     private fun sql(): String {
         return StringBuilder(128).also {
-            it.append(if (distinct) " SELECT DISTINCT * " else " SELECT * ")
+            it.append(selectClause)
             it.append(" FROM ${mapper.tableName} ")
             if (joinClauses.isNotEmpty()) {
                 it.append(joinClauses.joinToString(prefix = " JOIN ", separator = " JOIN ", postfix = " "))
@@ -45,7 +39,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
         }.toString()
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         val queryParams = (joinParams + whereParams).toMutableList()
         if (limit > 0 && offset >= 0) {
             queryParams += limit
@@ -65,7 +59,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
      *
      * @return Object T or null.
      */
-    override fun first(): T? {
+    fun first(): T? {
         limit = 1
         offset = 0
         return query().firstOrNull()
@@ -78,7 +72,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
      * @throws NoResultException        If result set is empty.
      * @throws NonUniqueResultException If more than 1 result found.
      */
-    override fun unique(): T {
+    fun unique(): T {
         limit = 2
         offset = 0
         return query().also {
@@ -92,9 +86,9 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
     }
 }
 
-class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) : Query<T> {
+class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) {
     init {
-        criteria.distinct = distinct
+        criteria.selectClause = if (distinct) " SELECT DISTINCT * " else " SELECT * "
     }
 
     fun join(joinClause: String, vararg args: Any): Join<T> {
@@ -113,20 +107,20 @@ class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) : Quer
         return Limit(criteria, limit, offset)
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         return criteria.query()
     }
 
-    override fun first(): T? {
+    fun first(): T? {
         return criteria.first()
     }
 
-    override fun unique(): T {
+    fun unique(): T {
         return criteria.unique()
     }
 }
 
-class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args: Any) : Query<T> {
+class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args: Any) {
     init {
         criteria.joinClauses += joinClause
         criteria.joinParams.addAll(args)
@@ -150,20 +144,20 @@ class Join<T>(private val criteria: Criteria<T>, joinClause: String, vararg args
         return Limit(criteria, limit, offset)
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         return criteria.query()
     }
 
-    override fun first(): T? {
+    fun first(): T? {
         return criteria.first()
     }
 
-    override fun unique(): T {
+    fun unique(): T {
         return criteria.unique()
     }
 }
 
-class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params: Any) : Query<T> {
+class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params: Any) {
     init {
         require(clause.count { it == '?' } == params.count()) { "params counts do not match given where clause" }
         criteria.whereClause = clause
@@ -178,20 +172,20 @@ class Where<T>(private val criteria: Criteria<T>, clause: String, vararg params:
         return Limit(criteria, offset, limit)
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         return criteria.query()
     }
 
-    override fun first(): T? {
+    fun first(): T? {
         return criteria.first()
     }
 
-    override fun unique(): T {
+    fun unique(): T {
         return criteria.unique()
     }
 }
 
-class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) : Query<T> {
+class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) {
     init {
         criteria.orderBys += orderBy
     }
@@ -205,20 +199,20 @@ class OrderBy<T>(private val criteria: Criteria<T>, orderBy: String) : Query<T> 
         return Limit(criteria, limit, offset)
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         return criteria.query()
     }
 
-    override fun first(): T? {
+    fun first(): T? {
         return criteria.first()
     }
 
-    override fun unique(): T {
+    fun unique(): T {
         return criteria.unique()
     }
 }
 
-class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) : Query<T> {
+class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) {
     init {
         require(limit > 0) { "limit must be > 0" }
         require(offset >= 0) { "offset must be >= 0" }
@@ -226,15 +220,15 @@ class Limit<T>(private val criteria: Criteria<T>, limit: Long, offset: Long) : Q
         criteria.offset = offset
     }
 
-    override fun query(): List<T> {
+    fun query(): List<T> {
         return criteria.query()
     }
 
-    override fun first(): T? {
+    fun first(): T? {
         return criteria.first()
     }
 
-    override fun unique(): T {
+    fun unique(): T {
         return criteria.unique()
     }
 }
