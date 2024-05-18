@@ -33,7 +33,7 @@ class AddressService(
     }
 
     fun getAddresses(userId: Int): List<Address> {
-        return jdbcTemplate.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, Address::class.java, userId)
+        return jdbcTemplate.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, userId)
     }
 
     fun deleteAddress(userId: Int) {
@@ -63,7 +63,7 @@ class UserService(
     }
 
     fun getUser(userId: Int): User {
-        return jdbcTemplate.queryRequiredObject(JdbcTestBase.SELECT_USER, User::class.java, userId)
+        return jdbcTemplate.queryRequired(JdbcTestBase.SELECT_USER, userId)
     }
 
     fun updateUser(user: User) {

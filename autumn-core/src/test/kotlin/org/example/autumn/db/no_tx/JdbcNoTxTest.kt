@@ -58,8 +58,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(1, userId1)
             assertEquals(2, userId2)
             // query user:
-            val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, userId1)
-            val alice = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, userId2)
+            val bob = jdbcTemplate.queryRequired<User>(SELECT_USER, userId1)
+            val alice = jdbcTemplate.queryRequired<User>(SELECT_USER, userId2)
             assertEquals(1, bob.id)
             assertEquals("Bob", bob.name)
             assertEquals(12, bob.age)
@@ -67,8 +67,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals("Alice", alice.name)
             assertNull(alice.age)
             // query name:
-            assertEquals("Bob", jdbcTemplate.queryRequiredObject(SELECT_USER_NAME, String::class.java, userId1))
-            assertEquals(12, jdbcTemplate.queryRequiredObject(SELECT_USER_AGE, Int::class.java, userId1))
+            assertEquals("Bob", jdbcTemplate.queryRequired(SELECT_USER_NAME, userId1))
+            assertEquals(12, jdbcTemplate.queryRequired(SELECT_USER_AGE, userId1))
             // update user:
             val n1 = jdbcTemplate.update(UPDATE_USER, "Bob Jones", 18, bob.id)
             assertEquals(1, n1)
@@ -79,12 +79,12 @@ class JdbcNoTxTest : JdbcTestBase() {
 
         AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
-            val bob = jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 1)
+            val bob = jdbcTemplate.queryRequired<User>(SELECT_USER, 1)
             assertEquals("Bob Jones", bob.name)
             assertEquals(18, bob.age)
             assertThrows<DataAccessException> {
                 // alice was deleted:
-                jdbcTemplate.queryRequiredObject(SELECT_USER, User::class.java, 2)
+                jdbcTemplate.queryRequired(SELECT_USER, 2)
             }
         }
     }

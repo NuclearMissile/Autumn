@@ -1,11 +1,17 @@
 package org.example.autumn.db
 
+import org.example.autumn.db.RowMapper.Companion.getResultSetExtractor
 import org.example.autumn.exception.DataAccessException
 import org.slf4j.LoggerFactory
 import java.sql.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
+    inline fun <reified T> query(sql: String, vararg args: Any?): T? {
+        return query(sql, T::class.java.getResultSetExtractor(), *args)
+    }
+
     fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             ps.executeQuery().use { rs -> rse.extractData(rs) }
@@ -59,26 +65,17 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    fun <T> queryRequiredObject(sql: String, clazz: Class<T>, vararg args: Any?): T {
-        return when {
-            String::class.java.isAssignableFrom(clazz) -> queryRequiredObject(sql, StringRowMapper.instance, *args) as T
-            Boolean::class.java.isAssignableFrom(clazz) || clazz == Boolean::class.javaPrimitiveType ->
-                queryRequiredObject(sql, BooleanRowMapper.instance, *args) as T
-
-            Number::class.java.isAssignableFrom(clazz) || clazz.isPrimitive ->
-                queryRequiredObject(sql, NumberRowMapper.instance, *args) as T
-
-            else -> queryRequiredObject(sql, BeanRowMapper(clazz), *args)
-        }
+    inline fun <reified T> queryRequired(sql: String, vararg args: Any?): T {
+        return queryRequired(sql, T::class.java.getResultSetExtractor(), *args)
     }
 
-    fun <T> queryRequiredObject(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): T {
+    fun <T> queryRequired(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             var ret: T? = null
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
                     if (ret == null) {
-                        ret = rowMapper.extractData(rs)
+                        ret = rse.extractData(rs)
                     } else {
                         throw DataAccessException("Multiple rows found.")
                     }
@@ -91,16 +88,16 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    fun <T> queryList(sql: String, clazz: Class<T>, vararg args: Any?): List<T> {
-        return queryList(sql, BeanRowMapper(clazz), *args)
+    inline fun <reified T> queryList(sql: String, vararg args: Any?): List<T> {
+        return queryList(sql, T::class.java.getResultSetExtractor(), *args)
     }
 
-    fun <T> queryList(sql: String, rowMapper: ResultSetExtractor<T>, vararg args: Any?): List<T> {
+    fun <T> queryList(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): List<T> {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             buildList {
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
-                        add(rowMapper.extractData(rs)!!)
+                        add(rse.extractData(rs)!!)
                     }
                 }
             }
@@ -156,7 +153,39 @@ fun interface ResultSetExtractor<T> {
     fun extractData(rs: ResultSet): T?
 }
 
-class BeanRowMapper<T>(private val clazz: Class<T>) : ResultSetExtractor<T> {
+class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
+    companion object {
+        private val cache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
+            put(Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
+            put(java.lang.Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
+            put(Long::class.java, ResultSetExtractor { it.getLong(1) })
+            put(java.lang.Long::class.java, ResultSetExtractor { it.getLong(1) })
+            put(Int::class.java, ResultSetExtractor { it.getInt(1) })
+            put(java.lang.Integer::class.java, ResultSetExtractor { it.getInt(1) })
+            put(Short::class.java, ResultSetExtractor { it.getShort(1) })
+            put(java.lang.Short::class.java, ResultSetExtractor { it.getShort(1) })
+            put(Byte::class.java, ResultSetExtractor { it.getByte(1) })
+            put(java.lang.Byte::class.java, ResultSetExtractor { it.getByte(1) })
+            put(Float::class.java, ResultSetExtractor { it.getFloat(1) })
+            put(java.lang.Float::class.java, ResultSetExtractor { it.getFloat(1) })
+            put(Double::class.java, ResultSetExtractor { it.getDouble(1) })
+            put(java.lang.Double::class.java, ResultSetExtractor { it.getDouble(1) })
+
+            put(String::class.java, ResultSetExtractor { it.getString(1) })
+            put(Number::class.java, ResultSetExtractor { it.getObject(1) as? Number })
+            put(ByteArray::class.java, ResultSetExtractor { it.getBytes(1) })
+            put(Date::class.java, ResultSetExtractor { it.getDate(1) })
+            put(Time::class.java, ResultSetExtractor { it.getTime(1) })
+            put(Timestamp::class.java, ResultSetExtractor { it.getTimestamp(1) })
+            put(Blob::class.java, ResultSetExtractor { it.getBlob(1) })
+            put(RowId::class.java, ResultSetExtractor { it.getRowId(1) })
+        }
+
+        fun <T> Class<T>.getResultSetExtractor(): ResultSetExtractor<T> {
+            return cache.getOrPut(this) { RowMapper(this) } as ResultSetExtractor<T>
+        }
+    }
+
     private val logger = LoggerFactory.getLogger(javaClass)
     private val fields = clazz.fields.associateBy {
         logger.atDebug().log("Add row mapping for {}", it.name)
@@ -197,35 +226,5 @@ class BeanRowMapper<T>(private val clazz: Class<T>) : ResultSetExtractor<T> {
                 throw DataAccessException("Could not map result set to class ${clazz.name}", e)
             }
         }
-    }
-}
-
-class StringRowMapper : ResultSetExtractor<String> {
-    companion object {
-        val instance = StringRowMapper()
-    }
-
-    override fun extractData(rs: ResultSet): String? {
-        return rs.getString(1)
-    }
-}
-
-class BooleanRowMapper : ResultSetExtractor<Boolean> {
-    companion object {
-        val instance = BooleanRowMapper()
-    }
-
-    override fun extractData(rs: ResultSet): Boolean {
-        return rs.getBoolean(1)
-    }
-}
-
-class NumberRowMapper : ResultSetExtractor<Number> {
-    companion object {
-        val instance = NumberRowMapper()
-    }
-
-    override fun extractData(rs: ResultSet): Number? {
-        return rs.getObject(1) as? Number
     }
 }

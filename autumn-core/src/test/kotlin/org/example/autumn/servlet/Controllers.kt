@@ -190,7 +190,7 @@ class MvcController {
     @Post("/signout")
     fun signout(session: HttpSession, req: HttpServletRequest, resp: HttpServletResponse): ModelAndView? {
         val name = req.getParameter("name")
-        session.setAttribute("signout", java.lang.Boolean.TRUE)
+        session.setAttribute("signout", true)
         resp.sendRedirect("/signin?name=$name")
         return null
     }
