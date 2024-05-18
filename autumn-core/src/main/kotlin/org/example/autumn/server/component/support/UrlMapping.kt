@@ -2,10 +2,9 @@ package org.example.autumn.server.component.support
 
 import jakarta.servlet.Filter
 import jakarta.servlet.Servlet
-import java.util.regex.Pattern
 
 open class UrlMapping(private val url: String) {
-    private val pattern: Pattern = run {
+    private val pattern: Regex = run {
         val sb = StringBuilder(url.length + 16)
         sb.append('^')
         url.forEach {
@@ -16,11 +15,11 @@ open class UrlMapping(private val url: String) {
             }
         }
         sb.append('$')
-        Pattern.compile(sb.toString())
+        Regex(sb.toString())
     }
-    
+
     fun matches(uri: String): Boolean {
-        return pattern.matcher(uri).matches()
+        return pattern.matches(uri)
     }
 }
 

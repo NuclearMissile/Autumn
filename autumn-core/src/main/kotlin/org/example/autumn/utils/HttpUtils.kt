@@ -1,15 +1,13 @@
 package org.example.autumn.utils
 
-import com.sun.net.httpserver.Headers
 import jakarta.servlet.http.Cookie
 import org.example.autumn.DEFAULT_LOCALE
 import java.net.URLDecoder
 import java.nio.charset.Charset
 import java.util.*
-import java.util.regex.Pattern
 
 object HttpUtils {
-    private val QUERY_SPLIT = Pattern.compile("&")
+    private val QUERY_SPLIT = Regex("&")
 
     fun String.escapeHtml(): String {
         return this.replace("&", "&amp;")
@@ -51,11 +49,6 @@ object HttpUtils {
             }
         }
         return ret
-    }
-
-    fun getHeader(headers: Headers, name: String): String? {
-        val values = headers[name]
-        return if (values.isNullOrEmpty()) null else values.first()
     }
 
     fun parseCookies(cookieValue: String?): Array<Cookie>? {

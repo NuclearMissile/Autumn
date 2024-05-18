@@ -13,10 +13,7 @@ import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.mock.web.MockHttpSession
 import org.springframework.mock.web.MockServletContext
 import java.nio.file.Path
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class DispatcherServletTest {
     private lateinit var dispatcherServlet: DispatcherServlet
@@ -25,18 +22,17 @@ class DispatcherServletTest {
     @Test
     fun testValidPath() {
         val p0 = compilePath("/user/{userId}/{orderId}")
-        val m0 = p0.matcher("/user/0/11")
-        assertTrue(m0.matches())
-        assertEquals("0", m0.group("userId"))
-        assertEquals("11", m0.group(2))
+        val m0 = p0.matchEntire("/user/0/11")
+        assertNotNull(m0)
+        assertEquals("0", m0.groups["userId"]!!.value)
+        assertEquals("11", m0.groups[2]!!.value)
 
-        val m00 = p0.matcher("/user/123/a/456")
-        assertFalse(m00.matches())
+        assertNull(p0.matchEntire("/user/123/a/456"))
 
         val p1 = compilePath("/test/{a123dsdas}")
-        val m1 = p1.matcher("/test/aaabbbccc")
-        assertTrue(m1.matches())
-        assertEquals("aaabbbccc", m1.group("a123dsdas"))
+        val m1 = p1.matchEntire("/test/aaabbbccc")
+        assertNotNull(m1)
+        assertEquals("aaabbbccc", m1.groups["a123dsdas"]!!.value)
     }
 
     @Test

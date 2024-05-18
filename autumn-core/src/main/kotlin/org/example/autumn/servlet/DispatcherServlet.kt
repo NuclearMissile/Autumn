@@ -22,16 +22,15 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
-import java.util.regex.Pattern
 
 class DispatcherServlet : HttpServlet() {
     companion object {
-        fun compilePath(path: String): Pattern {
+        fun compilePath(path: String): Regex {
             val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex(), "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
-            return Pattern.compile("^$regPath\$")
+            return Regex("^$regPath\$")
         }
     }
 
@@ -250,18 +249,15 @@ class DispatcherServlet : HttpServlet() {
         }
 
         fun match(url: String): Boolean {
-            return urlPattern.matcher(url).matches()
+            return urlPattern.matches(url)
         }
 
         fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
             val args = methodParams.map { param ->
                 when (param.paramAnno) {
                     is PathVariable -> try {
-                        urlPattern.matcher(url).let {
-                            it.matches()
-                            convertToType(param.paramType, it.group(param.name))
-                        }
-                    } catch (e: IllegalArgumentException) {
+                        urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toType(param.paramType)
+                    } catch (e: Exception) {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
 
@@ -276,7 +272,7 @@ class DispatcherServlet : HttpServlet() {
                             else
                                 return@map null
                         }
-                        convertToType(param.paramType, value)
+                        value.toType(param.paramType)
                     }
 
                     is Header -> {
@@ -306,16 +302,16 @@ class DispatcherServlet : HttpServlet() {
             }
         }
 
-        private fun convertToType(classType: Class<*>, s: String): Any {
+        private fun String.toType(classType: Class<*>): Any {
             return when (classType) {
-                String::class.java -> s
-                Boolean::class.javaPrimitiveType, Boolean::class.java -> s.toBoolean()
-                Int::class.javaPrimitiveType, Int::class.java -> s.toInt()
-                Long::class.javaPrimitiveType, Long::class.java -> s.toLong()
-                Byte::class.javaPrimitiveType, Byte::class.java -> s.toByte()
-                Short::class.javaPrimitiveType, Short::class.java -> s.toShort()
-                Float::class.javaPrimitiveType, Float::class.java -> s.toFloat()
-                Double::class.javaPrimitiveType, Double::class.java -> s.toDouble()
+                String::class.java -> this
+                Boolean::class.javaPrimitiveType, Boolean::class.java -> toBoolean()
+                Int::class.javaPrimitiveType, Int::class.java -> toInt()
+                Long::class.javaPrimitiveType, Long::class.java -> toLong()
+                Byte::class.javaPrimitiveType, Byte::class.java -> toByte()
+                Short::class.javaPrimitiveType, Short::class.java -> toShort()
+                Float::class.javaPrimitiveType, Float::class.java -> toFloat()
+                Double::class.javaPrimitiveType, Double::class.java -> toDouble()
                 else -> throw ServerErrorException("Could not determine argument type: $classType")
             }
         }

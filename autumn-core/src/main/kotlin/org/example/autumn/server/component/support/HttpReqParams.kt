@@ -40,8 +40,8 @@ class HttpReqParams(
             ret = HttpUtils.parseQuery(query, charset).toMutableMap()
         }
         if ("POST" == exchangeReq.getRequestMethod()) {
-            val value = HttpUtils.getHeader(exchangeReq.getRequestHeaders(), "Content-Type")
-            if (value != null && value.startsWith("application/x-www-form-urlencoded")) {
+            val value = exchangeReq.getRequestHeaders()["Content-Type"]?.firstOrNull()
+            if (value?.startsWith("application/x-www-form-urlencoded") == true) {
                 val requestBody = exchangeReq.getRequestBody().toString(charset)
                 val postParams = HttpUtils.parseQuery(requestBody, charset)
                 // merge:
