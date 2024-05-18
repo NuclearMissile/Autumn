@@ -60,9 +60,16 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
      * @return Object T or null.
      */
     fun first(): T? {
+        val _limit = limit
+        val _offset = offset
         limit = 1
         offset = 0
-        return query().firstOrNull()
+        return try {
+            query().firstOrNull()
+        } finally {
+            limit = _limit
+            offset = _offset
+        }
     }
 
     /**
@@ -73,16 +80,23 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
      * @throws NonUniqueResultException If more than 1 result found.
      */
     fun unique(): T {
+        val _limit = limit
+        val _offset = offset
         limit = 2
         offset = 0
-        return query().also {
-            require(it.isNotEmpty()) {
-                throw NoResultException("Expected unique row but nothing found.")
-            }
-            require(it.count() == 1) {
-                throw NonUniqueResultException("Expected unique row but more than 1 rows found.")
-            }
-        }.first()
+        return try {
+            query().also {
+                require(it.isNotEmpty()) {
+                    throw NoResultException("Expected unique row but nothing found.")
+                }
+                require(it.count() == 1) {
+                    throw NonUniqueResultException("Expected unique row but more than 1 rows found.")
+                }
+            }.first()
+        } finally {
+            limit = _limit
+            offset = _offset
+        }
     }
 }
 
