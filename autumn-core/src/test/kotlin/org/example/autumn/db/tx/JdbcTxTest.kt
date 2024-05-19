@@ -54,12 +54,8 @@ class UserService(
     lateinit var addressService: AddressService
 
     fun createUser(name: String?, age: Int): User {
-        val id: Number = jdbcTemplate.updateWithGeneratedKey(JdbcTestBase.INSERT_USER, name, age)
-        val user = User()
-        user.id = id.toInt()
-        user.name = name
-        user.age = age
-        return user
+        val id = jdbcTemplate.updateWithGeneratedKey(JdbcTestBase.INSERT_USER, name, age)
+        return User(id.toInt(), name, age)
     }
 
     fun getUser(userId: Int): User {

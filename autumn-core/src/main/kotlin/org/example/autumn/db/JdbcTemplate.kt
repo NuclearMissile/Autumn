@@ -2,7 +2,6 @@ package org.example.autumn.db
 
 import org.example.autumn.db.RowMapper.Companion.getResultSetExtractor
 import org.example.autumn.exception.DataAccessException
-import org.slf4j.LoggerFactory
 import java.sql.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
@@ -14,7 +13,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
-            ps.executeQuery().use { rs -> rse.extractData(rs) }
+            ps.executeQuery().use { rs -> rse.extract(rs) }
         }
     }
 
@@ -75,7 +74,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
             ps.executeQuery().use { rs ->
                 while (rs.next()) {
                     if (ret == null) {
-                        ret = rse.extractData(rs)
+                        ret = rse.extract(rs)
                     } else {
                         throw DataAccessException("Multiple rows found.")
                     }
@@ -97,7 +96,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
             buildList {
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
-                        add(rse.extractData(rs)!!)
+                        add(rse.extract(rs)!!)
                     }
                 }
             }
@@ -150,12 +149,16 @@ fun interface PreparedStatementCreator {
 }
 
 fun interface ResultSetExtractor<T> {
-    fun extractData(rs: ResultSet): T?
+    fun extract(rs: ResultSet): T?
+}
+
+fun interface ColumnExtractor<T> {
+    fun extract(rs: ResultSet, label: String): T?
 }
 
 class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
     companion object {
-        private val cache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
+        private val rseCache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
             put(Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
             put(java.lang.Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
             put(Long::class.java, ResultSetExtractor { it.getLong(1) })
@@ -181,24 +184,42 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
             put(RowId::class.java, ResultSetExtractor { it.getRowId(1) })
         }
 
+        private val ceCache = mapOf<Class<*>, ColumnExtractor<*>>(
+            Boolean::class.java to ColumnExtractor { rs, label -> rs.getBoolean(label) },
+            java.lang.Boolean::class.java to ColumnExtractor { rs, label -> rs.getBoolean(label) },
+            Long::class.java to ColumnExtractor { rs, label -> rs.getLong(label) },
+            java.lang.Long::class.java to ColumnExtractor { rs, label -> rs.getLong(label) },
+            Int::class.java to ColumnExtractor { rs, label -> rs.getInt(label) },
+            java.lang.Integer::class.java to ColumnExtractor { rs, label -> rs.getInt(label) },
+            Short::class.java to ColumnExtractor { rs, label -> rs.getShort(label) },
+            java.lang.Short::class.java to ColumnExtractor { rs, label -> rs.getShort(label) },
+            Byte::class.java to ColumnExtractor { rs, label -> rs.getByte(label) },
+            java.lang.Byte::class.java to ColumnExtractor { rs, label -> rs.getByte(label) },
+            Float::class.java to ColumnExtractor { rs, label -> rs.getFloat(label) },
+            java.lang.Float::class.java to ColumnExtractor { rs, label -> rs.getFloat(label) },
+            Double::class.java to ColumnExtractor { rs, label -> rs.getDouble(label) },
+            java.lang.Double::class.java to ColumnExtractor { rs, label -> rs.getDouble(label) },
+
+            String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
+            Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as? Number },
+            ByteArray::class.java to ColumnExtractor { rs, label -> rs.getBytes(label) },
+            Date::class.java to ColumnExtractor { rs, label -> rs.getDate(label) },
+            Time::class.java to ColumnExtractor { rs, label -> rs.getTime(label) },
+            Timestamp::class.java to ColumnExtractor { rs, label -> rs.getTimestamp(label) },
+            Blob::class.java to ColumnExtractor { rs, label -> rs.getBlob(label) },
+            RowId::class.java to ColumnExtractor { rs, label -> rs.getRowId(label) },
+        )
+
         fun <T> Class<T>.getResultSetExtractor(): ResultSetExtractor<T> {
-            return cache.getOrPut(this) { RowMapper(this) } as ResultSetExtractor<T>
+            return rseCache.getOrPut(this) { RowMapper(this) } as ResultSetExtractor<T>
         }
     }
 
-    private val logger = LoggerFactory.getLogger(javaClass)
-    private val fields = clazz.fields.associateBy {
-        logger.atDebug().log("Add row mapping for {}", it.name)
-        it.name
-    }
+    private val fields = clazz.declaredFields.associateBy { it.name }
     private val setters = clazz.methods
         .filter { it.parameters.size == 1 && it.name.length >= 4 && it.name.startsWith("set") }
-        .associateBy {
-            val name = it.name
-            val prop = name[3].lowercaseChar() + name.substring(4)
-            logger.atDebug()
-                .log("Add row mapping: {} to {}({})", prop, name, it.parameters.single().type.simpleName)
-            prop
+        .associateBy { setter ->
+            setter.name.substring(3).replaceFirstChar { it.lowercase() }
         }
     private val ctor = try {
         clazz.getConstructor()
@@ -208,18 +229,29 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
         )
     }
 
-    override fun extractData(rs: ResultSet): T? {
+    override fun extract(rs: ResultSet): T? {
         return ctor.newInstance().also { bean ->
             try {
                 val meta = rs.metaData
                 for (i in 1..meta.columnCount) {
                     val label = meta.getColumnLabel(i)
                     val setter = setters[label]
-                    if (setter != null) {
-                        setter.invoke(bean, rs.getObject(label))
-                    } else {
-                        val field = fields[label]
-                        field?.set(bean, rs.getObject(label))
+                    val field = fields[label]
+                    when {
+                        setter != null -> {
+                            setter.invoke(
+                                bean, ceCache[setter.parameterTypes.first()]?.extract(rs, label) ?: rs.getObject(label)
+                            )
+                        }
+
+                        field != null -> {
+                            field.isAccessible = true
+                            field.set(
+                                bean, ceCache[field.type]?.extract(rs, label) ?: rs.getObject(label)
+                            )
+                        }
+
+                        else -> throw IllegalArgumentException("cannot find setter or field on ${clazz.name} for label $label")
                     }
                 }
             } catch (e: ReflectiveOperationException) {

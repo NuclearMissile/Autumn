@@ -62,6 +62,9 @@ class DispatcherServlet : HttpServlet() {
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
             }
         }
+
+        getDispatchers.sortByDescending { it.urlPattern.pattern.length }
+        postDispatchers.sortByDescending { it.urlPattern.pattern.length }
     }
 
     override fun destroy() {
@@ -149,7 +152,7 @@ class DispatcherServlet : HttpServlet() {
             is ModelAndView -> {
                 val viewName = ret.viewName
                 if (ret.status >= 400) {
-                    viewResolver.renderError(ret.getModel(), ret.status, req, resp)
+                    viewResolver.renderError(ret.status, ret.getModel(), req, resp)
                 } else if (viewName.startsWith("redirect:")) {
                     resp.sendRedirect(req.contextPath + viewName.substring(9))
                 } else {
@@ -182,7 +185,7 @@ class DispatcherServlet : HttpServlet() {
                 flush()
             }
         } else {
-            viewResolver.renderError(null, e.statusCode, req, resp)
+            viewResolver.renderError(e.statusCode, null, req, resp)
         }
     }
 
@@ -204,12 +207,12 @@ class DispatcherServlet : HttpServlet() {
             if (getAnno != null) {
                 val urlPattern = "/" + (prefix + getAnno.value).trim('/')
                 configMethod(m)
-                getDispatchers += Dispatcher(instance, m, urlPattern, getAnno.produce, isRest)
+                getDispatchers += Dispatcher(instance, m, compilePath(urlPattern), getAnno.produce, isRest)
             }
             if (postAnno != null) {
                 val urlPattern = "/" + (prefix + postAnno.value).trim('/')
                 configMethod(m)
-                postDispatchers += Dispatcher(instance, m, urlPattern, postAnno.produce, isRest)
+                postDispatchers += Dispatcher(instance, m, compilePath(urlPattern), postAnno.produce, isRest)
             }
         }
 
@@ -218,10 +221,10 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private inner class Dispatcher(
+    private class Dispatcher(
         private val controller: Any,
         private val handlerMethod: Method,
-        urlPattern: String,
+        val urlPattern: Regex,
         val produce: String,
         val isRest: Boolean,
     ) {
@@ -229,7 +232,6 @@ class DispatcherServlet : HttpServlet() {
         val isVoid = handlerMethod.returnType == Void.TYPE
 
         private val logger = LoggerFactory.getLogger(javaClass)
-        private val urlPattern = compilePath(urlPattern)
         private val methodParams = mutableListOf<Param>()
 
         init {
@@ -239,7 +241,7 @@ class DispatcherServlet : HttpServlet() {
                 methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
             }
             logger.atDebug().log(
-                "mapping {} to handler {}.{}", urlPattern, controller.javaClass.simpleName, handlerMethod.name
+                "mapping {} to handler {}.{}", urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name
             )
             if (logger.isDebugEnabled) {
                 for (p in methodParams) {

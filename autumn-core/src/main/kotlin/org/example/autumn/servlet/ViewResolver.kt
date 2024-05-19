@@ -21,7 +21,7 @@ interface ViewResolver {
     )
 
     fun renderError(
-        model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse
     )
 }
 
@@ -76,7 +76,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun renderError(
-        model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse
     ) {
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
