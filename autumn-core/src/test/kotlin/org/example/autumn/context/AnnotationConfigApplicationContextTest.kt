@@ -156,7 +156,7 @@ class AnnotationConfigApplicationContextTest {
             "app.title" to "Scan App",
             "app.version" to "v1.0",
             "jdbc.url" to "jdbc:hsqldb:file:testdb.tmp",
-            "jdbc.username" to "sa",
+            "jdbc.username" to "",
             "jdbc.password" to "",
             "convert.boolean" to "true",
             "convert.byte" to "123",

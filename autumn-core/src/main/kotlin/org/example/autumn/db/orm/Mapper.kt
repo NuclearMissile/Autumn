@@ -1,6 +1,7 @@
 package org.example.autumn.db.orm
 
 import jakarta.persistence.*
+import org.example.autumn.db.COLUMN_EXTRACTORS
 import java.lang.reflect.Field
 import java.math.BigDecimal
 import java.sql.ResultSet
@@ -8,13 +9,11 @@ import java.sql.ResultSet
 /**
  * Represent an entity's field with @Column annotation.
  */
-class EntityProperty(private val field: Field) {
-    private val fieldType = field.type
-    private val fieldName = field.name
+class EntityProperty(val field: Field) {
     private val colAnno = field.getAnnotation(Column::class.java)!!
 
     // db col name
-    val colName: String = colAnno.name.ifEmpty { fieldName }
+    val colName: String = colAnno.name.ifEmpty { field.name }
     val isId = field.getAnnotation(Id::class.java) != null
     val isGeneratedId = if (!isId) false else
         field.getAnnotation(GeneratedValue::class.java)?.strategy == GenerationType.IDENTITY
@@ -25,7 +24,7 @@ class EntityProperty(private val field: Field) {
     val columnDefinition by lazy {
         StringBuilder(128).also {
             if (colAnno.columnDefinition.isEmpty()) {
-                it.append(if (fieldType.isEnum) "VARCHAR(32)" else getColumnType(fieldType, colAnno))
+                it.append(getColumnType(field.type, colAnno))
             } else {
                 it.append(colAnno.columnDefinition.uppercase())
             }
@@ -44,24 +43,26 @@ class EntityProperty(private val field: Field) {
         field.isAccessible = true
     }
 
-    operator fun get(entity: Any): Any {
-        val value = field[entity]
-        return if (fieldType.isEnum) (value as Enum<*>).name else value
+    operator fun get(entity: Any): Any? {
+        val value = field[entity] ?: return null
+        return if (field.type.isEnum) (value as Enum<*>).name else value
     }
 
-    @Suppress("UNCHECKED_CAST")
-    operator fun set(entity: Any, value: Any) {
-        field[entity] = if (fieldType.isEnum)
-            (fieldType.enumConstants as Array<Enum<*>>).first { it.name == value as String }
-        else value
+    operator fun set(entity: Any, value: Any?) {
+        field[entity] = when {
+            value == null -> null
+            field.type.isEnum -> field.type.enumConstants.first { (it as Enum<*>).name == value as String }
+            else -> value
+        }
     }
 
     override fun toString(): String {
-        return "EntityProperty(field=$field, type=$fieldType, fieldName='$fieldName', colName='$colName')"
+        return "EntityProperty(field=$field, type=${field.type}, fieldName='${field.name}', colName='$colName')"
     }
 
     companion object {
         private fun getColumnType(type: Class<*>, col: Column?): String {
+            if (type.isEnum) return "VARCHAR(32)"
             var ddl = DEFAULT_COLUMN_TYPES[type]!!
             if (ddl == "VARCHAR($1)") {
                 ddl = ddl.replace("$1", (col?.length ?: 255).toString())
@@ -77,13 +78,21 @@ class EntityProperty(private val field: Field) {
         private val DEFAULT_COLUMN_TYPES = mapOf(
             String::class.java to "VARCHAR($1)",
             Boolean::class.java to "BIT",
+            java.lang.Boolean::class.java to "BIT",
             Byte::class.java to "BIT",
+            java.lang.Byte::class.java to "BIT",
             Short::class.java to "TINYINT",
+            java.lang.Short::class.java to "TINYINT",
             Int::class.java to "INTEGER",
+            java.lang.Integer::class.java to "INTEGER",
             Long::class.java to "BIGINT",
+            java.lang.Long::class.java to "BIGINT",
             Float::class.java to "REAL",
+            java.lang.Float::class.java to "REAL",
             Double::class.java to "DOUBLE",
-            BigDecimal::class.java to "DECIMAL($1,$2)"
+            java.lang.Double::class.java to "DOUBLE",
+            BigDecimal::class.java to "DECIMAL($1,$2)",
+            ByteArray::class.java to "BLOB",
         )
     }
 }
@@ -132,7 +141,11 @@ class Mapper<T>(private val entityClass: Class<T>) {
                 while (rs.next()) {
                     val entity = entityClass.getConstructor().newInstance()
                     for (i in properties.indices) {
-                        propertiesMap[colNames[i]]!![entity as Any] = rs.getObject(i + 1)
+                        val colName = colNames[i]
+                        val prop = propertiesMap[colName]!!
+                        val extractor = COLUMN_EXTRACTORS[prop.field.type]
+                        prop[entity as Any] = if (extractor != null)
+                            extractor.extract(rs, colName) else rs.getObject(colName)
                     }
                     add(entity)
                 }
@@ -141,7 +154,7 @@ class Mapper<T>(private val entityClass: Class<T>) {
     }
 
     fun idOf(entity: Any): Any {
-        return id[entity]
+        return id[entity]!!
     }
 
     private val uniqueKey by lazy {

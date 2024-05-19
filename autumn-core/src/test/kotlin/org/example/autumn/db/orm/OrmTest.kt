@@ -1,5 +1,6 @@
 package org.example.autumn.db.orm
 
+import jakarta.persistence.*
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.db.orm.entity.EventEntity
@@ -12,6 +13,102 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.*
 
+enum class TestEnum { ENUM1, ENUM2 }
+
+@Entity
+@Table(name = "test_entities")
+data class TestEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false, updatable = false)
+    var id: Long,
+    @Column(nullable = false)
+    var string: String,
+    @Column
+    var nullableString: String?,
+    @Column(nullable = false)
+    var enum: TestEnum,
+    @Column
+    var nullableEnum: TestEnum?,
+    @Column(nullable = false)
+    var long: Long,
+    @Column
+    var nullableLong: Long?,
+    @Column(nullable = false)
+    var int: Int,
+    @Column
+    var nullableInt: Int?,
+    @Column(nullable = false)
+    var short: Short,
+    @Column
+    var nullableShort: Short?,
+    @Column(nullable = false)
+    var double: Double,
+    @Column
+    var nullableDouble: Double?,
+    @Column(nullable = false)
+    var float: Float,
+    @Column
+    var nullableFloat: Float?,
+    @Column(nullable = false)
+    var boolean: Boolean,
+    @Column
+    var nullableBoolean: Boolean?,
+    @Column
+    var blob: ByteArray?,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TestEntity
+
+        if (string != other.string) return false
+        if (nullableString != other.nullableString) return false
+        if (enum != other.enum) return false
+        if (nullableEnum != other.nullableEnum) return false
+        if (long != other.long) return false
+        if (nullableLong != other.nullableLong) return false
+        if (int != other.int) return false
+        if (nullableInt != other.nullableInt) return false
+        if (short != other.short) return false
+        if (nullableShort != other.nullableShort) return false
+        if (double != other.double) return false
+        if (nullableDouble != other.nullableDouble) return false
+        if (float != other.float) return false
+        if (nullableFloat != other.nullableFloat) return false
+        if (boolean != other.boolean) return false
+        if (nullableBoolean != other.nullableBoolean) return false
+        if (blob != null) {
+            if (other.blob == null) return false
+            if (!blob.contentEquals(other.blob)) return false
+        } else if (other.blob != null) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = string.hashCode()
+        result = 31 * result + (nullableString?.hashCode() ?: 0)
+        result = 31 * result + enum.hashCode()
+        result = 31 * result + (nullableEnum?.hashCode() ?: 0)
+        result = 31 * result + long.hashCode()
+        result = 31 * result + (nullableLong?.hashCode() ?: 0)
+        result = 31 * result + int
+        result = 31 * result + (nullableInt ?: 0)
+        result = 31 * result + short
+        result = 31 * result + (nullableShort ?: 0)
+        result = 31 * result + double.hashCode()
+        result = 31 * result + (nullableDouble?.hashCode() ?: 0)
+        result = 31 * result + float.hashCode()
+        result = 31 * result + (nullableFloat?.hashCode() ?: 0)
+        result = 31 * result + boolean.hashCode()
+        result = 31 * result + (nullableBoolean?.hashCode() ?: 0)
+        result = 31 * result + (blob?.contentHashCode() ?: 0)
+        return result
+    }
+}
+
 class OrmTest {
     companion object {
         const val CREATE_USERS =
@@ -20,12 +117,17 @@ class OrmTest {
             "CREATE TABLE events (sequenceId INTEGER PRIMARY KEY AUTOINCREMENT, previousId BIGINT NOT NULL, data TEXT NOT NULL, createdAt BIGINT NOT NULL);"
         const val CREATE_PASSWORD_AUTHS =
             "CREATE TABLE password_auths (userId INTEGER PRIMARY KEY AUTOINCREMENT, random TEXT NOT NULL, passwd TEXT NOT NULL);"
+        const val CREATE_TEST_ENTITIES =
+            "CREATE TABLE test_entities (id INTEGER PRIMARY KEY AUTOINCREMENT, string TEXT NOT NULL, nullableString TEXT, enum TEXT NOT NULL, nullableEnum TEXT," +
+                    "long INTEGER NOT NULL, nullableLong INTEGER, int INTEGER NOT NULL, nullableInt INTEGER, " +
+                    "short INTEGER NOT NULL, nullableShort INTEGER, double REAL NOT NULL, nullableDouble REAL, " +
+                    "float REAL NOT NULL, nullableFloat REAL, boolean BOOLEAN NOT NULL, nullableBoolean BOOLEAN, blob BLOB);"
     }
 
     private val config = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
-            "autumn.datasource.username" to "sa",
+            "autumn.datasource.username" to "",
             "autumn.datasource.password" to "",
             "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
         ).toProperties()
@@ -39,6 +141,44 @@ class OrmTest {
             jdbcTemplate.update(CREATE_USERS)
             jdbcTemplate.update(CREATE_EVENTS)
             jdbcTemplate.update(CREATE_PASSWORD_AUTHS)
+            jdbcTemplate.update(CREATE_TEST_ENTITIES)
+        }
+    }
+
+    @Test
+    fun testEntity() {
+        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+            val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
+            val e1 = TestEntity(
+                -1, "e1", "e1", TestEnum.ENUM1, TestEnum.ENUM2, 1L, 1,
+                1, 1, 1, 1, 1.0, 1.0,
+                1.0f, 1.0f, true, false, "e1".toByteArray()
+            )
+            naiveOrm.insert(e1)
+
+            assertNotEquals(-1, e1.id)
+            val e11 = naiveOrm.selectById<TestEntity>(e1.id)
+            val enum =
+                naiveOrm.jdbcTemplate.queryRequired<TestEnum>("select enum from test_entities where id = ?", e1.id)
+            val e111 =
+                naiveOrm.jdbcTemplate.queryRequired<TestEntity>("select * from test_entities where id = ?", e1.id)
+            assertEquals(e1, e11)
+            assertEquals(TestEnum.ENUM1, enum)
+            assertEquals(e1, e111)
+
+            val e2 = TestEntity(
+                -1, "e2", null, TestEnum.ENUM1, null, 2L, null,
+                2, null, 2, null, 2.0, null,
+                2.0f, null, true, null, null
+            )
+            naiveOrm.insert(e2)
+            assertNotEquals(-1, e2.id)
+            val e22 = naiveOrm.selectById<TestEntity>(e2.id)
+            val nullableEnum = naiveOrm.jdbcTemplate.query<TestEnum>("select nullableEnum from test_entities where id = ?", e2.id)
+            val e222 = naiveOrm.jdbcTemplate.query<TestEntity>("select * from test_entities where id = ?", e2.id)
+            assertEquals(e2, e22)
+            assertNull(nullableEnum)
+            assertEquals(e2, e222)
         }
     }
 

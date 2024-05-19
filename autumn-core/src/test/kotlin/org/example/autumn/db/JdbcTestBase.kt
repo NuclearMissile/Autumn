@@ -43,7 +43,7 @@ open class JdbcTestBase {
     val config = Config(
         mapOf(
             "autumn.datasource.url" to "jdbc:sqlite:test_jdbc.db",
-            "autumn.datasource.username" to "sa",
+            "autumn.datasource.username" to "",
             "autumn.datasource.password" to "",
             "autumn.datasource.driver-class-name" to "org.sqlite.JDBC"
         ).toProperties()

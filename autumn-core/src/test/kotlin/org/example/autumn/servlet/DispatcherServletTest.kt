@@ -302,7 +302,7 @@ class DispatcherServletTest {
                 "app.version" to "v1.0",
                 "autumn.web.favicon-path" to "/icon/favicon.ico",
                 "autumn.web.freemarker.template-path" to "/WEB-INF/templates",
-                "jdbc.username" to "sa",
+                "jdbc.username" to "",
                 "jdbc.password" to "",
             ).toProperties()
         )

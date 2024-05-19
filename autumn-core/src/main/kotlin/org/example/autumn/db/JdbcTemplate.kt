@@ -156,23 +156,103 @@ fun interface ColumnExtractor<T> {
     fun extract(rs: ResultSet, label: String): T?
 }
 
+val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
+    Boolean::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getBoolean(label)
+    },
+    java.lang.Boolean::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getBoolean(label)
+    },
+    Long::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getLong(label)
+    },
+    java.lang.Long::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getLong(label)
+    },
+    Int::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getInt(label)
+    },
+    java.lang.Integer::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getInt(label)
+    },
+    Short::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getShort(label)
+    },
+    java.lang.Short::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getShort(label)
+    },
+    Byte::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getByte(label)
+    },
+    java.lang.Byte::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getByte(label)
+    },
+    Float::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getFloat(label)
+    },
+    java.lang.Float::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getFloat(label)
+    },
+    Double::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getDouble(label)
+    },
+    java.lang.Double::class.java to ColumnExtractor { rs, label ->
+        if (rs.getObject(label) == null) null else rs.getDouble(label)
+    },
+
+    String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
+    Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as? Number },
+    ByteArray::class.java to ColumnExtractor { rs, label -> rs.getBytes(label) },
+    Date::class.java to ColumnExtractor { rs, label -> rs.getDate(label) },
+    Time::class.java to ColumnExtractor { rs, label -> rs.getTime(label) },
+    Timestamp::class.java to ColumnExtractor { rs, label -> rs.getTimestamp(label) },
+)
+
 class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
     companion object {
         private val rseCache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
-            put(Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
-            put(java.lang.Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
-            put(Long::class.java, ResultSetExtractor { it.getLong(1) })
-            put(java.lang.Long::class.java, ResultSetExtractor { it.getLong(1) })
-            put(Int::class.java, ResultSetExtractor { it.getInt(1) })
-            put(java.lang.Integer::class.java, ResultSetExtractor { it.getInt(1) })
-            put(Short::class.java, ResultSetExtractor { it.getShort(1) })
-            put(java.lang.Short::class.java, ResultSetExtractor { it.getShort(1) })
-            put(Byte::class.java, ResultSetExtractor { it.getByte(1) })
-            put(java.lang.Byte::class.java, ResultSetExtractor { it.getByte(1) })
-            put(Float::class.java, ResultSetExtractor { it.getFloat(1) })
-            put(java.lang.Float::class.java, ResultSetExtractor { it.getFloat(1) })
-            put(Double::class.java, ResultSetExtractor { it.getDouble(1) })
-            put(java.lang.Double::class.java, ResultSetExtractor { it.getDouble(1) })
+            put(Boolean::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getBoolean(1)
+            })
+            put(java.lang.Boolean::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getBoolean(1)
+            })
+            put(Long::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getLong(1)
+            })
+            put(java.lang.Long::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getLong(1)
+            })
+            put(Int::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getInt(1)
+            })
+            put(java.lang.Integer::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getInt(1)
+            })
+            put(Short::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getShort(1)
+            })
+            put(java.lang.Short::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getShort(1)
+            })
+            put(Byte::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getByte(1)
+            })
+            put(java.lang.Byte::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getByte(1)
+            })
+            put(Float::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getFloat(1)
+            })
+            put(java.lang.Float::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getFloat(1)
+            })
+            put(Double::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getDouble(1)
+            })
+            put(java.lang.Double::class.java, ResultSetExtractor {
+                if (it.getObject(1) == null) null else it.getDouble(1)
+            })
 
             put(String::class.java, ResultSetExtractor { it.getString(1) })
             put(Number::class.java, ResultSetExtractor { it.getObject(1) as? Number })
@@ -180,38 +260,15 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
             put(Date::class.java, ResultSetExtractor { it.getDate(1) })
             put(Time::class.java, ResultSetExtractor { it.getTime(1) })
             put(Timestamp::class.java, ResultSetExtractor { it.getTimestamp(1) })
-            put(Blob::class.java, ResultSetExtractor { it.getBlob(1) })
-            put(RowId::class.java, ResultSetExtractor { it.getRowId(1) })
         }
 
-        private val ceCache = mapOf<Class<*>, ColumnExtractor<*>>(
-            Boolean::class.java to ColumnExtractor { rs, label -> rs.getBoolean(label) },
-            java.lang.Boolean::class.java to ColumnExtractor { rs, label -> rs.getBoolean(label) },
-            Long::class.java to ColumnExtractor { rs, label -> rs.getLong(label) },
-            java.lang.Long::class.java to ColumnExtractor { rs, label -> rs.getLong(label) },
-            Int::class.java to ColumnExtractor { rs, label -> rs.getInt(label) },
-            java.lang.Integer::class.java to ColumnExtractor { rs, label -> rs.getInt(label) },
-            Short::class.java to ColumnExtractor { rs, label -> rs.getShort(label) },
-            java.lang.Short::class.java to ColumnExtractor { rs, label -> rs.getShort(label) },
-            Byte::class.java to ColumnExtractor { rs, label -> rs.getByte(label) },
-            java.lang.Byte::class.java to ColumnExtractor { rs, label -> rs.getByte(label) },
-            Float::class.java to ColumnExtractor { rs, label -> rs.getFloat(label) },
-            java.lang.Float::class.java to ColumnExtractor { rs, label -> rs.getFloat(label) },
-            Double::class.java to ColumnExtractor { rs, label -> rs.getDouble(label) },
-            java.lang.Double::class.java to ColumnExtractor { rs, label -> rs.getDouble(label) },
-
-            String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
-            Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as? Number },
-            ByteArray::class.java to ColumnExtractor { rs, label -> rs.getBytes(label) },
-            Date::class.java to ColumnExtractor { rs, label -> rs.getDate(label) },
-            Time::class.java to ColumnExtractor { rs, label -> rs.getTime(label) },
-            Timestamp::class.java to ColumnExtractor { rs, label -> rs.getTimestamp(label) },
-            Blob::class.java to ColumnExtractor { rs, label -> rs.getBlob(label) },
-            RowId::class.java to ColumnExtractor { rs, label -> rs.getRowId(label) },
-        )
-
         fun <T> Class<T>.getResultSetExtractor(): ResultSetExtractor<T> {
-            return rseCache.getOrPut(this) { RowMapper(this) } as ResultSetExtractor<T>
+            return rseCache.getOrPut(this) {
+                if (this.isEnum) ResultSetExtractor { rs ->
+                    val value = rs.getString(1) ?: return@ResultSetExtractor null
+                    this.enumConstants.first { (it as Enum<*>).name == value }
+                } else RowMapper(this)
+            } as ResultSetExtractor<T>
         }
     }
 
@@ -239,16 +296,34 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
                     val field = fields[label]
                     when {
                         setter != null -> {
-                            setter.invoke(
-                                bean, ceCache[setter.parameterTypes.first()]?.extract(rs, label) ?: rs.getObject(label)
-                            )
+                            val type = setter.parameterTypes.first()
+                            if (type.isEnum) {
+                                val value = rs.getString(label)
+                                setter.invoke(
+                                    bean, if (value == null) null else
+                                        type.enumConstants.first { (it as Enum<*>).name == value }
+                                )
+                            } else {
+                                val extractor = COLUMN_EXTRACTORS[type]
+                                setter.invoke(
+                                    bean, if (extractor != null) extractor.extract(rs, label) else rs.getObject(label)
+                                )
+                            }
                         }
 
                         field != null -> {
+                            val type = field.type
                             field.isAccessible = true
-                            field.set(
-                                bean, ceCache[field.type]?.extract(rs, label) ?: rs.getObject(label)
-                            )
+                            if (type.isEnum) {
+                                val value = rs.getString(label)
+                                field.set(bean, if (value == null) null else
+                                    type.enumConstants.first { (it as Enum<*>).name == value })
+                            } else {
+                                val extractor = COLUMN_EXTRACTORS[type]
+                                field.set(
+                                    bean, if (extractor != null) extractor.extract(rs, label) else rs.getObject(label)
+                                )
+                            }
                         }
 
                         else -> throw IllegalArgumentException("cannot find setter or field on ${clazz.name} for label $label")
