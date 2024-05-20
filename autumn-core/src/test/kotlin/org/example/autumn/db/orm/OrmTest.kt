@@ -10,6 +10,9 @@ import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
+import java.sql.Date
+import java.sql.Time
+import java.sql.Timestamp
 import kotlin.io.path.Path
 import kotlin.test.*
 
@@ -56,6 +59,12 @@ data class TestEntity(
     var nullableBoolean: Boolean?,
     @Column
     var blob: ByteArray?,
+    @Column
+    var timestamp: Timestamp?,
+    @Column
+    var time: Time?,
+    @Column
+    var date: Date?,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -83,6 +92,9 @@ data class TestEntity(
             if (other.blob == null) return false
             if (!blob.contentEquals(other.blob)) return false
         } else if (other.blob != null) return false
+        if (timestamp != other.timestamp) return false
+        if (time != other.time) return false
+        if (date != other.date) return false
 
         return true
     }
@@ -105,6 +117,9 @@ data class TestEntity(
         result = 31 * result + boolean.hashCode()
         result = 31 * result + (nullableBoolean?.hashCode() ?: 0)
         result = 31 * result + (blob?.contentHashCode() ?: 0)
+        result = 31 * result + (timestamp?.hashCode() ?: 0)
+        result = 31 * result + (time?.hashCode() ?: 0)
+        result = 31 * result + (date?.hashCode() ?: 0)
         return result
     }
 }
@@ -121,7 +136,8 @@ class OrmTest {
             "CREATE TABLE test_entities (id INTEGER PRIMARY KEY AUTOINCREMENT, string TEXT NOT NULL, nullableString TEXT, enum TEXT NOT NULL, nullableEnum TEXT," +
                     "long INTEGER NOT NULL, nullableLong INTEGER, int INTEGER NOT NULL, nullableInt INTEGER, " +
                     "short INTEGER NOT NULL, nullableShort INTEGER, double REAL NOT NULL, nullableDouble REAL, " +
-                    "float REAL NOT NULL, nullableFloat REAL, boolean BOOLEAN NOT NULL, nullableBoolean BOOLEAN, blob BLOB);"
+                    "float REAL NOT NULL, nullableFloat REAL, boolean BOOLEAN NOT NULL, nullableBoolean BOOLEAN, blob BLOB, " +
+                    "timestamp TIMESTAMP, time TIMESTAMP, date DATE);"
     }
 
     private val config = Config(
@@ -152,32 +168,40 @@ class OrmTest {
             val e1 = TestEntity(
                 -1, "e1", "e1", TestEnum.ENUM1, TestEnum.ENUM2, 1L, 1,
                 1, 1, 1, 1, 1.0, 1.0,
-                1.0f, 1.0f, true, false, "e1".toByteArray()
+                1.0f, 1.0f, true, false, "e1".toByteArray(), Timestamp(1),
+                Time(1), Date(1)
             )
             naiveOrm.insert(e1)
-
             assertNotEquals(-1, e1.id)
-            val e11 = naiveOrm.selectById<TestEntity>(e1.id)
+            val e11 = naiveOrm.selectById<TestEntity>(e1.id)!!
             val enum =
                 naiveOrm.jdbcTemplate.queryRequired<TestEnum>("select enum from test_entities where id = ?", e1.id)
             val e111 =
                 naiveOrm.jdbcTemplate.queryRequired<TestEntity>("select * from test_entities where id = ?", e1.id)
             assertEquals(e1, e11)
+            assertEquals(Timestamp(1), e11.timestamp)
+            assertEquals(Time(1), e11.time)
+            assertEquals(Date(1), e11.date)
             assertEquals(TestEnum.ENUM1, enum)
             assertEquals(e1, e111)
 
             val e2 = TestEntity(
                 -1, "e2", null, TestEnum.ENUM1, null, 2L, null,
                 2, null, 2, null, 2.0, null,
-                2.0f, null, true, null, null
+                2.0f, null, true, null, null, null, null, null
             )
             naiveOrm.insert(e2)
             assertNotEquals(-1, e2.id)
-            val e22 = naiveOrm.selectById<TestEntity>(e2.id)
-            val nullableEnum = naiveOrm.jdbcTemplate.query<TestEnum>("select nullableEnum from test_entities where id = ?", e2.id)
+            val e22 = naiveOrm.selectById<TestEntity>(e2.id)!!
+            val nullableEnum =
+                naiveOrm.jdbcTemplate.query<TestEnum>("select nullableEnum from test_entities where id = ?", e2.id)
             val e222 = naiveOrm.jdbcTemplate.query<TestEntity>("select * from test_entities where id = ?", e2.id)
             assertEquals(e2, e22)
+            assertNull(e22.timestamp)
+            assertNull(e22.time)
+            assertNull(e22.date)
             assertNull(nullableEnum)
+            assertNull(e22.timestamp)
             assertEquals(e2, e222)
         }
     }
