@@ -7,8 +7,6 @@ import java.nio.charset.Charset
 import java.util.*
 
 object HttpUtils {
-    private val QUERY_SPLIT = Regex("&")
-
     fun String.escapeHtml(): String {
         return this.replace("&", "&amp;")
             .replace("<", "&lt;")
@@ -24,8 +22,10 @@ object HttpUtils {
             val name = if (n < 0) lang else lang.substring(0, n)
             val m = name.indexOf('-')
             if (m < 0) {
+                if (name.isBlank()) continue
                 ret.add(Locale.of(name))
             } else {
+                if (name.substring(0, m).isBlank()) continue
                 ret.add(Locale.of(name.substring(0, m), name.substring(m + 1)))
             }
         }
@@ -34,32 +34,32 @@ object HttpUtils {
 
     fun parseQuery(query: String, charset: Charset = Charsets.UTF_8): Map<String, MutableList<String>> {
         if (query.isEmpty()) return emptyMap()
+        val decodedQuery = URLDecoder.decode(query.trim(), charset)
         val ret = mutableMapOf<String, MutableList<String>>()
-        for (q in query.split(QUERY_SPLIT)) {
+        for (q in decodedQuery.split('&')) {
             val n = q.indexOf('=')
             if (n >= 1) {
                 val key = q.substring(0, n)
-                val value = q.substring(n + 1)
-                var exist = ret[key]
-                if (exist == null) {
-                    exist = ArrayList(4)
-                    ret[key] = exist
-                }
-                exist.add(URLDecoder.decode(value, charset))
+                val values = q.substring(n + 1).split(",")
+                val exist = ret.getOrPut(key) { ArrayList(4) }
+                exist.addAll(values)
             }
         }
         return ret
     }
 
     fun parseCookies(cookieValue: String?): Array<Cookie>? {
-        if (cookieValue.isNullOrBlank()) return null
-        val cookies = cookieValue.trim().trim(';').split(";")
-        return cookies.map {
-            val cookie = it.trim()
+        val trimmed = cookieValue?.trim()?.trim(';')
+        if (trimmed.isNullOrBlank()) return null
+        val ret = mutableListOf<Cookie>()
+        for (c in trimmed.split(";")) {
+            val cookie = c.trim()
             val pos = cookie.indexOf('=')
             val name = if (pos >= 0) cookie.substring(0, pos) else cookie
+            if (name.isEmpty()) continue
             val value = if (pos >= 0) cookie.substring(pos + 1) else ""
-            Cookie(name, value)
-        }.toTypedArray()
+            ret.add(Cookie(name, value))
+        }
+        return if (ret.isEmpty()) null else ret.toTypedArray()
     }
 }

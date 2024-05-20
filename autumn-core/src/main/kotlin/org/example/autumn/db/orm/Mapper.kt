@@ -2,6 +2,7 @@ package org.example.autumn.db.orm
 
 import jakarta.persistence.*
 import org.example.autumn.db.COLUMN_EXTRACTORS
+import org.example.autumn.db.ResultSetExtractor
 import java.lang.reflect.Field
 import java.math.BigDecimal
 import java.sql.ResultSet
@@ -134,7 +135,7 @@ class Mapper<T>(private val entityClass: Class<T>) {
         }.toString()
     }
 
-    val resultSetExtractor = { rs: ResultSet ->
+    val rse = ResultSetExtractor { rs: ResultSet ->
         rs.use {
             val colNames = properties.indices.map { rs.metaData.getColumnLabel(it + 1) }
             buildList(rs.metaData.columnCount) {

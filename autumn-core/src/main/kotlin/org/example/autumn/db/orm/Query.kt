@@ -47,7 +47,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>)
         }
         val querySql = sql()
         val start = System.currentTimeMillis()
-        return naiveOrm.jdbcTemplate.query(querySql, mapper.resultSetExtractor, *queryParams.toTypedArray())!!.also {
+        return naiveOrm.jdbcTemplate.query(querySql, mapper.rse, *queryParams.toTypedArray())!!.also {
             logger.trace(
                 "querySql: {}, queryParams: {}, time: {}ms", querySql, queryParams, System.currentTimeMillis() - start
             )
