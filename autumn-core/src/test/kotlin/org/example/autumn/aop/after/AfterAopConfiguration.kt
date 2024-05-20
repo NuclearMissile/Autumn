@@ -1,8 +1,8 @@
 package org.example.autumn.aop.after
 
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.AfterInvocationHandlerAdapter
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
+import org.example.autumn.aop.InvocationHandlerAdapter
 import java.lang.reflect.Method
 
 @Configuration
@@ -27,7 +27,7 @@ class GreetingBean {
 }
 
 @Component
-class PoliteInvocationHandler : AfterInvocationHandlerAdapter() {
+class PoliteInvocationHandler : InvocationHandlerAdapter {
     override fun after(proxy: Any, returnValue: Any, method: Method, args: Array<Any?>?): Any {
         if (returnValue is String) {
             if (returnValue.endsWith(".")) {

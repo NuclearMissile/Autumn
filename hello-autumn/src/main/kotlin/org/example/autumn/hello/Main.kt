@@ -8,7 +8,7 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.BeforeInvocationHandlerAdapter
+import org.example.autumn.aop.InvocationHandlerAdapter
 import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
@@ -40,7 +40,7 @@ class HelloContextLoadListener : ContextLoadListener()
 //class HelloConfiguration
 
 @Component
-class BeforeLogInvocationHandler : BeforeInvocationHandlerAdapter() {
+class BeforeLogInvocationHandler : InvocationHandlerAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(proxy: Any, method: Method, args: Array<Any?>?) {

@@ -5,7 +5,10 @@ import org.example.autumn.db.COLUMN_EXTRACTORS
 import org.example.autumn.db.ResultSetExtractor
 import java.lang.reflect.Field
 import java.math.BigDecimal
+import java.sql.Date
 import java.sql.ResultSet
+import java.sql.Time
+import java.sql.Timestamp
 
 /**
  * Represent an entity's field with @Column annotation.
@@ -94,6 +97,9 @@ class EntityProperty(val field: Field) {
             java.lang.Double::class.java to "DOUBLE",
             BigDecimal::class.java to "DECIMAL($1,$2)",
             ByteArray::class.java to "BLOB",
+            Timestamp::class.java to "TIMESTAMP",
+            Time::class.java to "TIMESTAMP",
+            Date::class.java to "DATE",
         )
     }
 }
