@@ -6,7 +6,7 @@ import org.example.autumn.annotation.Subscribe
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
 import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 import java.util.concurrent.Executors
 
 @Configuration
@@ -23,8 +23,11 @@ class EventBusConfiguration {
 }
 
 class EventSubscribeBeanPostProcessor : BeanPostProcessor {
+    private val eventBus by lazy {
+        ApplicationContextHolder.requiredApplicationContext.getBean(EventBus::class.java)
+    }
+
     override fun afterInitialization(bean: Any, beanName: String): Any {
-        val eventBus = ApplicationContextHolder.requiredApplicationContext.getBean(EventBus::class.java)
         for (method in bean.javaClass.methods) {
             if (method.getAnnotation(Subscribe::class.java) != null) {
                 eventBus.register(bean)
@@ -40,7 +43,7 @@ enum class EventMode { ASYNC, SYNC }
 interface Event
 
 class EventBus internal constructor() : AutoCloseable {
-    private val subMap = ConcurrentHashMap<Any, ArrayList<Method>>()
+    private val subMap = Collections.synchronizedMap(LinkedHashMap<Any, List<Method>>())
     private val executor = Executors.newCachedThreadPool()
 
     fun isRegistered(subscriber: Any): Boolean {
@@ -48,14 +51,14 @@ class EventBus internal constructor() : AutoCloseable {
     }
 
     fun register(subscriber: Any) {
-        val methods = ArrayList<Method>()
+        val methods = mutableListOf<Method>()
         for (method in subscriber.javaClass.methods) {
             if (method.getAnnotation(Subscribe::class.java) != null) {
                 methods.add(method)
             }
         }
         if (methods.isNotEmpty()) {
-            subMap[subscriber] = methods
+            subMap[subscriber] = methods.sortedBy { it.name }
         }
     }
 

@@ -39,6 +39,7 @@ class HttpUtilsTest {
         assertEquals("{}", parseQuery("&").toString())
         assertEquals("{}", parseQuery("=").toString())
         assertEquals("{}", parseQuery("&=").toString())
+        assertEquals("{}", parseQuery("&=,").toString())
     }
 
     @Test
@@ -50,6 +51,7 @@ class HttpUtilsTest {
         assertNull(parseCookies(""))
         assertNull(parseCookies(";"))
         assertNull(parseCookies("="))
+        assertNull(parseCookies(";="))
         assertEquals("a:", parseCookies("a")!!.joinToString { "${it.name}:${it.value}" })
     }
 }

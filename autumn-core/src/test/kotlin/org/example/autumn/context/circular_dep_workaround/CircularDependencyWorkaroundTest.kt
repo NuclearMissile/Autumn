@@ -16,6 +16,7 @@ class A(@Autowired private val b: B)
 
 @Component
 class B {
+    @Autowired
     private lateinit var a: A
 }
 

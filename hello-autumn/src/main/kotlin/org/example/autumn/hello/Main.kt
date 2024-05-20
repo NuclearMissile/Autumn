@@ -98,13 +98,13 @@ class HelloController {
 }
 
 @Controller
-class IndexController(
-    @Autowired private val userService: UserService,
-    @Autowired private val eventBus: EventBus,
-) {
+class IndexController @Autowired constructor(private val userService: UserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
+
+    @Autowired
+    lateinit var eventBus: EventBus
 
     @PostConstruct
     fun init() {
@@ -134,7 +134,7 @@ class IndexController(
         return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
         else
-            ModelAndView("/register.ftl", mapOf("error" to "$email already registered"))
+            ModelAndView("/register.ftl", mapOf("error" to "email is already registered"))
     }
 
     @Get("/login")

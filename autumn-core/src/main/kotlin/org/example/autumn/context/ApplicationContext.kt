@@ -23,7 +23,8 @@ class AnnotationConfigApplicationContext(
     configClass: Class<*>, private val config: PropertyResolver,
 ) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val infos = mutableMapOf<String, BeanMetaInfo>()
+    private val infoMap = mutableMapOf<String, BeanMetaInfo>()
+    private val sortedInfos: List<BeanMetaInfo>
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
@@ -31,15 +32,18 @@ class AnnotationConfigApplicationContext(
 
     init {
         ApplicationContextHolder.applicationContext = this
-        infos += createBeanMetaInfos(managedClassNames)
-        infos.values.filter { it.isConfiguration }.sorted().forEach(::createEarlySingleton)
-        postProcessors += infos.values.filter { it.isBeanPostProcessor }.sorted().map {
+        infoMap += createBeanMetaInfos(managedClassNames)
+        sortedInfos = infoMap.values.sorted()
+        // init @Configuration beans
+        sortedInfos.filter { it.isConfiguration }.forEach(::createEarlySingleton)
+        // init BeanPostProcessor beans
+        postProcessors += sortedInfos.filter { it.isBeanPostProcessor }.map {
             createEarlySingleton(it) as BeanPostProcessor
         }
-        // 创建其他普通Bean:
-        infos.values.sorted().forEach { it.instance ?: createEarlySingleton(it) }
-        // 通过字段和set方法注入依赖:
-        infos.values.forEach {
+        // init naive beans
+        sortedInfos.forEach { it.instance ?: createEarlySingleton(it) }
+        // inject depends via field or setter
+        sortedInfos.forEach {
             try {
                 injectProperties(it, it.beanClass, getOriginalInstance(it))
             } catch (e: ReflectiveOperationException) {
@@ -47,7 +51,7 @@ class AnnotationConfigApplicationContext(
             }
         }
         // call init method
-        infos.values.forEach { info ->
+        sortedInfos.forEach { info ->
             invokeMethod(getOriginalInstance(info), info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
                 val processed = postProcessor.afterInitialization(info.requiredInstance, info.beanName)
@@ -61,7 +65,7 @@ class AnnotationConfigApplicationContext(
             }
         }
         if (logger.isDebugEnabled) {
-            infos.values.sorted().forEach { logger.debug("bean initialized: $it") }
+            sortedInfos.forEach { logger.debug("bean initialized: $it") }
         }
     }
 
@@ -120,7 +124,7 @@ class AnnotationConfigApplicationContext(
             if (infos.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
             }
-            logger.atDebug().log("define bean: {}", info)
+            logger.atDebug().log("define bean via @Component: {}", info)
 
             // handle factory method
             ClassUtils.findAnnotation(clazz, Configuration::class.java) ?: continue
@@ -143,16 +147,6 @@ class AnnotationConfigApplicationContext(
 
     /**
      * Scan factory method that annotated with @Bean:
-     *
-     * <code>
-     * &#64;Configuration
-     * public class Hello {
-     *     @Bean
-     *     ZoneId createZone() {
-     *         return ZoneId.of("Z");
-     *     }
-     * }
-     * </code>
      */
     private fun scanFactoryMethods(
         factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>,
@@ -178,7 +172,7 @@ class AnnotationConfigApplicationContext(
             if (infos.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
             }
-            logger.atDebug().log("define bean: {}", info)
+            logger.atDebug().log("define bean via factory method: {}", info)
         }
     }
 
@@ -253,7 +247,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -273,7 +267,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                        "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }
@@ -295,7 +289,7 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun findBeanMetaInfos(type: Class<*>): List<BeanMetaInfo> {
-        return infos.values.filter { type.isAssignableFrom(it.beanClass) }.sorted()
+        return sortedInfos.filter { type.isAssignableFrom(it.beanClass) }
     }
 
     /**
@@ -317,14 +311,14 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun findBeanMetaInfo(name: String): BeanMetaInfo? {
-        return infos[name]
+        return infoMap[name]
     }
 
     /**
      * 根据Name和Type查找BeanDefinition，如果Name不存在，返回null，如果Name存在，但Type不匹配，抛出异常。
      */
     override fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo? {
-        val info = infos[name] ?: return null
+        val info = infoMap[name] ?: return null
         if (!requiredType.isAssignableFrom(info.beanClass)) {
             throw BeanTypeException(
                 "Autowire required type '$requiredType' but bean '$name' has actual type '${info.beanClass}'."
@@ -342,7 +336,7 @@ class AnnotationConfigApplicationContext(
         if (!creatingBeanNames.add(info.beanName)) {
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
         }
-        val createFn = (if (info.factoryName == null) info.beanCtor else info.factoryMethod)!!
+        val createFn = (info.beanCtor ?: info.factoryMethod)!!
         val createFnParams = createFn.parameters
         val ctorAutowiredAnno = if (createFn is Constructor<*>) createFn.getAnnotation(Autowired::class.java) else null
         val args = arrayOfNulls<Any>(createFnParams.size)
@@ -413,12 +407,11 @@ class AnnotationConfigApplicationContext(
 
         // 创建Bean实例:
         info.instance = try {
-            if (info.factoryName == null)
-            // 用构造方法创建:
-                info.beanCtor!!.newInstance(*args)
-            else
-            // 用@Bean方法创建:
-                info.factoryMethod!!.invoke(getBean(info.factoryName!!), *args)
+            when {
+                info.beanCtor != null -> info.beanCtor!!.newInstance(*args)
+                info.factoryMethod != null -> info.factoryMethod!!.invoke(getBean(info.factoryName!!), *args)
+                else -> BeanDefinitionException("cannot instantiate $info")
+            }
         } catch (e: Exception) {
             throw BeanCreationException(
                 "Exception when create bean '${info.beanName}': ${info.beanClass.name}", e
@@ -440,7 +433,7 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun contains(name: String): Boolean {
-        return infos.contains(name)
+        return infoMap.contains(name)
     }
 
     override fun <T> getBean(name: String): T {
@@ -480,10 +473,10 @@ class AnnotationConfigApplicationContext(
 
     override fun close() {
         logger.info("Closing {}...", this.javaClass.name)
-        infos.values.forEach {
+        sortedInfos.forEach {
             invokeMethod(getOriginalInstance(it), it.destroyMethod, it.destroyMethodName)
         }
-        infos.clear()
+        infoMap.clear()
         logger.info("{} closed.", this.javaClass.name)
         ApplicationContextHolder.applicationContext = null
     }

@@ -9,18 +9,6 @@ import java.lang.reflect.Method
 class BeanMetaInfo private constructor(
     val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean
 ) : Comparable<BeanMetaInfo> {
-    var instance: Any? = null
-        set(value) {
-            requireNotNull(value) { "Bean instance is null." }
-            require(beanClass.isAssignableFrom(value.javaClass)) {
-                throw BeanCreationException("Instance $value of Bean ${value.javaClass.name} is not the expected type: ${beanClass.name}")
-            }
-            field = value
-        }
-    val requiredInstance: Any
-        get() = instance ?: throw BeanCreationException(
-            "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
-        )
     var beanCtor: Constructor<*>? = null
         private set
     var factoryName: String? = null
@@ -35,10 +23,22 @@ class BeanMetaInfo private constructor(
         private set
     var destroyMethod: Method? = null
         private set
-    val isConfiguration: Boolean
-        get() = findAnnotation(beanClass, Configuration::class.java) != null
-    val isBeanPostProcessor: Boolean
-        get() = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
+
+    var instance: Any? = null
+        set(value) {
+            requireNotNull(value) { "Bean instance is null." }
+            require(beanClass.isAssignableFrom(value.javaClass)) {
+                throw BeanCreationException("Instance $value of Bean ${value.javaClass.name} is not the expected type: ${beanClass.name}")
+            }
+            field = value
+        }
+    val requiredInstance: Any
+        get() = instance ?: throw BeanCreationException(
+            "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
+        )
+
+    val isConfiguration: Boolean = findAnnotation(beanClass, Configuration::class.java) != null
+    val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, beanCtor: Constructor<*>,
@@ -46,7 +46,10 @@ class BeanMetaInfo private constructor(
     ) : this(beanName, beanClass, order, isPrimary) {
         beanCtor.isAccessible = true
         this.beanCtor = beanCtor
-        setInitAndDestroyMethods(initMethodName, destroyMethodName, initMethod, destroyMethod)
+        this.initMethod = initMethod
+        this.destroyMethod = destroyMethod
+        this.initMethod?.isAccessible = true
+        this.destroyMethod?.isAccessible = true
     }
 
     constructor(
@@ -54,26 +57,11 @@ class BeanMetaInfo private constructor(
         factoryMethod: Method, initMethodName: String?, destroyMethodName: String?
     ) : this(beanName, beanClass, order, isPrimary) {
         this.factoryName = factoryName
-        factoryMethod.isAccessible = true
         this.factoryMethod = factoryMethod
-        setInitAndDestroyMethods(initMethodName, destroyMethodName, initMethod, destroyMethod)
-    }
-
-    private fun setInitAndDestroyMethods(
-        initMethodName: String?, destroyMethodName: String?, initMethod: Method?, destroyMethod: Method?
-    ) {
+        this.factoryMethod?.isAccessible = true
         this.initMethodName = initMethodName
         this.destroyMethodName = destroyMethodName
-        if (initMethod != null) {
-            initMethod.isAccessible = true
-            this.initMethod = initMethod
-        }
-        if (destroyMethod != null) {
-            destroyMethod.isAccessible = true
-            this.destroyMethod = destroyMethod
-        }
     }
-
 
     override fun compareTo(other: BeanMetaInfo): Int {
         val orderCmp = order.compareTo(other.order)
