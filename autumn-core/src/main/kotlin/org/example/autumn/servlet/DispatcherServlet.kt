@@ -118,8 +118,8 @@ class DispatcherServlet : HttpServlet() {
         if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "application/json" }
         if (dispatcher.isResponseBody) {
             when (ret) {
-                is String -> resp.writer.also { it.write(ret) }.flush()
-                is ByteArray -> resp.outputStream.also { it.write(ret) }.flush()
+                is String -> resp.writer.apply { write(ret) }.flush()
+                is ByteArray -> resp.outputStream.apply { write(ret) }.flush()
                 else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
             }
         } else if (!dispatcher.isVoid) {
@@ -133,7 +133,7 @@ class DispatcherServlet : HttpServlet() {
         when (ret) {
             is String -> {
                 if (dispatcher.isResponseBody) {
-                    resp.writer.also { it.write(ret) }.flush()
+                    resp.writer.apply { write(ret) }.flush()
                 } else if (ret.startsWith("redirect:")) {
                     resp.sendRedirect(req.contextPath + ret.substring(9))
                 } else {

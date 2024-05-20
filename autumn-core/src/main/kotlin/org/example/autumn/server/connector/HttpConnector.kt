@@ -47,9 +47,13 @@ class HttpConnector(
                 // fall-over error handling
                 logger.error("unhandled exception caught:", e)
                 try {
-                    resp.sendError(500)
+                    resp.status = 500
+                    resp.writer.apply {
+                        write("<h1>500 Internal Error</h1>")
+                        flush()
+                    }
                 } catch (e: IllegalStateException) {
-                    logger.error("the response has already been committed.")
+                    logger.error("response has already been committed.")
                 }
             } finally {
                 Thread.currentThread().contextClassLoader = null

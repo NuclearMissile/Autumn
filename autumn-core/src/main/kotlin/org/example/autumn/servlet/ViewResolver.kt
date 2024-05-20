@@ -65,13 +65,13 @@ class FreeMarkerViewResolver(
         }
         resp.status = statusCode
         resp.contentType = "text/html"
-        resp.writer.also {
+        resp.writer.apply {
             try {
-                template.process(model, it)
+                template.process(model, this)
+                flush()
             } catch (e: TemplateException) {
                 throw ServerErrorException("Exception thrown while rendering template.", null, e)
             }
-            it.flush()
         }
     }
 
@@ -86,13 +86,13 @@ class FreeMarkerViewResolver(
         }
         resp.status = statusCode
         resp.contentType = "text/html"
-        resp.writer.also {
+        resp.writer.apply {
             try {
-                template.process(model, it)
+                template.process(model, this)
+                flush()
             } catch (e: TemplateException) {
                 throw ServerErrorException("Exception thrown while rendering template.", null, e)
             }
-            it.flush()
         }
     }
 }

@@ -197,6 +197,7 @@ class ServletContextImpl(
             servletMappings.firstOrNull { it.matches(path) }?.servlet ?: defaultServlet else defaultServlet
         // 404 Not Found:
         if (servlet == null) {
+            resp.status = 400
             resp.writer.apply {
                 write("<h1>404 Not Found</h1><p>No mapping for URL: ${path.escapeHtml()}</p>")
                 flush()
