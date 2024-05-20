@@ -71,7 +71,7 @@ class LoginEventListener {
         logger.info("sync event: [Login] ${e.user}")
     }
 
-    @Subscribe
+    @Subscribe(EventMode.ASYNC)
     fun onLoginEventAsync(e: LoginEvent) {
         logger.info("async event: [Login] ${e.user}")
     }
@@ -130,6 +130,7 @@ class IndexController(
     fun register(
         @RequestParam email: String, @RequestParam name: String, @RequestParam password: String,
     ): ModelAndView {
+        if (name.isBlank()) return ModelAndView("/register.ftl", mapOf("error" to "name is blank"))
         return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
         else
