@@ -159,7 +159,6 @@ class IndexController(
     }
 }
 
-@Around("beforeLogInvocationHandler")
 @RestController("/api")
 class RestApiController {
     @Get("/hello/{name}")

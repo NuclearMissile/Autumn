@@ -27,8 +27,8 @@ class AroundProxyTest {
 
             // test injected proxy:
             val other = ctx.getBean(OtherBean::class.java)
-            assertSame(proxy, other.origin)
-            assertEquals("Hello, Bob!", other.origin.hello())
+            assertSame(proxy, other.proxied)
+            assertEquals("Hello, Bob!", other.proxied.hello())
         }
     }
 }

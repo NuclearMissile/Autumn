@@ -48,5 +48,5 @@ class OriginBean {
 }
 
 @Component
-class OtherBean @Autowired constructor(val origin: OriginBean)
+class OtherBean @Autowired constructor(val proxied: OriginBean)
 

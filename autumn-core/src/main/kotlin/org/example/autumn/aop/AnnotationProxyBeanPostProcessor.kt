@@ -32,7 +32,9 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         @OptIn(ExperimentalStdlibApi::class)
         fun <T> createProxy(bean: T, handler: InvocationHandler): T {
             val targetClass = bean!!.javaClass
-            logger.atDebug().log("create proxy for bean {} @{}", targetClass.name, bean.hashCode().toHexString())
+            if (logger.isDebugEnabled) {
+                logger.debug("create proxy for bean {} @{}", targetClass.name, bean.hashCode().toHexString())
+            }
             val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
                 .method(ElementMatchers.isPublic())
                 .intercept(InvocationHandlerAdapter.of { _, method, args ->
