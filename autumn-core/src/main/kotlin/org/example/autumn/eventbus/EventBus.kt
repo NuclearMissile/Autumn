@@ -2,6 +2,7 @@ package org.example.autumn.eventbus
 
 import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
+import org.example.autumn.annotation.Order
 import org.example.autumn.annotation.Subscribe
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
@@ -58,7 +59,12 @@ class EventBus internal constructor() : AutoCloseable {
             }
         }
         if (methods.isNotEmpty()) {
-            subMap[subscriber] = methods.sortedBy { it.name }
+            subMap[subscriber] = methods.sortedWith { o1, o2 ->
+                val order1 = o1.getAnnotation(Order::class.java)?.value
+                val order2 = o2.getAnnotation(Order::class.java)?.value
+                if (order1 != null && order2 != null)
+                    order1.compareTo(order2) else o1.name.compareTo(o2.name)
+            }
         }
     }
 

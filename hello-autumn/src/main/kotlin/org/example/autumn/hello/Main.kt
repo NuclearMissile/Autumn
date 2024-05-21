@@ -55,9 +55,10 @@ class LogFilter : FilterRegistrationBean() {
     override val filter = object : Filter {
         private val logger = LoggerFactory.getLogger(javaClass)
         override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
+            val startTime = System.currentTimeMillis()
             val httpReq = req as HttpServletRequest
-            logger.info("{}: {}", httpReq.method, httpReq.requestURI)
             chain.doFilter(req, resp)
+            logger.info("{}: {} ${System.currentTimeMillis() - startTime}ms", httpReq.method, httpReq.requestURI)
         }
     }
 }

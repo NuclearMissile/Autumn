@@ -1,9 +1,6 @@
 package org.example.autumn.eventbus
 
-import org.example.autumn.annotation.Component
-import org.example.autumn.annotation.ComponentScan
-import org.example.autumn.annotation.Import
-import org.example.autumn.annotation.Subscribe
+import org.example.autumn.annotation.*
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
@@ -20,10 +17,13 @@ class EventBusTestConfiguration
 data class TestEventSync(val message: String) : Event
 data class TestEventAsync(val message: String) : Event
 data class TestEventUnregister(val message: String) : Event
+data class TestEventOrder(val message: String) : Event
 
 var testEventMessageSync = ""
 var testEventMessageAsync = ""
 var testEventMessageUnregister = ""
+var testEventMessageOrder1 = ""
+var testEventMessageOrder2 = ""
 
 @Component
 class TestEventSyncListener {
@@ -50,12 +50,51 @@ class TestEventUnregisterListener {
     }
 }
 
+@Component
+class TestEventOrderListener {
+    @Order(1)
+    @Subscribe
+    fun onTestEventOrder1(event: TestEventOrder) {
+        testEventMessageOrder1 += "1"
+    }
+
+    @Order(2)
+    @Subscribe
+    fun onTestEventOrder2(event: TestEventOrder) {
+        testEventMessageOrder1 += "2"
+    }
+
+    @Order(4)
+    @Subscribe
+    fun onTestEventOrder3(event: TestEventOrder) {
+        testEventMessageOrder2 += "3"
+    }
+
+    @Order(3)
+    @Subscribe
+    fun onTestEventOrder4(event: TestEventOrder) {
+        testEventMessageOrder2 += "4"
+    }
+}
+
 class EventBusTest {
     @BeforeEach
     fun setUp() {
         testEventMessageSync = ""
         testEventMessageAsync = ""
         testEventMessageUnregister = ""
+        testEventMessageOrder1 = ""
+        testEventMessageOrder2 = ""
+    }
+
+    @Test
+    fun testPostTestEventOrder() {
+        AnnotationConfigApplicationContext(EventBusTestConfiguration::class.java, Config(Properties())).use {
+            val eventBus = it.getBean(EventBus::class.java)
+            eventBus.post(TestEventOrder("test"))
+            assertEquals("12", testEventMessageOrder1)
+            assertEquals("43", testEventMessageOrder2)
+        }
     }
 
     @Test
