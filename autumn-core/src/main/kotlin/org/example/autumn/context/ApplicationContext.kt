@@ -3,10 +3,8 @@ package org.example.autumn.context
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.utils.ClassUtils
-import org.example.autumn.utils.ClassUtils.findAnnotationMethod
+import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
-import org.example.autumn.utils.ClassUtils.getNamedMethod
 import org.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
@@ -71,9 +69,9 @@ class AnnotationConfigApplicationContext(
     }
 
     private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
-        val scanAnno = ClassUtils.findAnnotation(configClass, ComponentScan::class.java)
-        val scanPackages = (if (scanAnno == null || scanAnno.value.isEmpty())
-            arrayOf(configClass.packageName) else scanAnno.value).toList()
+        val scanAnno = configClass.getAnnotation(ComponentScan::class.java)
+        val scanPackages = if (scanAnno == null || scanAnno.value.isEmpty())
+            listOf(configClass.packageName) else scanAnno.value.toList()
         logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
 
         val classNameSet = scanClassNames(scanPackages).also {
@@ -93,7 +91,26 @@ class AnnotationConfigApplicationContext(
     }
 
     private fun createBeanMetaInfos(classNames: Collection<String>): MutableMap<String, BeanMetaInfo> {
-        val infos = mutableMapOf<String, BeanMetaInfo>()
+        /**
+         * Get non-arg method by @PostConstruct or @PreDestroy. Not search in super class.
+         */
+        fun Class<*>.findLifecycleMethod(annoClass: Class<out Annotation>): Method? {
+            // try get declared method:
+            val ms = declaredMethods.filter { it.isAnnotationPresent(annoClass) }
+            require(ms.size <= 1) {
+                throw BeanDefinitionException(
+                    "Multiple methods with @${annoClass.simpleName} found in class: $name"
+                )
+            }
+            require(ms.isEmpty() || ms[0].parameterCount == 0) {
+                throw BeanDefinitionException(
+                    "Method '${ms[0].name}' with @${annoClass.simpleName} must not have argument: $name"
+                )
+            }
+            return ms.firstOrNull()
+        }
+
+        val infoMap = mutableMapOf<String, BeanMetaInfo>()
         for (className in classNames) {
             // 获取Class:
             val clazz = try {
@@ -106,7 +123,7 @@ class AnnotationConfigApplicationContext(
             }
 
             // 是否标注@Component?
-            ClassUtils.findAnnotation(clazz, Component::class.java) ?: continue
+            clazz.findAnnotation(Component::class.java) ?: continue
             logger.atDebug().log("found component: {}", clazz.name)
             val mod = clazz.modifiers
             if (Modifier.isAbstract(mod)) {
@@ -116,25 +133,25 @@ class AnnotationConfigApplicationContext(
                 throw BeanDefinitionException("@Component class ${clazz.name} must not be private.")
             }
 
-            val beanName = getBeanName(clazz)
+            val beanName = clazz.getBeanName()
             val info = BeanMetaInfo(
                 beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.beanCtor(),
-                findAnnotationMethod(clazz, PostConstruct::class.java),
-                findAnnotationMethod(clazz, PreDestroy::class.java)
+                clazz.findLifecycleMethod(PostConstruct::class.java),
+                clazz.findLifecycleMethod(PreDestroy::class.java)
             )
-            if (infos.put(info.beanName, info) != null) {
+            if (infoMap.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
             }
             logger.atDebug().log("define bean via @Component: {}", info)
 
             // handle factory method
-            ClassUtils.findAnnotation(clazz, Configuration::class.java) ?: continue
+            clazz.getAnnotation(Configuration::class.java) ?: continue
             if (BeanPostProcessor::class.java.isAssignableFrom(clazz)) {
                 throw BeanDefinitionException("@Configuration class '${clazz.name}' cannot be BeanPostProcessor.")
             }
-            scanFactoryMethods(beanName, clazz, infos)
+            scanFactoryMethods(beanName, clazz, infoMap)
         }
-        return infos
+        return infoMap
     }
 
     private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
@@ -167,9 +184,10 @@ class AnnotationConfigApplicationContext(
                 throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return primitive type")
             if (beanClass == Void.TYPE || beanClass == Void::class.java)
                 throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return void")
+            val beanName = method.getAnnotation(Bean::class.java)!!.value.ifEmpty { method.name }
             val info = BeanMetaInfo(
-                getBeanName(method), beanClass, method.getOrder(), method.isPrimary(),
-                factoryBeanName, method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
+                beanName, beanClass, method.getOrder(), method.isPrimary(), factoryBeanName,
+                method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
             )
             if (infos.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
@@ -249,7 +267,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -269,7 +287,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                        "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }
@@ -346,8 +364,8 @@ class AnnotationConfigApplicationContext(
         for (i in createFnParams.indices) {
             val param = createFnParams[i]
             val paramAnnos = createFn.parameterAnnotations[i].toList()
-            val paramValueAnno = ClassUtils.findAnnotation(paramAnnos, Value::class.java)
-            var paramAutowiredAnno = ClassUtils.findAnnotation(paramAnnos, Autowired::class.java)
+            val paramValueAnno = paramAnnos.firstOrNull { Value::class.java.isInstance(it) } as Value?
+            var paramAutowiredAnno = paramAnnos.firstOrNull { Autowired::class.java.isInstance(it) } as Autowired?
             if (ctorAutowiredAnno != null && paramValueAnno == null && paramAutowiredAnno == null) {
                 paramAutowiredAnno = Autowired()
             }
@@ -510,7 +528,11 @@ class AnnotationConfigApplicationContext(
                 throw BeanCreationException("Method $method invocation failed.", e)
             }
         } else if (methodName != null) {
-            val namedMethod = getNamedMethod(beanInstance.javaClass, methodName)
+            val namedMethod = try {
+                beanInstance.javaClass.getDeclaredMethod(methodName)
+            } catch (e: ReflectiveOperationException) {
+                throw BeanDefinitionException("Method '$methodName' not found in class: ${beanInstance.javaClass.name}")
+            }
             namedMethod.isAccessible = true
             try {
                 namedMethod.invoke(beanInstance)

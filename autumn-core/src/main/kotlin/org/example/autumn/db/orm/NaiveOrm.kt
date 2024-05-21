@@ -3,7 +3,6 @@ package org.example.autumn.db.orm
 import jakarta.persistence.Entity
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.db.JdbcTemplate
-import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
@@ -14,7 +13,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
     private val classMapping by lazy {
         ApplicationContextHolder.applicationContext!!.managedClassNames
             .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
-            .filter { findAnnotation(it, Entity::class.java) != null }
+            .filter { it.isAnnotationPresent(Entity::class.java) }
             .associateWith { Mapper(it) }
     }
 

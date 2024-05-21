@@ -14,7 +14,6 @@ import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
-import org.example.autumn.utils.ClassUtils.findAnnotation
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
@@ -329,12 +328,12 @@ class DispatcherServlet : HttpServlet() {
         init {
             val anno = listOf(
                 PathVariable::class.java, RequestParam::class.java, RequestBody::class.java, Header::class.java
-            ).mapNotNull { findAnnotation(annos, it) }
+            ).mapNotNull { annos.firstOrNull { a -> it.isInstance(a) } }
 
             // should only have 1 annotation:
             if (anno.count() > 1) {
                 throw ServletException(
-                    "Annotation @PathVariable, @RequestParam, @RequestBody, @Headers and @Header cannot be combined at method: $method"
+                    "(Duplicated annotation?) @PathVariable, @RequestParam, @RequestBody, @Headers and @Header cannot be combined: $method"
                 )
             }
 

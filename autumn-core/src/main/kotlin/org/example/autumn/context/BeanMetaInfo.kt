@@ -2,7 +2,6 @@ package org.example.autumn.context
 
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.exception.BeanCreationException
-import org.example.autumn.utils.ClassUtils.findAnnotation
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
@@ -37,7 +36,7 @@ class BeanMetaInfo private constructor(
             "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
         )
 
-    val isConfiguration: Boolean = findAnnotation(beanClass, Configuration::class.java) != null
+    val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
     val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 
     constructor(
