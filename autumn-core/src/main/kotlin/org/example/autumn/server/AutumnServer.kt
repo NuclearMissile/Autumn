@@ -40,6 +40,7 @@ class AutumnServer {
         // cli entry point
         @JvmStatic
         fun main(args: Array<String>) {
+            val startTime = System.currentTimeMillis()
             val options = Options().addOption(
                 Option.builder("w").longOpt("war").argName("file").hasArg()
                     .desc("specify war file.").required().build()
@@ -58,10 +59,46 @@ class AutumnServer {
                 HelpFormatter().printHelp("java -jar jarPath [options]", options)
                 exitProcess(1)
             }
-            startWar(war, customConfig)
+            startWar(war, customConfig, startTime)
         }
 
-        private fun startWar(war: String, customConfig: String?) {
+        private fun startWar(war: String, customConfig: String?, startTime: Long) {
+            fun extractWar(warPath: Path): Pair<Path, Path> {
+                if (Files.isDirectory(warPath)) {
+                    logger.info("war path is already a directory, no need to extract: {}", warPath)
+                    val classesPath = warPath.resolve("WEB-INF/classes")
+                    val libPath = warPath.resolve("WEB-INF/lib")
+                    Files.createDirectories(classesPath)
+                    Files.createDirectories(libPath)
+                    return Pair(classesPath, libPath)
+                }
+
+                val tmpPath = Files.createTempDirectory("Autumn_Server_")
+                Runtime.getRuntime().addShutdownHook(Thread {
+                    Files.walk(tmpPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete)
+                })
+
+                logger.info("extract {} to {}", warPath, tmpPath)
+                val warFile = JarFile(warPath.toFile())
+                warFile.stream().forEach { entry ->
+                    if (!entry.isDirectory) {
+                        val file = tmpPath.resolve(entry.name)
+                        val dir = file.parent
+                        if (!Files.isDirectory(dir)) {
+                            Files.createDirectories(dir)
+                        }
+                        warFile.getInputStream(entry).use { Files.copy(it, file) }
+                    }
+                }
+
+                // check WEB-INF/classes and WEB-INF/lib:
+                val classesPath = tmpPath.resolve("WEB-INF/classes")
+                val libPath = tmpPath.resolve("WEB-INF/lib")
+                Files.createDirectories(classesPath)
+                Files.createDirectories(libPath)
+                return Pair(classesPath, libPath)
+            }
+
             val warPath = Path.of(war).toAbsolutePath().normalize()
             require(warPath.isRegularFile() || warPath.isDirectory()) {
                 "warDir must be a file or a directory"
@@ -133,18 +170,17 @@ class AutumnServer {
             classLoader.walkClassesPath(handler)
             classLoader.walkLibPaths(handler)
 
-            start(webRoot, config, classLoader, classSet.toList(), false)
+            start(webRoot, config, classLoader, classSet.toList(), false, startTime)
         }
 
         // server entry point
         fun start(
-            webRoot: String, config: PropertyResolver, classLoader: ClassLoader,
-            annoClasses: List<Class<*>>, showBanner: Boolean = true,
+            webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>,
+            showBanner: Boolean = true, startTime: Long = System.currentTimeMillis(),
         ) {
             // show banner in embedded mode
             if (showBanner) logger.info(readStringFromClassPath("/banner.txt"))
             // start info:
-            val startTime = System.currentTimeMillis()
             val jvmVersion = Runtime.version().feature()
             val pid = ManagementFactory.getRuntimeMXBean().pid
             val user = System.getProperty("user.name")
@@ -165,8 +201,7 @@ class AutumnServer {
                 @Suppress("Since15")
                 Executors.newVirtualThreadPerTaskExecutor()
             } else ThreadPoolExecutor(
-                5, config.getRequired("server.thread-pool-size"), 10L,
-                TimeUnit.MILLISECONDS, LinkedBlockingQueue()
+                5, config.getRequired("server.thread-pool-size"), 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
 
             try {
@@ -176,7 +211,7 @@ class AutumnServer {
                     val endTime = System.currentTimeMillis()
                     val appTime = "%.3f".format((endTime - startTime) / 1000.0)
                     val jvmTime = "%.3f".format(ManagementFactory.getRuntimeMXBean().uptime / 1000.0)
-                    logger.info("started in {} s (process running for {} s)", appTime, jvmTime)
+                    logger.info("startup in {} s (process running for {} s)", appTime, jvmTime)
                     while (true) {
                         try {
                             Thread.sleep(1000)
@@ -188,42 +223,6 @@ class AutumnServer {
             } catch (e: Exception) {
                 logger.error(e.message, e)
             }
-        }
-
-        private fun extractWar(warPath: Path): Pair<Path, Path> {
-            if (Files.isDirectory(warPath)) {
-                logger.info("war is directy: {}", warPath)
-                val classesPath = warPath.resolve("WEB-INF/classes")
-                val libPath = warPath.resolve("WEB-INF/lib")
-                Files.createDirectories(classesPath)
-                Files.createDirectories(libPath)
-                return Pair(classesPath, libPath)
-            }
-
-            val tmpPath = Files.createTempDirectory("Autumn_Server_")
-            Runtime.getRuntime().addShutdownHook(Thread {
-                Files.walk(tmpPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete)
-            })
-
-            logger.info("extract {} to {}", warPath, tmpPath)
-            val war = JarFile(warPath.toFile())
-            war.stream().forEach { entry ->
-                if (!entry.isDirectory) {
-                    val file = tmpPath.resolve(entry.name)
-                    val dir = file.parent
-                    if (!Files.isDirectory(dir)) {
-                        Files.createDirectories(dir)
-                    }
-                    war.getInputStream(entry).use { Files.copy(it, file) }
-                }
-            }
-
-            // check WEB-INF/classes and WEB-INF/lib:
-            val classesPath = tmpPath.resolve("WEB-INF/classes")
-            val libPath = tmpPath.resolve("WEB-INF/lib")
-            Files.createDirectories(classesPath)
-            Files.createDirectories(libPath)
-            return Pair(classesPath, libPath)
         }
     }
 }
