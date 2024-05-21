@@ -104,7 +104,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
     }
 
     @Autowired
-    lateinit var eventBus: EventBus
+    private lateinit var eventBus: EventBus
 
     @PostConstruct
     fun init() {

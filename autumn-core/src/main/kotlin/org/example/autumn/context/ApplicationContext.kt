@@ -118,7 +118,7 @@ class AnnotationConfigApplicationContext(
 
             val beanName = getBeanName(clazz)
             val info = BeanMetaInfo(
-                beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.primaryCtor(),
+                beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.beanCtor(),
                 findAnnotationMethod(clazz, PostConstruct::class.java),
                 findAnnotationMethod(clazz, PreDestroy::class.java)
             )
@@ -137,14 +137,15 @@ class AnnotationConfigApplicationContext(
         return infos
     }
 
-    private fun Class<*>.getOrder() = this.getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
-    private fun Method.getOrder() = this.getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
-    private fun Class<*>.isPrimary() = this.isAnnotationPresent(Primary::class.java)
-    private fun Method.isPrimary() = this.isAnnotationPresent(Primary::class.java)
-    private fun Class<*>.primaryCtor() =
-        this.kotlin.primaryConstructor?.javaConstructor
-            ?: this.declaredConstructors.firstOrNull { it.parameterCount == 0 }
-            ?: throw BeanDefinitionException("No primary constructor found in class: ${this.name}.")
+    private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
+    private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
+    private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
+    private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
+    private fun Class<*>.beanCtor() =
+        declaredConstructors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) }
+            ?: kotlin.primaryConstructor?.javaConstructor
+            ?: declaredConstructors.firstOrNull { it.parameterCount == 0 }
+            ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
 
     /**
      * Scan factory method that annotated with @Bean:
