@@ -23,7 +23,8 @@ class AnnotationConfigApplicationContext(
     configClass: Class<*>, private val config: PropertyResolver,
 ) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val infoMap = mutableMapOf<String, BeanMetaInfo>()
+
+    private val infoMap: MutableMap<String, BeanMetaInfo>
     private val sortedInfos: List<BeanMetaInfo>
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
@@ -32,7 +33,7 @@ class AnnotationConfigApplicationContext(
 
     init {
         ApplicationContextHolder.applicationContext = this
-        infoMap += createBeanMetaInfos(managedClassNames)
+        infoMap = createBeanMetaInfos(managedClassNames)
         sortedInfos = infoMap.values.sorted()
         // init @Configuration beans
         sortedInfos.filter { it.isConfiguration }.forEach(::createEarlySingleton)
@@ -91,7 +92,7 @@ class AnnotationConfigApplicationContext(
         return classNameSet
     }
 
-    private fun createBeanMetaInfos(classNames: Collection<String>): Map<String, BeanMetaInfo> {
+    private fun createBeanMetaInfos(classNames: Collection<String>): MutableMap<String, BeanMetaInfo> {
         val infos = mutableMapOf<String, BeanMetaInfo>()
         for (className in classNames) {
             // 获取Class:
@@ -247,7 +248,7 @@ class AnnotationConfigApplicationContext(
                 if (required && depends == null) {
                     throw DependencyException(
                         "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
                 if (depends != null) {
@@ -267,7 +268,7 @@ class AnnotationConfigApplicationContext(
             else -> {
                 throw BeanCreationException(
                     "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                        "for bean '${info.beanName}': ${info.beanClass.name}"
                 )
             }
         }

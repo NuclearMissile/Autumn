@@ -18,8 +18,9 @@ annotation class PreDestroy
 @Target(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_SETTER,
     AnnotationTarget.VALUE_PARAMETER,
-    AnnotationTarget.CONSTRUCTOR
+    AnnotationTarget.CONSTRUCTOR,
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
@@ -92,7 +93,12 @@ annotation class Order(val value: Int)
 @MustBeDocumented
 annotation class Primary
 
-@Target(AnnotationTarget.FIELD, AnnotationTarget.FUNCTION, AnnotationTarget.VALUE_PARAMETER)
+@Target(
+    AnnotationTarget.FIELD,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_SETTER,
+    AnnotationTarget.VALUE_PARAMETER,
+)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Value(val value: String)
