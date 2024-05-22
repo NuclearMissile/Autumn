@@ -7,7 +7,7 @@ import org.example.autumn.annotation.Subscribe
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
 import java.lang.reflect.Method
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 @Configuration
@@ -44,7 +44,7 @@ enum class EventMode { ASYNC, SYNC }
 interface Event
 
 class EventBus internal constructor() : AutoCloseable {
-    private val subMap = Collections.synchronizedMap(LinkedHashMap<Any, List<Method>>())
+    private val subMap = ConcurrentHashMap<Any, List<Method>>()
     private val executor = Executors.newCachedThreadPool()
 
     fun isRegistered(subscriber: Any): Boolean {

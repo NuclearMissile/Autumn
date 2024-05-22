@@ -134,8 +134,7 @@ class AnnotationConfigApplicationContext(
             val beanName = clazz.getBeanName()
             val info = BeanMetaInfo(
                 beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.beanCtor(),
-                clazz.findLifecycleMethod(PostConstruct::class.java),
-                clazz.findLifecycleMethod(PreDestroy::class.java)
+                clazz.findLifecycleMethod(PostConstruct::class.java), clazz.findLifecycleMethod(PreDestroy::class.java)
             )
             if (infoMap.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
