@@ -51,28 +51,26 @@ object ClassUtils {
      */
     fun Class<*>.getBeanName(): String {
         // 查找@Component:
-        var name = ""
-        val component = getAnnotation(Component::class.java)
-        if (component != null) {
-            name = component.value
-        }
-        for (anno in annotations) {
-            val annoType = anno.annotationClass.java
-            if (annoType.findNestedAnnotation(Component::class.java) != null) {
-                try {
-                    val value = annoType.getMethod("value").invoke(anno) as String
-                    if (value.isNotEmpty()) {
-                        if (name.isNotEmpty()) {
-                            throw BeanDefinitionException("Duplicate ${annoType.simpleName}.value found on class $simpleName")
+        var name = findNestedAnnotation(Component::class.java)?.value ?: ""
+        if (name.isEmpty()) {
+            for (anno in annotations) {
+                val annoType = anno.annotationClass.java
+                if (annoType.findNestedAnnotation(Component::class.java) != null) {
+                    try {
+                        val value = annoType.getMethod("value").invoke(anno) as String
+                        if (value.isNotEmpty()) {
+                            if (name.isNotEmpty()) {
+                                throw BeanDefinitionException("Duplicate ${annoType.simpleName}.value found on class $simpleName")
+                            }
+                            name = value
                         }
-                        name = value
-                    }
-                } catch (e: Throwable) {
-                    when (e) {
-                        is ReflectiveOperationException, is ClassCastException ->
-                            throw BeanDefinitionException("Get ${annoType.simpleName}.value failed", e)
+                    } catch (e: Throwable) {
+                        when (e) {
+                            is ReflectiveOperationException, is ClassCastException ->
+                                throw BeanDefinitionException("Get ${annoType.simpleName}.value failed", e)
 
-                        else -> throw e
+                            else -> throw e
+                        }
                     }
                 }
             }
