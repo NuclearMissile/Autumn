@@ -8,8 +8,6 @@ import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaConstructor
 
 object ApplicationContextHolder {
     var applicationContext: ApplicationContext? = null
@@ -158,11 +156,15 @@ class AnnotationConfigApplicationContext(
     private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
     private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
     private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
-    private fun Class<*>.beanCtor() =
-        declaredConstructors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) }
-            ?: kotlin.primaryConstructor?.javaConstructor
-            ?: declaredConstructors.firstOrNull { it.parameterCount == 0 }
-            ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
+    private fun Class<*>.beanCtor() = run {
+        val ctors = declaredConstructors.sortedByDescending { it.parameterCount }
+        ctors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) } ?: ctors.firstOrNull {
+            it.parameters.all { p ->
+                p.isAnnotationPresent(Autowired::class.java) || p.isAnnotationPresent(Value::class.java)
+            }
+        } ?: ctors.firstOrNull { it.parameterCount == 0 }
+        ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
+    }
 
     /**
      * Scan factory method that annotated with @Bean:
