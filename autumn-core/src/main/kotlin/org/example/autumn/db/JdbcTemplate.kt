@@ -23,6 +23,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     fun batchInsert(sql: String, count: Int, vararg args: Any?): List<Number> {
         return execute({ conn ->
+            @Suppress("SqlSourceToSinkFlow")
             conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
                 val batchCount = args.size / count
                 for (i in args.indices) {
@@ -263,6 +264,7 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
         }
 
         fun <T> Class<T>.getResultSetExtractor(): ResultSetExtractor<T> {
+            @Suppress("UNCHECKED_CAST")
             return rseCache.getOrPut(this) {
                 if (this.isEnum) ResultSetExtractor { rs ->
                     val value = rs.getString(1) ?: return@ResultSetExtractor null

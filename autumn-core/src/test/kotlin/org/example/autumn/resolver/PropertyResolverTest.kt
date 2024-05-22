@@ -23,7 +23,7 @@ class PropertyResolverTest {
         assertEquals("dummy", config.getRequiredString("server.web-app.name"))
 
         val test = Config.loadYaml("/test.yml")
-        assertThrows<IllegalArgumentException> { test.getRequiredString("other.list") }
+        assertEquals("Apple,Orange,Pear", test.getRequiredString("other.list"))
     }
 
     @Test

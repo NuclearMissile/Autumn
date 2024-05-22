@@ -200,111 +200,118 @@ class AnnotationConfigApplicationContext(
      * 注入属性
      */
     private fun injectProperties(info: BeanMetaInfo, clazz: Class<*>, bean: Any) {
+        fun Member.checkModifier() {
+            when {
+                Modifier.isStatic(modifiers) -> {
+                    throw BeanDefinitionException("Cannot inject static field or method: $this")
+                }
+
+                Modifier.isFinal(modifiers) -> {
+                    if (this is Field) {
+                        throw BeanDefinitionException("Cannot inject final field: $this")
+                    }
+                    if (this is Method) {
+                        logger.warn("Inject final method should be careful because it may cause NPE if that bean is proxied.")
+                    }
+                }
+            }
+        }
+
+        fun doInject(info: BeanMetaInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
+            val valueAnno = acc.getAnnotation(Value::class.java)
+            val autowiredAnno = acc.getAnnotation(Autowired::class.java)
+            if (valueAnno == null && autowiredAnno == null) return
+
+            acc.isAccessible = true
+            val field: Field?
+            val method: Method?
+            when (acc) {
+                is Field -> {
+                    acc.checkModifier()
+                    field = acc
+                    method = null
+                }
+
+                is Method -> {
+                    if (acc.parameterCount != 1) {
+                        throw BeanDefinitionException(
+                            "Cannot inject a non-setter method $acc for bean '${info.beanName}': ${info.beanClass.name}"
+                        )
+                    }
+                    acc.checkModifier()
+                    method = acc
+                    field = null
+                }
+
+                else -> {
+                    throw AssertionError("Should not be here.")
+                }
+            }
+            val accessibleName = field?.name ?: method!!.name
+            val accessibleType = field?.type ?: method!!.parameterTypes.first()
+            @Suppress("KotlinConstantConditions")
+            when {
+                valueAnno != null -> {
+                    val propValue = config.getRequired(valueAnno.value, accessibleType)
+                    if (field != null) {
+                        logger.atDebug().log(
+                            "Field injection by @Value: {}.{} = {}", info.beanClass.name, accessibleName, propValue
+                        )
+                        field[bean] = propValue
+                    }
+                    if (method != null) {
+                        logger.atDebug().log(
+                            "Method injection by @Value: {}.{} ({})", info.beanClass.name, accessibleName, propValue
+                        )
+                        method.invoke(bean, propValue)
+                    }
+                }
+
+                autowiredAnno != null -> {
+                    val name = autowiredAnno.name
+                    val required = autowiredAnno.value
+                    val depends = if (name.isEmpty()) tryGetBean(accessibleType) else tryGetBean(name, accessibleType)
+                    if (required && depends == null) {
+                        throw DependencyException(
+                            "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName for bean '${info.beanName}': ${info.beanClass.name}"
+                        )
+                    }
+                    if (depends != null) {
+                        if (field != null) {
+                            logger.atDebug().log(
+                                "Field injection by @Autowired: {}.{} = {}",
+                                info.beanClass.name, accessibleName, depends
+                            )
+                            field[bean] = depends
+                        }
+                        if (method != null) {
+                            logger.atDebug().log(
+                                "Method injection by @AutoWired: {}.{} ({})",
+                                info.beanClass.name, accessibleName, depends
+                            )
+                            method.invoke(bean, depends)
+                        }
+                    }
+                }
+
+                else -> {
+                    throw BeanCreationException(
+                        "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                    )
+                }
+            }
+        }
+
         clazz.declaredFields.forEach {
-            doInjectProperties(info, clazz, bean, it)
+            doInject(info, clazz, bean, it)
         }
         clazz.declaredMethods.forEach {
-            doInjectProperties(info, clazz, bean, it)
+            doInject(info, clazz, bean, it)
         }
         val superClass = clazz.superclass
         if (superClass != null) {
             injectProperties(info, superClass, bean)
-        }
-    }
-
-    private fun doInjectProperties(info: BeanMetaInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
-        val valueAnno = acc.getAnnotation(Value::class.java)
-        val autowiredAnno = acc.getAnnotation(Autowired::class.java)
-        if (valueAnno == null && autowiredAnno == null) return
-
-        val field: Field?
-        val method: Method?
-        acc.isAccessible = true
-        when (acc) {
-            is Field -> {
-                checkFieldOrMethod(acc)
-                field = acc
-                method = null
-            }
-
-            is Method -> {
-                checkFieldOrMethod(acc)
-                if (acc.parameterCount != 1) {
-                    throw BeanDefinitionException(
-                        "Cannot inject a non-setter method $acc for bean '${info.beanName}': ${info.beanClass.name}"
-                    )
-                }
-                method = acc
-                field = null
-            }
-
-            else -> {
-                throw AssertionError("Should not be here.")
-            }
-        }
-        val accessibleName = field?.name ?: method!!.name
-        val accessibleType = field?.type ?: method!!.parameterTypes.first()
-        @Suppress("KotlinConstantConditions")
-        when {
-            valueAnno != null -> {
-                val propValue = config.getRequired(valueAnno.value, accessibleType)
-                if (field != null) {
-                    logger.atDebug()
-                        .log("Field injection: {}.{} = {}", info.beanClass.name, accessibleName, propValue)
-                    field[bean] = propValue
-                }
-                if (method != null) {
-                    logger.atDebug()
-                        .log("Method injection: {}.{} ({})", info.beanClass.name, accessibleName, propValue)
-                    method.invoke(bean, propValue)
-                }
-            }
-
-            autowiredAnno != null -> {
-                val name = autowiredAnno.name
-                val required = autowiredAnno.value
-                val depends = if (name.isEmpty()) tryGetBean(accessibleType) else tryGetBean(name, accessibleType)
-                if (required && depends == null) {
-                    throw DependencyException(
-                        "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
-                    )
-                }
-                if (depends != null) {
-                    if (field != null) {
-                        logger.atDebug()
-                            .log("Field injection: {}.{} = {}", info.beanClass.name, accessibleName, depends)
-                        field[bean] = depends
-                    }
-                    if (method != null) {
-                        logger.atDebug()
-                            .log("Method injection: {}.{} ({})", info.beanClass.name, accessibleName, depends)
-                        method.invoke(bean, depends)
-                    }
-                }
-            }
-
-            else -> {
-                throw BeanCreationException(
-                    "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
-                )
-            }
-        }
-    }
-
-    private fun checkFieldOrMethod(member: Member) {
-        val mod = member.modifiers
-        if (Modifier.isStatic(mod)) {
-            throw BeanDefinitionException("Cannot inject static field or method: $member")
-        }
-        if (Modifier.isFinal(mod)) {
-            if (member is Field) {
-                throw BeanDefinitionException("Cannot inject final field: $member")
-            }
-            if (member is Method) {
-                logger.warn("Inject final method should be careful because it may cause NPE when bean is proxied.")
-            }
         }
     }
 
@@ -409,6 +416,7 @@ class AnnotationConfigApplicationContext(
                     if (dependsOnInfo != null) {
                         // 获取依赖Bean:
                         var autowiredBeanInstance = dependsOnInfo.instance
+                        @Suppress("KotlinConstantConditions")
                         if (autowiredBeanInstance == null && !info.isConfiguration && !info.isBeanPostProcessor) {
                             // 当前依赖Bean尚未初始化，递归调用初始化该依赖Bean:
                             autowiredBeanInstance = createEarlySingleton(dependsOnInfo)
@@ -472,20 +480,24 @@ class AnnotationConfigApplicationContext(
         return tryGetBean(clazz) ?: throw NoSuchBeanException("No bean defined with type '$clazz'.")
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> getBeans(clazz: Class<T>): List<T> {
         return findBeanMetaInfos(clazz).map { it.requiredInstance as T }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(name: String): T? {
         val info = findBeanMetaInfo(name) ?: return null
         return info.requiredInstance as T
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(name: String, clazz: Class<T>): T? {
         val info = findBeanMetaInfo(name, clazz) ?: return null
         return info.requiredInstance as T
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(clazz: Class<T>): T? {
         val info = findBeanMetaInfo(clazz) ?: return null
         return info.requiredInstance as T

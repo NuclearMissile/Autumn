@@ -52,6 +52,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         require(types.size == 1) { "Class ${javaClass.name} has more than 1 parameterized types." }
         val ret = types.single()
         require(ret is Class<*>) { "Class ${javaClass.name} does not have parameterized type of class." }
+        @Suppress("UNCHECKED_CAST")
         ret as Class<A>
     }
 

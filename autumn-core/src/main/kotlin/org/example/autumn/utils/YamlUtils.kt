@@ -11,10 +11,10 @@ import org.yaml.snakeyaml.resolver.Resolver
 import java.nio.file.Path
 
 object YamlUtils {
-    fun loadYamlAsPlainMap(path: String, fromClassPath: Boolean): Map<String, Any> {
-        val result = mutableMapOf<String, Any>()
-        flatten(loadYaml(path, fromClassPath), "", result)
-        return result
+    fun loadYamlAsPlainMap(path: String, fromClassPath: Boolean): Map<String, String> {
+        return mutableMapOf<String, String>().apply {
+            flatten(loadYaml(path, fromClassPath), "", this)
+        }
     }
 
     private fun loadYaml(path: String, fromClassPath: Boolean): Map<String, Any> {
@@ -32,7 +32,7 @@ object YamlUtils {
             readInputStream(Path.of(path)) { input -> yaml.load(input) }
     }
 
-    private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, Any>) {
+    private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, String>) {
         source.forEach { (k, v) ->
             when (v) {
                 is Map<*, *> -> {
@@ -40,7 +40,7 @@ object YamlUtils {
                 }
 
                 is List<*> -> {
-                    plain[prefix + k] = v
+                    plain[prefix + k] = v.joinToString(separator = ",")
                 }
 
                 else -> {
