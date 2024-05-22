@@ -4,6 +4,7 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
 import org.example.autumn.resolver.ResourceResolver
 import java.lang.reflect.InvocationTargetException
+import java.util.function.Supplier
 
 object ClassUtils {
     /**
@@ -23,13 +24,13 @@ object ClassUtils {
      * public class Hello {}
      *
      */
-    fun <A : Annotation> Class<*>.findAnnotation(annoClass: Class<A>): A? {
+    fun <A : Annotation> Class<*>.findNestedAnnotation(annoClass: Class<A>): A? {
         var res = getAnnotation(annoClass)
         for (anno in annotations) {
             val annoType = anno.annotationClass.java
             if (annoType.packageName.startsWith("java") || annoType.packageName.startsWith("kotlin"))
                 continue
-            val found = annoType.findAnnotation(annoClass)
+            val found = annoType.findNestedAnnotation(annoClass)
             if (found != null) {
                 if (res != null) {
                     throw BeanDefinitionException("Duplicate @${annoClass.simpleName} found on class $simpleName")
@@ -54,16 +55,24 @@ object ClassUtils {
         val component = getAnnotation(Component::class.java)
         if (component != null) {
             name = component.value
-        } else {
-            // 未找到@Component，继续在其他注解中查找@Component:
-            for (anno in annotations.sortedBy { it.javaClass.simpleName }) {
-                val annoClass = anno.annotationClass.java
-                if (annoClass.findAnnotation(Component::class.java) != null) {
-                    try {
-                        name = annoClass.getMethod("value").invoke(anno) as String
-                        break
-                    } catch (e: ReflectiveOperationException) {
-                        throw BeanDefinitionException("Cannot get annotation value.", e)
+        }
+        for (anno in annotations) {
+            val annoType = anno.annotationClass.java
+            if (annoType.findNestedAnnotation(Component::class.java) != null) {
+                try {
+                    val value = annoType.getMethod("value").invoke(anno) as String
+                    if (value.isNotEmpty()) {
+                        if (name.isNotEmpty()) {
+                            throw BeanDefinitionException("Duplicate ${annoType.simpleName}.value found on class $simpleName")
+                        }
+                        name = value
+                    }
+                } catch (e: Throwable) {
+                    when (e) {
+                        is ReflectiveOperationException, is ClassCastException ->
+                            throw BeanDefinitionException("Get ${annoType.simpleName}.value failed", e)
+
+                        else -> throw e
                     }
                 }
             }
@@ -89,11 +98,11 @@ object ClassUtils {
         return clazz.getConstructor().newInstance()
     }
 
-    fun <T> withClassLoader(classLoader: ClassLoader, func: () -> T): T {
+    fun <T> withClassLoader(classLoader: ClassLoader, supplier: Supplier<T>): T {
         val original = Thread.currentThread().contextClassLoader
         return try {
             Thread.currentThread().contextClassLoader = classLoader
-            func.invoke()
+            supplier.get()
         } finally {
             Thread.currentThread().contextClassLoader = original
         }

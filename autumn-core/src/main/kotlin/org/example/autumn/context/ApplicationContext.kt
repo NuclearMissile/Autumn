@@ -3,7 +3,7 @@ package org.example.autumn.context
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.utils.ClassUtils.findAnnotation
+import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
 import org.slf4j.LoggerFactory
@@ -123,7 +123,7 @@ class AnnotationConfigApplicationContext(
             }
 
             // 是否标注@Component?
-            clazz.findAnnotation(Component::class.java) ?: continue
+            clazz.findNestedAnnotation(Component::class.java) ?: continue
             logger.atDebug().log("found component: {}", clazz.name)
             val mod = clazz.modifiers
             if (Modifier.isAbstract(mod)) {
