@@ -11,6 +11,7 @@ import org.example.autumn.exception.DataAccessException
 import org.junit.jupiter.api.assertThrows
 import javax.sql.DataSource
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -18,14 +19,15 @@ import kotlin.test.assertNull
 @Configuration
 class JdbcNoTxConfiguration {
     @Bean(destroyMethod = "close")
-    fun dataSource( // properties:
+    fun dataSource(
+        // properties:
         @Value("\${autumn.datasource.url}") url: String?,
         @Value("\${autumn.datasource.username}") username: String?,
         @Value("\${autumn.datasource.password}") password: String?,
         @Value("\${autumn.datasource.driver-class-name:}") driver: String?,
         @Value("\${autumn.datasource.maximum-pool-size:20}") maximumPoolSize: Int,
         @Value("\${autumn.datasource.minimum-pool-size:1}") minimumPoolSize: Int,
-        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int
+        @Value("\${autumn.datasource.connection-timeout:30000}") connTimeout: Int,
     ): DataSource {
         return HikariDataSource(HikariConfig().also { config ->
             config.isAutoCommit = false
@@ -50,8 +52,8 @@ class JdbcNoTxTest : JdbcTestBase() {
     fun testJdbcNoTx() {
         AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
-            jdbcTemplate.update(CREATE_USER)
-            jdbcTemplate.update(CREATE_ADDRESS)
+            jdbcTemplate.update(CREATE_USER_TABLE)
+            jdbcTemplate.update(CREATE_ADDRESS_TABLE)
             // insert user:
             val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", 12).toInt()
             val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", null).toInt()
@@ -66,6 +68,11 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(2, alice.id)
             assertEquals("Alice", alice.name)
             assertNull(alice.age)
+
+            val list1 = jdbcTemplate.queryList<User>(SELECT_ALL_USER)
+            assertEquals(bob, list1[0])
+            assertEquals(alice, list1[1])
+
             // query name:
             assertEquals("Bob", jdbcTemplate.queryRequired(SELECT_USER_NAME, userId1))
             assertEquals(12, jdbcTemplate.queryRequired(SELECT_USER_AGE, userId1))
@@ -75,6 +82,9 @@ class JdbcNoTxTest : JdbcTestBase() {
             // delete user:
             val n2 = jdbcTemplate.update(DELETE_USER, alice.id)
             assertEquals(1, n2)
+
+            val list2 = jdbcTemplate.queryList<User>(SELECT_ALL_USER)
+            assertEquals(1, list2.size)
         }
 
         AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
@@ -86,6 +96,54 @@ class JdbcNoTxTest : JdbcTestBase() {
                 // alice was deleted:
                 jdbcTemplate.queryRequired(SELECT_USER, 2)
             }
+        }
+    }
+
+    @Test
+    fun testQueryList() {
+        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+            jdbcTemplate.update(CREATE_USER_TABLE)
+
+            val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", 12).toInt()
+            val list1 = jdbcTemplate.query<List<*>>(SELECT_USER, userId1)
+            assertEquals("[$userId1, Alice, 12, 0, 0, 1]", list1.toString())
+
+            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", null).toInt()
+            val list2 = jdbcTemplate.query<MutableList<*>>(SELECT_USER, userId2)
+            assertEquals("[$userId2, Bob, null, 0, 0, 1]", list2.toString())
+
+            val list3 = jdbcTemplate.queryList<List<*>>(SELECT_ALL_USER)
+            assertContentEquals(list1, list3[0])
+            assertContentEquals(list2, list3[1])
+
+            assertThrows<IllegalArgumentException> { jdbcTemplate.query<ArrayList<*>>(SELECT_USER, userId1) }
+        }
+    }
+
+    @Test
+    fun testQueryMap() {
+        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+            jdbcTemplate.update(CREATE_USER_TABLE)
+
+            val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", 12).toInt()
+            val map1 = jdbcTemplate.query<Map<String, *>>(SELECT_USER, userId1)
+            assertEquals(
+                "{id=$userId1, name=Alice, age=12, booleanTest=0, shortTest=0, isTest=1}", map1.toString()
+            )
+
+            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", null).toInt()
+            val map2 = jdbcTemplate.query<MutableMap<String, *>>(SELECT_USER, userId2)
+            assertEquals(
+                "{id=$userId2, name=Bob, age=null, booleanTest=0, shortTest=0, isTest=1}", map2.toString()
+            )
+
+            val list3 = jdbcTemplate.queryList<Map<String, *>>(SELECT_ALL_USER)
+            assertEquals(map1.toString(), list3[0].toString())
+            assertEquals(map2.toString(), list3[1].toString())
+
+            assertThrows<IllegalArgumentException> { jdbcTemplate.query<HashMap<String, *>>(SELECT_USER, userId1) }
         }
     }
 }

@@ -1,6 +1,6 @@
 package org.example.autumn.db
 
-import org.example.autumn.db.RowMapper.Companion.getResultSetExtractor
+import org.example.autumn.db.RowExtractor.Companion.getRowExtractor
 import org.example.autumn.exception.DataAccessException
 import java.sql.*
 import java.util.concurrent.ConcurrentHashMap
@@ -8,7 +8,7 @@ import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
     inline fun <reified T> query(sql: String, vararg args: Any?): T? {
-        return query(sql, T::class.java.getResultSetExtractor(), *args)
+        return query(sql, T::class.java.getRowExtractor(), *args)
     }
 
     fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
@@ -66,7 +66,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     inline fun <reified T> queryRequired(sql: String, vararg args: Any?): T {
-        return queryRequired(sql, T::class.java.getResultSetExtractor(), *args)
+        return queryRequired(sql, T::class.java.getRowExtractor(), *args)
     }
 
     fun <T> queryRequired(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T {
@@ -89,7 +89,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     inline fun <reified T> queryList(sql: String, vararg args: Any?): List<T> {
-        return queryList(sql, T::class.java.getResultSetExtractor(), *args)
+        return queryList(sql, T::class.java.getRowExtractor(), *args)
     }
 
     fun <T> queryList(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): List<T> {
@@ -209,7 +209,7 @@ val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
     Timestamp::class.java to ColumnExtractor { rs, label -> rs.getTimestamp(label) },
 )
 
-class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
+class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
     companion object {
         private val rseCache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
             put(Boolean::class.java, ResultSetExtractor {
@@ -263,14 +263,45 @@ class RowMapper<T> private constructor(private val clazz: Class<T>) : ResultSetE
             put(Timestamp::class.java, ResultSetExtractor { it.getTimestamp(1) })
         }
 
-        fun <T> Class<T>.getResultSetExtractor(): ResultSetExtractor<T> {
-            @Suppress("UNCHECKED_CAST")
-            return rseCache.getOrPut(this) {
-                if (this.isEnum) ResultSetExtractor { rs ->
-                    val value = rs.getString(1) ?: return@ResultSetExtractor null
-                    this.enumConstants.first { (it as Enum<*>).name == value }
-                } else RowMapper(this)
-            } as ResultSetExtractor<T>
+        @Suppress("UNCHECKED_CAST")
+        fun <T> Class<T>.getRowExtractor(): ResultSetExtractor<T> {
+            return when {
+                Map::class.java.isAssignableFrom(this) -> {
+                    require(this == Map::class.java) {
+                        "query for plain map only support (Mutable)Map<*, *> return type"
+                    }
+                    ResultSetExtractor { rs ->
+                        val md = rs.metaData
+                        buildMap<String, Any?> {
+                            (1..md.columnCount).map { md.getColumnName(it) }.forEach {
+                                set(it, rs.getObject(it))
+                            }
+                        }
+                    } as ResultSetExtractor<T>
+                }
+
+                List::class.java.isAssignableFrom(this) -> {
+                    require(this == List::class.java) {
+                        "query for plain list only support (Mutable)List<*> return type"
+                    }
+                    ResultSetExtractor { rs ->
+                        val md = rs.metaData
+                        buildList<Any?> {
+                            (1..md.columnCount).forEach { add(rs.getObject(it)) }
+                        }
+                    } as ResultSetExtractor<T>
+                }
+
+                else -> {
+                    rseCache.getOrPut(this) {
+                        if (this.isEnum) ResultSetExtractor { rs ->
+                            val value = rs.getString(1) ?: return@ResultSetExtractor null
+                            this.enumConstants.first { (it as Enum<*>).name == value }
+                        } else RowExtractor(this)
+                    } as ResultSetExtractor<T>
+                }
+            }
+
         }
     }
 

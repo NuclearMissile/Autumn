@@ -78,8 +78,8 @@ class JdbcTxTest : JdbcTestBase() {
     fun testJdbcWithTx() {
         AnnotationConfigApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
-            jdbcTemplate.update(CREATE_USER)
-            jdbcTemplate.update(CREATE_ADDRESS)
+            jdbcTemplate.update(CREATE_USER_TABLE)
+            jdbcTemplate.update(CREATE_ADDRESS_TABLE)
 
             val userService: UserService = ctx.getBean(UserService::class.java)
             val addressService: AddressService = ctx.getBean(AddressService::class.java)

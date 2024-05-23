@@ -17,7 +17,7 @@ interface PropertyResolver {
     fun getRequiredString(key: String): String
     fun <T> getRequired(key: String, clazz: Class<T>): T
     fun merge(other: PropertyResolver): PropertyResolver
-    fun getMap(): Map<String, String>
+    fun toMap(): Map<String, String>
 }
 
 inline fun <reified T> PropertyResolver.get(key: String): T? {
@@ -78,12 +78,12 @@ class Config(props: Properties) : PropertyResolver {
     }
 
     override fun merge(other: PropertyResolver): PropertyResolver {
-        properties += other.getMap()
+        properties += other.toMap()
         return this
     }
 
-    override fun getMap(): Map<String, String> {
-        return properties
+    override fun toMap(): Map<String, String> {
+        return properties.toMap()
     }
 
     override fun contains(key: String) = properties.containsKey(key)
@@ -134,29 +134,29 @@ class Config(props: Properties) : PropertyResolver {
     }
 
     private fun parseValue(value: String): String {
-        val expr = parsePropertyExpr(value) ?: return value
-        return if (expr.defaultValue != null) {
-            getString(expr.key, expr.defaultValue)
+        val valueExpr = parsePropertyExpr(value) ?: return value
+        return if (valueExpr.defaultValue != null) {
+            getString(valueExpr.key, valueExpr.defaultValue)
         } else {
-            getRequiredString(expr.key)
+            getRequiredString(valueExpr.key)
         }
     }
 
-    private fun parsePropertyExpr(key: String): PropertyExpr? {
-        if (key.startsWith("\${") && key.endsWith("}")) {
-            val n = key.indexOf(':')
+    private fun parsePropertyExpr(s: String): PropertyExpr? {
+        if (s.startsWith("\${") && s.endsWith("}")) {
+            val n = s.indexOf(':')
             if (n == -1) {
                 // no default value: ${key}
-                val k = key.substring(2, key.length - 1).also {
-                    if (it.isEmpty()) throw IllegalArgumentException("Invalid key: $it")
+                val k = s.substring(2, s.length - 1).apply {
+                    if (isEmpty()) throw IllegalArgumentException("Invalid key: $this")
                 }
                 return PropertyExpr(k, null)
             } else {
                 // has default value: ${key:default}
-                val k = key.substring(2, n).also {
-                    if (it.isEmpty()) throw IllegalArgumentException("Invalid key: $it")
+                val k = s.substring(2, n).apply {
+                    if (isEmpty()) throw IllegalArgumentException("Invalid key: $this")
                 }
-                return PropertyExpr(k, key.substring(n + 1, key.length - 1))
+                return PropertyExpr(k, s.substring(n + 1, s.length - 1))
             }
         }
         return null
