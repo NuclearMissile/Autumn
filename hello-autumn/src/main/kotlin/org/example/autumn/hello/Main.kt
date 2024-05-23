@@ -68,17 +68,18 @@ class LoginEventListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Subscribe(EventMode.SYNC)
-    fun onLoginEvent(e: LoginEvent) {
-        logger.info("sync event: [Login] ${e.user}")
+    fun onLogin(e: LoginEvent) {
+        logger.info("[Login] ${e.user}")
     }
 
     @Subscribe(EventMode.ASYNC)
-    fun onLoginEventAsync(e: LoginEvent) {
-        logger.info("async event: [Login] ${e.user}")
+    fun onLogoff(e: LogoffEvent) {
+        logger.info("[Logoff] ${e.user}")
     }
 }
 
 data class LoginEvent(val user: User) : Event
+data class LogoffEvent(val user: User) : Event
 
 @Controller("/hello")
 class HelloController {
@@ -156,7 +157,9 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @Get("/logoff")
     fun logoff(session: HttpSession): String {
+        val user = session.getAttribute(USER_SESSION_KEY) as User
         session.removeAttribute(USER_SESSION_KEY)
+        eventBus.post(LogoffEvent(user))
         return "redirect:/login"
     }
 }

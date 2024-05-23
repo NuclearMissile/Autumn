@@ -32,11 +32,11 @@ object YamlUtils {
             readInputStream(Path.of(path)) { input -> yaml.load(input) }
     }
 
-    private fun flatten(source: Map<String, Any>, prefix: String, plain: MutableMap<String, String>) {
+    private fun flatten(source: Map<*, *>, prefix: String, plain: MutableMap<String, String>) {
         source.forEach { (k, v) ->
             when (v) {
                 is Map<*, *> -> {
-                    flatten(v as Map<String, Any>, "$prefix$k.", plain)
+                    flatten(v, "$prefix$k.", plain)
                 }
 
                 is List<*> -> {

@@ -7,10 +7,10 @@ import kotlin.io.path.isRegularFile
 
 object IOUtils {
     fun <T> readInputStreamFromClassPath(path: String, callback: (stream: InputStream) -> T): T {
-        val _path = path.removePrefix("/")
+        val filePath = path.removePrefix("/")
         val classLoader = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
-        classLoader.getResourceAsStream(_path).use { input ->
-            input ?: throw FileNotFoundException("File not found in classpath: $_path")
+        classLoader.getResourceAsStream(filePath).use { input ->
+            input ?: throw FileNotFoundException("File not found under classpath: $filePath")
             return callback.invoke(input)
         }
     }

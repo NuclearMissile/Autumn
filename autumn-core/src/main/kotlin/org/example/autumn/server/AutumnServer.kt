@@ -48,17 +48,16 @@ class AutumnServer {
                 Option.builder("c").longOpt("config").argName("file").hasArg()
                     .desc("specify external configuration file.").build()
             )
-            val war: String?
-            val customConfig: String?
-            try {
-                val cmd = DefaultParser().parse(options, args)
-                war = cmd.getOptionValue("war")!!
-                customConfig = cmd.getOptionValue("config")
+
+            val cmd = try {
+                DefaultParser().parse(options, args)
             } catch (e: ParseException) {
                 System.err.println(e.message)
                 HelpFormatter().printHelp("java -jar jarPath [options]", options)
                 exitProcess(1)
             }
+            val war = cmd.getOptionValue("war")!!
+            val customConfig = cmd.getOptionValue("config")
             startWar(war, customConfig, startTime)
         }
 
