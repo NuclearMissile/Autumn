@@ -10,10 +10,7 @@ import org.example.autumn.db.User
 import org.example.autumn.exception.DataAccessException
 import org.junit.jupiter.api.assertThrows
 import javax.sql.DataSource
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.*
 
 @ComponentScan
 @Configuration
@@ -96,6 +93,18 @@ class JdbcNoTxTest : JdbcTestBase() {
                 // alice was deleted:
                 jdbcTemplate.queryRequired(SELECT_USER, 2)
             }
+        }
+    }
+
+    @Ignore("batchInsert return generated keys not supported by sqlite")
+    @Test
+    fun testBatchInsert() {
+        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+            jdbcTemplate.update(CREATE_USER_TABLE)
+
+            val ids = jdbcTemplate.batchInsert(INSERT_USER, 2, "Alice", 12, "Bob", null)
+            assertEquals(1, ids[1] - ids[0])
         }
     }
 

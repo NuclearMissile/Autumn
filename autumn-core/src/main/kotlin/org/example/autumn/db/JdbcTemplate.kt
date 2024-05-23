@@ -21,7 +21,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         return execute(preparedStatementCreator(sql, *args), PreparedStatement::executeUpdate)!!
     }
 
-    fun batchInsert(sql: String, count: Int, vararg args: Any?): List<Number> {
+    fun batchInsert(sql: String, count: Int, vararg args: Any?): List<Long> {
         return execute({ conn ->
             @Suppress("SqlSourceToSinkFlow")
             conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
@@ -40,7 +40,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
             buildList {
                 ps.generatedKeys.use { keys ->
                     while (keys.next()) {
-                        add(keys.getObject(1) as Number)
+                        add(keys.getLong(1))
                     }
                 }
             }
@@ -211,7 +211,7 @@ val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
 
 class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
     companion object {
-        private val rseCache = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
+        private val rowExtractors = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
             put(Boolean::class.java, ResultSetExtractor {
                 if (it.getObject(1) == null) null else it.getBoolean(1)
             })
@@ -293,7 +293,7 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                 }
 
                 else -> {
-                    rseCache.getOrPut(this) {
+                    rowExtractors.getOrPut(this) {
                         if (this.isEnum) ResultSetExtractor { rs ->
                             val value = rs.getString(1) ?: return@ResultSetExtractor null
                             this.enumConstants.first { (it as Enum<*>).name == value }
