@@ -12,21 +12,21 @@ import javax.sql.DataSource
 
 interface TransactionManager
 
-class TransactionStatus(val conn: Connection)
+class TransactionStatus(val connection: Connection)
 
 class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transactional>()
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
-        private val transactionStatusHolder = ThreadLocal<TransactionStatus>()
+        private val holder = ThreadLocal<TransactionStatus>()
         val connection: Connection?
-            get() = transactionStatusHolder.get()?.conn
+            get() = holder.get()?.connection
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
-        val txs = transactionStatusHolder.get()
+        val txs = holder.get()
         // join current tx
         if (txs != null)
             return method.invoke(proxy, *(args ?: emptyArray()))
@@ -37,7 +37,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 conn.autoCommit = false
             }
             try {
-                transactionStatusHolder.set(TransactionStatus(conn))
+                holder.set(TransactionStatus(conn))
                 val ret = method.invoke(proxy, *(args ?: emptyArray()))
                 conn.commit()
                 return ret
@@ -51,7 +51,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 }
                 throw target
             } finally {
-                transactionStatusHolder.remove()
+                holder.remove()
                 if (autoCommit) {
                     conn.autoCommit = true
                 }

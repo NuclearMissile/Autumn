@@ -56,17 +56,16 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
     }
 
     fun walkLibPaths(visitor: Consumer<Resource>) {
-        fun scanJar(handler: Consumer<Resource>, jarPath: Path) {
-            JarFile(jarPath.toFile()).stream().filter { !it.isDirectory }.forEach {
-                handler.accept(Resource(jarPath, it.name))
+        libPaths.forEach { libPath ->
+            JarFile(libPath.toFile()).stream().filter { !it.isDirectory }.forEach {
+                visitor.accept(Resource(libPath, it.name))
             }
         }
-        libPaths.forEach { scanJar(visitor, it) }
     }
 
     fun walkClassesPath(visitor: Consumer<Resource>, basePath: Path = classesPath) {
-        Files.walk(basePath).filter(Path::isRegularFile).forEach { p ->
-            visitor.accept(Resource(p, basePath.relativize(p).toString().replace("\\", "/")))
+        Files.walk(basePath).filter(Path::isRegularFile).forEach { path ->
+            visitor.accept(Resource(path, basePath.relativize(path).toString().replace("\\", "/")))
         }
     }
 }

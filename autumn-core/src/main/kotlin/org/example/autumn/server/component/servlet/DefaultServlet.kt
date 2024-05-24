@@ -4,7 +4,7 @@ import jakarta.servlet.ServletConfig
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.utils.DateUtils
+import org.example.autumn.utils.DateUtils.formatDateTimeGMT
 import org.example.autumn.utils.HttpUtils.escapeHtml
 import org.example.autumn.utils.IOUtils
 import org.slf4j.LoggerFactory
@@ -19,17 +19,17 @@ class DefaultServlet : HttpServlet() {
     companion object {
         private fun formatTr(file: Path, size: Long, name: String): String {
             return "<tr>" +
-                "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
-                "<td>${formatSize(size)}</td>" +
-                "<td>${DateUtils.formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
+                    "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
+                    "<td>${formatSize(size)}</td>" +
+                    "<td>${formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
         }
 
         private fun formatSize(size: Long): String {
             return when {
                 size >= 0 -> {
-                    if (size > 1024 * 1024 * 1024) String.format("%.3f GB", size / (1024 * 1024 * 1024.0))
-                    if (size > 1024 * 1024) String.format("%.3f MB", size / (1024 * 1024.0))
-                    if (size > 1024) String.format("%.3f KB", size / 1024.0)
+                    if (size > 1024 * 1024 * 1024) "%.3f GB".format(size / (1024 * 1024 * 1024.0))
+                    if (size > 1024 * 1024) "%.3f MB".format(size / (1024 * 1024.0))
+                    if (size > 1024) "%.3f KB".format(size / 1024.0)
                     "$size B"
                 }
 

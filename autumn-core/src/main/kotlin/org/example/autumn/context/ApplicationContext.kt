@@ -161,8 +161,7 @@ class AnnotationConfigApplicationContext(
             it.parameters.all { p ->
                 p.isAnnotationPresent(Autowired::class.java) || p.isAnnotationPresent(Value::class.java)
             }
-        } ?: ctors.firstOrNull { it.parameterCount == 0 }
-        ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
+        } ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
     }
 
     /**
