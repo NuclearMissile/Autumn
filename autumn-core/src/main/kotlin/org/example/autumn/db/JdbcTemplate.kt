@@ -47,7 +47,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    fun updateWithGeneratedKey(sql: String, vararg args: Any?): Number {
+    fun insert(sql: String, vararg args: Any?): Long {
         return execute(preparedStatementCreator(sql, *args)) { ps: PreparedStatement ->
             val n = ps.executeUpdate()
             if (n == 0) {
@@ -58,7 +58,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
             }
             ps.generatedKeys.use { keys ->
                 while (keys.next()) {
-                    return@execute keys.getObject(1) as Number
+                    return@execute keys.getLong(1)
                 }
             }
             throw DataAccessException("Should not reach here.")

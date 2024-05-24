@@ -5,7 +5,6 @@ import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.db.JdbcTemplate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.math.BigInteger
 
 class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
@@ -85,8 +84,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         entities.forEach { entity ->
             val args = mapper.insertableProperties.map { it[entity as Any] }.toTypedArray()
             if (mapper.id.isGeneratedId) {
-                val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
-                mapper.id[entity as Any] = if (key is BigInteger) key.longValueExact() else key
+                mapper.id[entity as Any] = jdbcTemplate.insert(sql, *args)
             } else {
                 jdbcTemplate.update(sql, *args)
             }
@@ -100,7 +98,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
 //        val keys = jdbcTemplate.batchInsert(sql, entities.size, *args)
 //        if (mapper.id.isGeneratedId) {
 //            keys.forEachIndexed { index, key ->
-//                mapper.id[entities[index] as Any] = if (key is BigInteger) key.longValueExact() else key
+//                mapper.id[entities[index] as Any] = key
 //            }
 //        }
     }
@@ -115,8 +113,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         val sql = mapper.insertSQL
         logger.atDebug().log("insert SQL: {}, args: {}", sql, args)
         if (mapper.id.isGeneratedId) {
-            val key = jdbcTemplate.updateWithGeneratedKey(sql, *args)
-            mapper.id[entity as Any] = if (key is BigInteger) key.longValueExact() else key
+            mapper.id[entity as Any] = jdbcTemplate.insert(sql, *args)
         } else {
             jdbcTemplate.update(sql, *args)
         }

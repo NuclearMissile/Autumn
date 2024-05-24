@@ -52,8 +52,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             jdbcTemplate.update(CREATE_USER_TABLE)
             jdbcTemplate.update(CREATE_ADDRESS_TABLE)
             // insert user:
-            val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", 12).toInt()
-            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", null).toInt()
+            val userId1 = jdbcTemplate.insert(INSERT_USER, "Bob", 12).toInt()
+            val userId2 = jdbcTemplate.insert(INSERT_USER, "Alice", null).toInt()
             assertEquals(1, userId1)
             assertEquals(2, userId2)
             // query user:
@@ -114,11 +114,11 @@ class JdbcNoTxTest : JdbcTestBase() {
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
 
-            val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", 12).toInt()
+            val userId1 = jdbcTemplate.insert(INSERT_USER, "Alice", 12).toInt()
             val list1 = jdbcTemplate.query<List<*>>(SELECT_USER, userId1)
             assertEquals("[$userId1, Alice, 12, 0, 0, 1]", list1.toString())
 
-            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", null).toInt()
+            val userId2 = jdbcTemplate.insert(INSERT_USER, "Bob", null).toInt()
             val list2 = jdbcTemplate.query<MutableList<*>>(SELECT_USER, userId2)
             assertEquals("[$userId2, Bob, null, 0, 0, 1]", list2.toString())
 
@@ -136,13 +136,13 @@ class JdbcNoTxTest : JdbcTestBase() {
             val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
 
-            val userId1 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Alice", 12).toInt()
+            val userId1 = jdbcTemplate.insert(INSERT_USER, "Alice", 12).toInt()
             val map1 = jdbcTemplate.query<Map<String, *>>(SELECT_USER, userId1)
             assertEquals(
                 "{id=$userId1, name=Alice, age=12, booleanTest=0, shortTest=0, isTest=1}", map1.toString()
             )
 
-            val userId2 = jdbcTemplate.updateWithGeneratedKey(INSERT_USER, "Bob", null).toInt()
+            val userId2 = jdbcTemplate.insert(INSERT_USER, "Bob", null).toInt()
             val map2 = jdbcTemplate.query<MutableMap<String, *>>(SELECT_USER, userId2)
             assertEquals(
                 "{id=$userId2, name=Bob, age=null, booleanTest=0, shortTest=0, isTest=1}", map2.toString()
