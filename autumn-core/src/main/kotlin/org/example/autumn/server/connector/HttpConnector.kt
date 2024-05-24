@@ -29,7 +29,7 @@ class HttpConnector(
         // init servlet context:
         withClassLoader(classLoader) {
             servletContext = ServletContextImpl(classLoader, config, webRoot)
-            servletContext.setAttribute("config", config)
+            servletContext.setAttribute("autumn_server_flg", true)
             initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
             servletContext.init(scannedClasses)
         }

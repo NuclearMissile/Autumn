@@ -129,9 +129,6 @@ class AutumnServer {
                     Config.load() else Config.load().merge(Config.loadYaml(customConfig, false))
             }
 
-            // show banner
-            logger.info(readStringFromClassPath("/banner.txt"))
-
             // scan class:
             val classSet = mutableSetOf<Class<*>>()
             val handler = Consumer { r: Resource ->
@@ -150,17 +147,17 @@ class AutumnServer {
                     }
                     when {
                         clazz.isAnnotationPresent(WebServlet::class.java) -> {
-                            logger.info("Found @WebServlet: {}", clazz.name)
+                            logger.debug("Found @WebServlet: {}", clazz.name)
                             classSet.add(clazz)
                         }
 
                         clazz.isAnnotationPresent(WebFilter::class.java) -> {
-                            logger.info("Found @WebFilter: {}", clazz.name)
+                            logger.debug("Found @WebFilter: {}", clazz.name)
                             classSet.add(clazz)
                         }
 
                         clazz.isAnnotationPresent(WebListener::class.java) -> {
-                            logger.info("Found @WebListener: {}", clazz.name)
+                            logger.debug("Found @WebListener: {}", clazz.name)
                             classSet.add(clazz)
                         }
                     }
@@ -169,16 +166,16 @@ class AutumnServer {
             classLoader.walkClassesPath(handler)
             classLoader.walkLibPaths(handler)
 
-            start(webRoot, config, classLoader, classSet.toList(), false, startTime)
+            start(webRoot, config, classLoader, classSet.toList(), startTime)
         }
 
         // server entry point
         fun start(
             webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>,
-            showBanner: Boolean = true, startTime: Long = System.currentTimeMillis(),
+            startTime: Long = System.currentTimeMillis(),
         ) {
-            // show banner in embedded mode
-            if (showBanner) logger.info(readStringFromClassPath("/banner.txt"))
+            // show banner
+            logger.info(readStringFromClassPath("/banner.txt"))
             // start info:
             val jvmVersion = Runtime.version().feature()
             val pid = ManagementFactory.getRuntimeMXBean().pid

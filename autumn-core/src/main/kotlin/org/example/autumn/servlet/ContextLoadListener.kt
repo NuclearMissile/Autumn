@@ -8,7 +8,9 @@ import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.context.ApplicationContext
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.AutumnException
+import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.Objects.requireNonNull
@@ -17,15 +19,20 @@ open class ContextLoadListener : ServletContextListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun contextInitialized(sce: ServletContextEvent) {
-        logger.info("init {}.", javaClass.name)
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
 
-        val config = servletContext.getAttribute("config") as PropertyResolver
+        if (servletContext.getAttribute("autumn_server_flg") != true) {
+            // show banner
+            logger.info(readStringFromClassPath("/banner.txt"))
+        }
+        logger.info("invoke {}", javaClass.name)
+
+        val config = Config.load()
         val encoding = config.getRequiredString("\${autumn.web.character-encoding:UTF-8}")
         servletContext.requestCharacterEncoding = encoding
         servletContext.responseCharacterEncoding = encoding
-        val configClassName = config.getRequiredString("autumn.config-class-path")
+        val configClassName = config.getRequiredString("autumn.config-class-name")
         val applicationContext = createApplicationContext(configClassName, config)
         logger.info("Application context created: {}", applicationContext)
 
