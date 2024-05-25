@@ -18,9 +18,35 @@ _Yet another toy web application framework imitating Spring with homemade http s
 
 hello-autumn (user login demo), use Autumn just like Spring
 
-_test account: test@test.com; test_
-
 ![](login-demo.png)
+
+### Let's have a try
+
+```shell
+# build
+ls                     # current path: xxx/autumn
+cd ./autumn-build/     # cd to xxx/autumn/autumn-build/
+mvn clean              # clean previous build
+mvn install            # build and install builds to maven local cache
+cd ../hello-autumn/    # cd to xxx/autumn/hello-autumn/ 
+mvn war:war            # build .war package for hello-autumn project
+
+# start web application with homemade http server
+ls                     # current path: xxx/autumn
+cp ./hello-autumn/target/hello-autumn-1.0.0.war ./autumn-core/target/hello-autumn-1.0.0.war
+cd ./autumn-core/target/
+# execute hello-autumn-1.0.0.war with homemade http server in autumn-core
+java -jar autumn-core-1.0.0.jar -w hello-autumn-1.0.0.war
+
+# or start web application with Tomcat and docker
+ls                     # current path: xxx/autumn
+cd ./hello-autumn/
+docker build -t hello-autumn . 
+docker run -p 8080:8080 -t hello-autumn
+
+# then access localhost:8080 to play with the demo
+
+```
 
 <details>
 
