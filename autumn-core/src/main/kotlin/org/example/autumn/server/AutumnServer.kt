@@ -32,7 +32,6 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.system.exitProcess
 
-
 class AutumnServer {
     companion object {
         private val logger = LoggerFactory.getLogger(Companion::class.java)
