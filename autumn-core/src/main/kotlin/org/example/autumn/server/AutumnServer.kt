@@ -76,7 +76,7 @@ class AutumnServer {
                     Files.walk(tmpPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete)
                 })
 
-                logger.info("extract {} to {}", warPath, tmpPath)
+                logger.debug("extract {} to {}", warPath, tmpPath)
                 val warFile = JarFile(warPath.toFile())
                 warFile.stream().forEach { entry ->
                     if (!entry.isDirectory) {
@@ -107,7 +107,7 @@ class AutumnServer {
 
             val (classesPath, libPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
-            logger.info("set webRoot as {}", webRoot)
+            logger.debug("set webRoot as {}", webRoot)
 
             val classLoader = WebAppClassLoader(classesPath, libPath)
             val config = withClassLoader(classLoader) {
