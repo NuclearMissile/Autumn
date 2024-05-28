@@ -114,7 +114,7 @@ annotation class Around(
     val value: String,
 )
 
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Inherited

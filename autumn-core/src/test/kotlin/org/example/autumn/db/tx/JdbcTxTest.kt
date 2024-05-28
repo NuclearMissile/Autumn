@@ -24,6 +24,7 @@ class AddressService(
     @Autowired
     lateinit var userService: UserService
 
+    @Transactional
     fun addAddress(vararg addresses: Address) {
         for (address in addresses) {
             // check if userId exists:
@@ -36,6 +37,7 @@ class AddressService(
         return jdbcTemplate.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, userId)
     }
 
+    @Transactional
     fun deleteAddress(userId: Int) {
         jdbcTemplate.update(JdbcTestBase.DELETE_ADDRESS_BY_USERID, userId)
         if (userId == 1) {
@@ -53,6 +55,7 @@ class UserService(
     @Autowired
     lateinit var addressService: AddressService
 
+    @Transactional
     fun createUser(name: String?, age: Int): User {
         val id = jdbcTemplate.insert(JdbcTestBase.INSERT_USER, name, age)
         return User(id.toInt(), name, age)
@@ -62,10 +65,12 @@ class UserService(
         return jdbcTemplate.queryRequired(JdbcTestBase.SELECT_USER, userId)
     }
 
+    @Transactional
     fun updateUser(user: User) {
         jdbcTemplate.update(JdbcTestBase.UPDATE_USER, user.name, user.age, user.id)
     }
 
+    @Transactional
     fun deleteUser(user: User) {
         jdbcTemplate.update(JdbcTestBase.DELETE_USER, user.id)
         addressService.deleteAddress(user.id)

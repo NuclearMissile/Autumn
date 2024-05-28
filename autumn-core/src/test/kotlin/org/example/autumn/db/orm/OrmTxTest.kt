@@ -78,12 +78,14 @@ class UserService(@Autowired val naiveOrm: NaiveOrm) {
         return naiveOrm.selectFrom<User>().query()
     }
 
+    @Transactional
     fun insertUser(email: String, name: String, password: String): User {
         val user = User(-1, email, name, password)
         naiveOrm.insert(user)
         return user
     }
 
+    @Transactional
     fun insertUsers(users: List<User>) {
         users.forEach { user -> naiveOrm.insert(user) }
     }
