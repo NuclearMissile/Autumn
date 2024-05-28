@@ -51,8 +51,8 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
     private val libPaths = libPath?.scanJars() ?: emptyList()
 
     init {
-        logger.info("set class path: ${this.classesPath.absPath()}")
-        libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
+        logger.debug("set class path: ${this.classesPath.absPath()}")
+        libPaths.forEach { logger.debug("set jar path: ${it.absPath()}") }
     }
 
     fun walkLibPaths(visitor: Consumer<Resource>) {
