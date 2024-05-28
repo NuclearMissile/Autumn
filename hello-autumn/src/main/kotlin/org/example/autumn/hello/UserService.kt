@@ -45,6 +45,7 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
+    @Transactional
     fun register(email: String, name: String, password: String): User? {
         val pwdSalt = SecureRandomUtils.genRandomString(32)
         val pwdHash = HashUtils.hmacSha256(password, pwdSalt)
