@@ -1,7 +1,7 @@
 <div align="center"> <img src="https://raw.githubusercontent.com/NuclearMissile/Autumn/master/autumn.png" width="250"> </div>
 
 <div align="center"> 
-<h1>Autumn</h1>
+<h2>Autumn</h2>
 Yet another web application framework imitating Spring with homemade http server with Kotlin.
 </div>
 
