@@ -272,10 +272,9 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                     }
                     ResultSetExtractor { rs ->
                         val md = rs.metaData
-                        buildMap<String, Any?> {
-                            (1..md.columnCount).map { md.getColumnName(it) }.forEach {
-                                set(it, rs.getObject(it))
-                            }
+                        (1..md.columnCount).associate {
+                            val colName = md.getColumnName(it)
+                            colName to rs.getObject(colName)
                         }
                     } as ResultSetExtractor<T>
                 }
@@ -285,10 +284,7 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                         "query for plain list only support (Mutable)List<*> return type"
                     }
                     ResultSetExtractor { rs ->
-                        val md = rs.metaData
-                        buildList<Any?> {
-                            (1..md.columnCount).forEach { add(rs.getObject(it)) }
-                        }
+                        (1..rs.metaData.columnCount).map { rs.getObject(it) }
                     } as ResultSetExtractor<T>
                 }
 

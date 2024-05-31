@@ -27,7 +27,7 @@ var testEventMessageOrder2 = ""
 
 @Component
 class TestEventSyncListener {
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventSync(event: TestEventSync) {
         testEventMessageSync = event.message
     }
@@ -35,7 +35,7 @@ class TestEventSyncListener {
 
 @Component
 class TestEventAsyncListener {
-    @Subscribe(EventMode.ASYNC)
+    @Subscribe
     fun onTestEventAsync(event: TestEventAsync) {
         Thread.sleep(10)
         testEventMessageAsync = event.message
@@ -44,7 +44,7 @@ class TestEventAsyncListener {
 
 @Component
 class TestEventUnregisterListener {
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventUnregister(event: TestEventUnregister) {
         testEventMessageUnregister = event.message
     }
@@ -53,25 +53,25 @@ class TestEventUnregisterListener {
 @Component
 class TestEventOrderListener {
     @Order(1)
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventOrder1(event: TestEventOrder) {
         testEventMessageOrder1 += "1"
     }
 
     @Order(2)
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventOrder2(event: TestEventOrder) {
         testEventMessageOrder1 += "2"
     }
 
     @Order(4)
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventOrder3(event: TestEventOrder) {
         testEventMessageOrder2 += "3"
     }
 
     @Order(3)
-    @Subscribe
+    @Subscribe(EventMode.SYNC)
     fun onTestEventOrder4(event: TestEventOrder) {
         testEventMessageOrder2 += "4"
     }
