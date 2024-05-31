@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class JdbcTxTestConfiguration
 
 @Component
-@Transactional
+@TransactionalBean
 class AddressService(
     @Autowired val jdbcTemplate: JdbcTemplate,
 ) {
@@ -47,7 +47,7 @@ class AddressService(
 }
 
 @Component
-@Transactional
+@TransactionalBean
 @Around("aroundLogInvocationHandler")
 class UserService(
     @Autowired val jdbcTemplate: JdbcTemplate,

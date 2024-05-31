@@ -28,7 +28,7 @@ import org.example.autumn.utils.SecureRandomUtils
 
 @Around("beforeLogInvocationHandler")
 @Component
-@Transactional
+@TransactionalBean
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +

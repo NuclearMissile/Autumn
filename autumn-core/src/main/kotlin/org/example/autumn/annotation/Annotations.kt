@@ -114,11 +114,17 @@ annotation class Around(
     val value: String,
 )
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Inherited
-annotation class Transactional(val value: String = "transactionManager")
+annotation class Transactional
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+@Inherited
+annotation class TransactionalBean(val value: String = "transactionManager")
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -190,4 +196,4 @@ annotation class RestController(
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class Subscribe(val eventMode: EventMode = EventMode.SYNC)
+annotation class Subscribe(val eventMode: EventMode = EventMode.ASYNC)

@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
+import org.example.autumn.annotation.TransactionalBean
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.exception.DataAccessException
@@ -72,7 +73,7 @@ data class User(
 )
 
 @Component
-@Transactional
+@TransactionalBean
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     fun getAllUser(): List<User> {
         return naiveOrm.selectFrom<User>().query()

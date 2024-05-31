@@ -1,6 +1,7 @@
 package org.example.autumn.db
 
 import org.example.autumn.annotation.Transactional
+import org.example.autumn.annotation.TransactionalBean
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.slf4j.LoggerFactory
@@ -14,7 +15,7 @@ interface TransactionManager
 
 class TransactionStatus(val connection: Connection)
 
-class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transactional>()
+class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<TransactionalBean>()
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
