@@ -1,8 +1,9 @@
-<img src="https://raw.githubusercontent.com/NuclearMissile/Autumn/master/autumn.png" width="300"> 
+<div align="center"> <img src="https://raw.githubusercontent.com/NuclearMissile/Autumn/master/autumn.png" width="250"> </div>
 
-# Autumn
-
-_Yet another toy web application framework imitating Spring with homemade http server in Kotlin._
+<div align="center"> 
+<h1>Autumn</h1>
+Yet another web application framework imitating Spring with homemade http server with Kotlin.
+</div>
 
 ![](screenshot.png)
 
@@ -139,7 +140,7 @@ data class User(
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
     @PostConstruct
