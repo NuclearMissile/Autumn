@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.*
 
 object ApplicationContextHolder {
-    var applicationContext: ApplicationContext? = null
-    val requiredApplicationContext: ApplicationContext
-        get() = requireNotNull(applicationContext) { "ApplicationContext is not set." }
+    internal var context: ApplicationContext? = null
+    val required: ApplicationContext
+        get() = requireNotNull(context) { "ApplicationContext is not set." }
 }
 
 class AnnotationConfigApplicationContext(
@@ -28,7 +28,8 @@ class AnnotationConfigApplicationContext(
     override val managedClassNames = scanClassNamesOnConfigClass(configClass)
 
     init {
-        ApplicationContextHolder.applicationContext = this
+        // register this to app context holder
+        ApplicationContextHolder.context = this
         infoMap = createBeanMetaInfos(managedClassNames)
         sortedInfos = infoMap.values.sorted()
         // init @Configuration beans
@@ -297,7 +298,7 @@ class AnnotationConfigApplicationContext(
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
@@ -510,7 +511,7 @@ class AnnotationConfigApplicationContext(
         }
         infoMap.clear()
         logger.info("{} closed.", this.javaClass.name)
-        ApplicationContextHolder.applicationContext = null
+        ApplicationContextHolder.context = null
     }
 
     private fun getOriginalInstance(info: BeanMetaInfo): Any {

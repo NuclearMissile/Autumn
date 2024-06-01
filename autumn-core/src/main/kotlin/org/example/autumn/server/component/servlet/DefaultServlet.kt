@@ -4,6 +4,7 @@ import jakarta.servlet.ServletConfig
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.utils.DateUtils.formatDateTimeGMT
 import org.example.autumn.utils.HttpUtils.escapeHtml
 import org.example.autumn.utils.IOUtils
@@ -49,7 +50,7 @@ class DefaultServlet : HttpServlet() {
         if (!uri.startsWith("/") || uri.indexOf("/../") > 0 || uri == "/WEB-INF" || uri.startsWith("/WEB-INF/")) {
             // insecure uri:
             logger.debug("prevent access insecure uri: {}", uri)
-            resp.sendError(403, "Forbidden")
+            resp.sendError(403, DEFAULT_ERROR_MSG[403])
             return
         }
         val path = Paths.get(req.servletContext.getRealPath(uri))
@@ -93,7 +94,7 @@ class DefaultServlet : HttpServlet() {
             }
 
             else -> {
-                resp.sendError(404, "Not Found")
+                resp.sendError(404, DEFAULT_ERROR_MSG[404])
             }
         }
     }

@@ -10,7 +10,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val classMapping by lazy {
-        ApplicationContextHolder.applicationContext!!.managedClassNames
+        ApplicationContextHolder.required.managedClassNames
             .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
             .filter { it.isAnnotationPresent(Entity::class.java) }
             .associateWith { Mapper(it) }

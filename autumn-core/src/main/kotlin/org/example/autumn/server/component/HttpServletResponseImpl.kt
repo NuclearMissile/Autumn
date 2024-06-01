@@ -27,7 +27,7 @@ class HttpServletResponseImpl(
     private var printWriter: PrintWriter? = null
 
     private fun commitHeaders(length: Long) {
-        exchangeResp.sendResponseHeaders(this.status, length)
+        exchangeResp.sendResponseHeaders(status, length)
         isCommitted = true
     }
 
@@ -163,11 +163,18 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot sendError after committed")
         }
         status = sc
-        commitHeaders(-1)
+        writer.apply {
+            write(msg)
+            flush()
+        }
     }
 
     override fun sendError(sc: Int) {
-        sendError(sc, "Error")
+        require(!isCommitted) {
+            throw IllegalStateException("cannot sendError after committed")
+        }
+        status = sc
+        commitHeaders(-1)
     }
 
     override fun sendRedirect(location: String) {

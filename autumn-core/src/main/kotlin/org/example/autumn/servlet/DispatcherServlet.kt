@@ -34,9 +34,9 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val applicationContext = ApplicationContextHolder.requiredApplicationContext
-    private val config = applicationContext.getConfig()
-    private val viewResolver = applicationContext.getBean(ViewResolver::class.java)
+    private val context = ApplicationContextHolder.required
+    private val config = context.getConfig()
+    private val viewResolver = context.getBean(ViewResolver::class.java)
     private val resourcePath = config
         .getString("\${autumn.web.static-path:/static/}")!!.removeSuffix("/") + "/"
     private val faviconPath = config.getRequiredString("\${autumn.web.favicon-path:/favicon.ico}")
@@ -46,7 +46,7 @@ class DispatcherServlet : HttpServlet() {
     override fun init() {
         logger.info("init {}.", javaClass.name)
         // scan @Controller and @RestController:
-        for (info in applicationContext.findBeanMetaInfos(Any::class.java)) {
+        for (info in context.findBeanMetaInfos(Any::class.java)) {
             val beanClass = info.beanClass
             val bean = info.requiredInstance
             val controllerAnno = beanClass.getAnnotation(Controller::class.java)
@@ -67,7 +67,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     override fun destroy() {
-        applicationContext.close()
+        context.close()
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {

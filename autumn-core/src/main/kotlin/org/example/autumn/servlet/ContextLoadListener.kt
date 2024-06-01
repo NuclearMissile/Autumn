@@ -50,8 +50,8 @@ open class ContextLoadListener : ServletContextListener {
     }
 
     private fun registerFilters(servletContext: ServletContext) {
-        val applicationContext = ApplicationContextHolder.requiredApplicationContext
-        for (filterRegBean in applicationContext.getBeans(FilterRegistrationBean::class.java)) {
+        val context = ApplicationContextHolder.required
+        for (filterRegBean in context.getBeans(FilterRegistrationBean::class.java)) {
             val urlPatterns = filterRegBean.urlPatterns
             require(urlPatterns.isNotEmpty()) {
                 "No url patterns for ${filterRegBean.javaClass.name}"

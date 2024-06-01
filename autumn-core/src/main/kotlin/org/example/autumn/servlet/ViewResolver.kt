@@ -9,6 +9,7 @@ import freemarker.template.TemplateExceptionHandler
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ServerErrorException
 import org.slf4j.LoggerFactory
@@ -81,7 +82,9 @@ class FreeMarkerViewResolver(
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
         } catch (e: Exception) {
-            resp.sendError(statusCode)
+            resp.sendError(
+                statusCode, DEFAULT_ERROR_MSG.getOrDefault(statusCode, "<h1>Status: $statusCode</h1>")
+            )
             return
         }
         resp.status = statusCode

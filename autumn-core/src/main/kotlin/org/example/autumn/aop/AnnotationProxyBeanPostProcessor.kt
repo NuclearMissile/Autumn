@@ -64,11 +64,11 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         } catch (e: ReflectiveOperationException) {
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
         } as String
-        val ctx = ApplicationContextHolder.requiredApplicationContext
-        val handlerInfo = ctx.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
+        val context = ApplicationContextHolder.required
+        val handlerInfo = context.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
             "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
         )
-        val handler = handlerInfo.instance ?: ctx.createEarlySingleton(handlerInfo)
+        val handler = handlerInfo.instance ?: context.createEarlySingleton(handlerInfo)
         val proxy = if (handler is InvocationHandler)
             createProxy(bean, handler)
         else throw AopConfigException(
