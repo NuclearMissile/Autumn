@@ -10,7 +10,6 @@ import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.DEFAULT_ERROR_MSG
-import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ServerErrorException
 import org.slf4j.LoggerFactory
 import java.io.*
@@ -59,19 +58,21 @@ class FreeMarkerViewResolver(
     override fun render(
         viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
     ) {
+        resp.status = statusCode
+        resp.contentType = "text/html"
+
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
         } catch (e: Exception) {
-            throw NotFoundException("Template '$viewName' not found.")
+            throw ServerErrorException("Template '$viewName' not found.")
         }
-        resp.status = statusCode
-        resp.contentType = "text/html"
+
         resp.writer.apply {
             try {
                 template.process(model, this)
                 flush()
             } catch (e: TemplateException) {
-                throw ServerErrorException("Exception thrown while rendering template.", null, e)
+                throw ServerErrorException("Exception thrown while rendering template: $viewName", null, e)
             }
         }
     }
@@ -79,6 +80,9 @@ class FreeMarkerViewResolver(
     override fun renderError(
         statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse
     ) {
+        resp.status = statusCode
+        resp.contentType = "text/html"
+
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
         } catch (e: Exception) {
@@ -87,14 +91,14 @@ class FreeMarkerViewResolver(
             )
             return
         }
-        resp.status = statusCode
-        resp.contentType = "text/html"
+
         resp.writer.apply {
             try {
                 template.process(model, this)
                 flush()
             } catch (e: TemplateException) {
-                throw ServerErrorException("Exception thrown while rendering template.", null, e)
+                logger.warn("Exception thrown while rendering template: $statusCode.html")
+                resp.sendError(500, DEFAULT_ERROR_MSG[500])
             }
         }
     }

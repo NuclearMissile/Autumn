@@ -87,7 +87,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveError(url, NotFoundException("Resource not found"), req, resp, false)
+                serveException(url, NotFoundException("Resource not found"), req, resp, false)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -103,12 +103,12 @@ class DispatcherServlet : HttpServlet() {
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
-                dispatcher == null -> serveError(url, NotFoundException("Path not found"), req, resp, false)
+                dispatcher == null -> serveException(url, NotFoundException("Path not found"), req, resp, false)
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
                 else -> serveMvc(url, dispatcher, req, resp)
             }
         } catch (e: ResponseErrorException) {
-            serveError(url, e, req, resp, dispatcher!!.isRest)
+            serveException(url, e, req, resp, dispatcher!!.isRest)
         }
     }
 
@@ -165,26 +165,33 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun serveError(
+    private fun serveException(
         url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean,
     ) {
         logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $url)", e)
         if (resp.isCommitted) return
         resp.reset()
         resp.status = e.statusCode
-        resp.contentType = "text/plain"
-        if (isRest) {
-            resp.writer.apply {
-                write(e.responseBody ?: "")
-                flush()
+        when {
+            isRest -> {
+                resp.contentType = "text/plain"
+                resp.writer.apply {
+                    write(e.responseBody ?: "")
+                    flush()
+                }
             }
-        } else if (e.responseBody != null) {
-            resp.writer.apply {
-                write(e.responseBody)
-                flush()
+
+            e.responseBody != null -> {
+                resp.contentType = "text/html"
+                resp.writer.apply {
+                    write(e.responseBody)
+                    flush()
+                }
             }
-        } else {
-            viewResolver.renderError(e.statusCode, null, req, resp)
+
+            else -> {
+                viewResolver.renderError(e.statusCode, null, req, resp)
+            }
         }
     }
 

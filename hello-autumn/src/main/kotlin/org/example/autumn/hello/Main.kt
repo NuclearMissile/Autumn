@@ -162,6 +162,11 @@ class IndexController @Autowired constructor(private val userService: UserServic
         eventBus.post(LogoffEvent(user))
         return "redirect:/login"
     }
+
+    @Get("/error/{errorCode}")
+    fun error(@PathVariable errorCode: Int) {
+        throw ResponseErrorException(errorCode, "test")
+    }
 }
 
 @RestController("/api")
