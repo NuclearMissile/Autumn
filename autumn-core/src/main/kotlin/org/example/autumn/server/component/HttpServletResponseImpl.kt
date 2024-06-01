@@ -163,10 +163,7 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot sendError after committed")
         }
         status = sc
-        writer.apply {
-            write(msg)
-            flush()
-        }
+        writer.apply { write(msg) }.flush()
     }
 
     override fun sendError(sc: Int) {

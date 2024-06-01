@@ -175,18 +175,12 @@ class DispatcherServlet : HttpServlet() {
         when {
             isRest -> {
                 resp.contentType = "text/plain"
-                resp.writer.apply {
-                    write(e.responseBody ?: "")
-                    flush()
-                }
+                resp.writer.apply { write(e.responseBody ?: "") }.flush()
             }
 
             e.responseBody != null -> {
                 resp.contentType = "text/html"
-                resp.writer.apply {
-                    write(e.responseBody)
-                    flush()
-                }
+                resp.writer.apply { write(e.responseBody) }.flush()
             }
 
             else -> {

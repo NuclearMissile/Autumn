@@ -46,8 +46,7 @@ class DefaultServlet : HttpServlet() {
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
         val uri = req.requestURI
-        logger.info("render file browser for {}", uri)
-        if (!uri.startsWith("/") || uri.indexOf("/../") > 0 || uri == "/WEB-INF" || uri.startsWith("/WEB-INF/")) {
+        if (!uri.startsWith("/") || uri.indexOf("/../") > 0 || uri.startsWith("/WEB-INF") || uri.startsWith("/META-INF")) {
             // insecure uri:
             logger.debug("prevent access insecure uri: {}", uri)
             resp.sendError(403, DEFAULT_ERROR_MSG[403])
@@ -56,32 +55,27 @@ class DefaultServlet : HttpServlet() {
         val path = Paths.get(req.servletContext.getRealPath(uri))
         logger.debug("try access path: {}", path)
         when {
-            uri.endsWith("/") -> {
-                if (Files.isDirectory(path)) {
-                    val sb = StringBuilder(4096)
-                    if (uri != "/") {
-                        sb.append(formatTr(path.parent, -1, ".."))
-                    }
-
-                    for (file in Files.list(path).toList().sortedBy { it.toString() }) {
-                        var name = file.fileName.toString()
-                        var size = -1L
-                        if (Files.isDirectory(file)) {
-                            name = "$name/"
-                        } else if (Files.isRegularFile(file)) {
-                            size = Files.size(file)
-                        }
-                        sb.append(formatTr(file, size, name))
-                    }
-                    val trs = sb.append("</tr>").toString()
-                    val html = indexTemplate.replace("\${URI}", uri.escapeHtml()) //
-                        .replace("\${SERVER_INFO}", servletContext.serverInfo) //
-                        .replace("\${TRS}", trs)
-                    resp.writer.apply {
-                        write(html)
-                        flush()
-                    }
+            uri.endsWith("/") && Files.isDirectory(path) -> {
+                val sb = StringBuilder(4096)
+                if (uri != "/") {
+                    sb.append(formatTr(path.parent, -1, ".."))
                 }
+
+                for (file in Files.list(path).toList().sortedBy { it.toString() }) {
+                    var name = file.fileName.toString()
+                    var size = -1L
+                    if (Files.isDirectory(file)) {
+                        name = "$name/"
+                    } else if (Files.isRegularFile(file)) {
+                        size = Files.size(file)
+                    }
+                    sb.append(formatTr(file, size, name))
+                }
+                val trs = sb.append("</tr>").toString()
+                val html = indexTemplate.replace("\${URI}", uri.escapeHtml()) //
+                    .replace("\${SERVER_INFO}", servletContext.serverInfo) //
+                    .replace("\${TRS}", trs)
+                resp.writer.apply { write(html) }.flush()
             }
 
             Files.isReadable(path) -> {

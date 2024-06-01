@@ -2,6 +2,7 @@ package org.example.autumn.server.connector
 
 import com.sun.net.httpserver.HttpServer
 import jakarta.servlet.ServletContainerInitializer
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.component.HttpServletRequestImpl
@@ -47,13 +48,9 @@ class HttpConnector(
                 // fall-over error handling
                 logger.error("unhandled exception caught:", e)
                 try {
-                    resp.status = 500
-                    resp.writer.apply {
-                        write("<h1>500 Internal Error</h1>")
-                        flush()
-                    }
+                    resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
                 } catch (e: IllegalStateException) {
-                    logger.error("response has already been committed.")
+                    logger.warn("response has already been committed.")
                 }
             } finally {
                 Thread.currentThread().contextClassLoader = null

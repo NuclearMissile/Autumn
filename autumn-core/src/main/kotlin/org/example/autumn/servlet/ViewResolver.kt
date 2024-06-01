@@ -70,11 +70,10 @@ class FreeMarkerViewResolver(
         resp.writer.apply {
             try {
                 template.process(model, this)
-                flush()
             } catch (e: TemplateException) {
                 throw ServerErrorException("Exception thrown while rendering template: $viewName", null, e)
             }
-        }
+        }.flush()
     }
 
     override fun renderError(
@@ -95,12 +94,11 @@ class FreeMarkerViewResolver(
         resp.writer.apply {
             try {
                 template.process(model, this)
-                flush()
             } catch (e: TemplateException) {
                 logger.warn("Exception thrown while rendering template: $statusCode.html")
                 resp.sendError(500, DEFAULT_ERROR_MSG[500])
             }
-        }
+        }.flush()
     }
 }
 
