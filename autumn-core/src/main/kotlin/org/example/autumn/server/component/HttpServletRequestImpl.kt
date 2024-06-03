@@ -4,15 +4,16 @@ import jakarta.servlet.*
 import jakarta.servlet.http.*
 import org.example.autumn.DEFAULT_LOCALE
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.server.component.support.HttpHeaders
-import org.example.autumn.server.component.support.HttpReqParams
+import org.example.autumn.server.component.support.*
 import org.example.autumn.server.connector.HttpExchangeRequest
+import org.example.autumn.utils.DateUtils
 import org.example.autumn.utils.HttpUtils
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.security.Principal
+import java.time.format.DateTimeParseException
 import java.util.*
 
 class HttpServletRequestImpl(
@@ -22,7 +23,7 @@ class HttpServletRequestImpl(
     private val resp: HttpServletResponse,
 ) : HttpServletRequest {
     private val method = exchangeReq.getRequestMethod()
-    private val headers = HttpHeaders(exchangeReq.getRequestHeaders())
+    private val headers = exchangeReq.getRequestHeaders()
     private val attributes = mutableMapOf<String, Any>()
     private val requestId = UUID.randomUUID().toString()
     private val contentLength = if (listOf("POST", "PUT", "DELETE", "PATCH").contains(method))
@@ -262,24 +263,29 @@ class HttpServletRequestImpl(
     }
 
     override fun getDateHeader(name: String): Long {
-        return headers.getDateHeader(name)
+        val value = headers.getFirst(name) ?: return -1
+        try {
+            return DateUtils.parseDateTimeGMT(value)
+        } catch (e: DateTimeParseException) {
+            throw IllegalArgumentException("Cannot parse date header: $value")
+        }
     }
 
     override fun getHeader(name: String): String? {
-        return headers.getHeader(name)
+        return headers.getFirst(name)
     }
 
     override fun getHeaders(name: String): Enumeration<String> {
-        val hs = headers.getHeaders(name)
+        val hs = headers[name]
         return if (hs == null) Collections.emptyEnumeration() else Collections.enumeration(hs)
     }
 
     override fun getHeaderNames(): Enumeration<String> {
-        return Collections.enumeration(headers.getHeaderNames())
+        return Collections.enumeration(headers.keys)
     }
 
     override fun getIntHeader(name: String): Int {
-        return headers.getIntHeader(name)
+        return headers.getFirst(name)?.toInt() ?: -1
     }
 
     override fun getMethod(): String {

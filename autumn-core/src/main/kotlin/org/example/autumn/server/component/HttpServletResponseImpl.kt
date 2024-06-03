@@ -4,16 +4,16 @@ import jakarta.servlet.ServletOutputStream
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.server.component.support.HttpHeaders
 import org.example.autumn.server.connector.HttpExchangeResponse
+import org.example.autumn.utils.DateUtils
 import java.io.PrintWriter
 import java.nio.charset.Charset
 import java.util.*
 
 class HttpServletResponseImpl(
-    config: PropertyResolver, private val exchangeResp: HttpExchangeResponse
+    config: PropertyResolver, private val exchangeResp: HttpExchangeResponse,
 ) : HttpServletResponse {
-    private val headers = HttpHeaders(exchangeResp.getResponseHeaders())
+    private val headers = exchangeResp.getResponseHeaders()
     private val cookies = mutableListOf<Cookie>()
 
     private var status = 200
@@ -125,7 +125,7 @@ class HttpServletResponseImpl(
         status = 200
         outputStream = null
         printWriter = null
-        headers.clearHeaders()
+        headers.clear()
     }
 
     override fun setLocale(loc: Locale) {
@@ -147,7 +147,7 @@ class HttpServletResponseImpl(
     }
 
     override fun containsHeader(name: String): Boolean {
-        return headers.containsHeader(name)
+        return headers.contains(name)
     }
 
     override fun encodeURL(url: String): String {
@@ -179,7 +179,7 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot sendRedirect after committed")
         }
         status = 302
-        headers.setHeader("Location", location)
+        headers["Location"] = location
         commitHeaders(-1)
     }
 
@@ -187,42 +187,42 @@ class HttpServletResponseImpl(
         require(!isCommitted) {
             throw IllegalStateException("cannot setDateHeader after committed")
         }
-        headers.setDateHeader(name, date)
+        headers[name] = DateUtils.formatDateTimeGMT(date)
     }
 
     override fun addDateHeader(name: String, date: Long) {
         require(!isCommitted) {
             throw IllegalStateException("cannot addDateHeader after committed")
         }
-        headers.addDateHeader(name, date)
+        headers.add(name, DateUtils.formatDateTimeGMT(date))
     }
 
     override fun setHeader(name: String, value: String) {
         require(!isCommitted) {
             throw IllegalStateException("cannot setHeader after committed")
         }
-        headers.setHeader(name, value)
+        headers[name] = value
     }
 
     override fun addHeader(name: String, value: String) {
         require(!isCommitted) {
             throw IllegalStateException("cannot addHeader after committed")
         }
-        headers.addHeader(name, value)
+        headers.add(name, value)
     }
 
     override fun setIntHeader(name: String, value: Int) {
         require(!isCommitted) {
             throw IllegalStateException("cannot setIntHeader after committed")
         }
-        headers.setIntHeader(name, value)
+        headers[name] = value.toString()
     }
 
     override fun addIntHeader(name: String, value: Int) {
         require(!isCommitted) {
             throw IllegalStateException("cannot addIntHeader after committed")
         }
-        headers.addIntHeader(name, value)
+        headers.add(name, value.toString())
     }
 
     override fun setStatus(sc: Int) {
@@ -237,14 +237,14 @@ class HttpServletResponseImpl(
     }
 
     override fun getHeader(name: String): String? {
-        return headers.getHeader(name)
+        return headers.getFirst(name)
     }
 
     override fun getHeaders(name: String): Collection<String> {
-        return headers.getHeaders(name) ?: emptyList()
+        return headers[name] ?: emptyList()
     }
 
     override fun getHeaderNames(): Collection<String> {
-        return headers.getHeaderNames()
+        return headers.keys
     }
 }

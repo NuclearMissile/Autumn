@@ -15,6 +15,7 @@ import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.example.autumn.utils.JsonUtils.readJson
+import org.example.autumn.utils.JsonUtils.toJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
@@ -115,14 +116,28 @@ class DispatcherServlet : HttpServlet() {
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
         val ret = dispatcher.process(url, req, resp)
         if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "application/json" }
-        if (dispatcher.isResponseBody) {
-            when (ret) {
-                is String -> resp.writer.apply { write(ret) }.flush()
-                is ByteArray -> resp.outputStream.apply { write(ret) }.flush()
-                else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
+        when {
+            dispatcher.isResponseBody -> {
+                when (ret) {
+                    is String -> resp.writer.apply { write(ret) }.flush()
+                    is ByteArray -> resp.outputStream.apply { write(ret) }.flush()
+                    else -> throw ServerErrorException("Unable to process REST @ResponseBody result when handle url: $url")
+                }
             }
-        } else if (!dispatcher.isVoid) {
-            resp.writer.writeJson(ret).flush()
+
+            ret is ResponseEntity -> {
+                resp.status = ret.status
+                resp.contentType = ret.contentType
+                when (ret.body) {
+                    is String -> resp.writer.apply { write(ret.body) }.flush()
+                    is ByteArray -> resp.outputStream.apply { write(ret.body) }.flush()
+                    else -> resp.writer.apply { write(ret.body.toJson()) }.flush()
+                }
+            }
+
+            !dispatcher.isVoid -> {
+                resp.writer.writeJson(ret).flush()
+            }
         }
     }
 
@@ -130,6 +145,16 @@ class DispatcherServlet : HttpServlet() {
         val ret = dispatcher.process(url, req, resp)
         if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "text/html" }
         when (ret) {
+            is ResponseEntity -> {
+                resp.status = ret.status
+                resp.contentType = ret.contentType
+                when (ret.body) {
+                    is String -> resp.writer.apply { write(ret.body) }.flush()
+                    is ByteArray -> resp.outputStream.apply { write(ret.body) }.flush()
+                    else -> resp.writer.apply { write(ret.body.toJson()) }.flush()
+                }
+            }
+
             is String -> {
                 if (dispatcher.isResponseBody) {
                     resp.writer.apply { write(ret) }.flush()
@@ -264,7 +289,7 @@ class DispatcherServlet : HttpServlet() {
                     }
 
                     is RequestBody -> if (String::class.java.isAssignableFrom(param.paramType))
-                        req.reader.readText() else req.reader.readJson(param.paramType)
+                        req.reader.use { it.readText() } else req.reader.use { it.readJson(param.paramType) }
 
                     is RequestParam -> {
                         val value = req.getParameter(param.name) ?: param.defaultValue!!
@@ -293,6 +318,12 @@ class DispatcherServlet : HttpServlet() {
                         HttpServletResponse::class.java -> resp
                         HttpSession::class.java -> req.session
                         ServletContext::class.java -> req.servletContext
+                        RequestEntity::class.java -> RequestEntity(
+                            req.method, req.requestURI, req.reader.use { it.readText() },
+                            req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
+                            req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() }
+                        )
+
                         else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                     }
                 }
@@ -364,7 +395,8 @@ class DispatcherServlet : HttpServlet() {
                     if (paramType != HttpServletRequest::class.java &&
                         paramType != HttpServletResponse::class.java &&
                         paramType != HttpSession::class.java &&
-                        paramType != ServletContext::class.java
+                        paramType != ServletContext::class.java &&
+                        paramType != RequestEntity::class.java
                     ) {
                         throw ServerErrorException(
                             "(Missing annotation?) Unsupported argument type: $paramType at method: $method"

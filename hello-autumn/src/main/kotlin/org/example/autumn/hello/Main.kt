@@ -15,9 +15,7 @@ import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
-import org.example.autumn.servlet.ContextLoadListener
-import org.example.autumn.servlet.FilterRegistrationBean
-import org.example.autumn.servlet.ModelAndView
+import org.example.autumn.servlet.*
 import org.example.autumn.utils.JsonUtils.toJson
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
@@ -167,6 +165,11 @@ class IndexController @Autowired constructor(private val userService: UserServic
     fun error(@PathVariable errorCode: Int) {
         throw ResponseErrorException(errorCode, "test")
     }
+
+    @Get("/echo")
+    fun echo(req: RequestEntity): ResponseEntity {
+        return ResponseEntity(req)
+    }
 }
 
 @RestController("/api")
@@ -185,6 +188,11 @@ class RestApiController {
     @Get("/error")
     fun error() {
         throw Exception("api test error")
+    }
+
+    @Get("/400")
+    fun responseEntityTest(req: RequestEntity): ResponseEntity {
+        return ResponseEntity("400 error", 400)
     }
 
     @Get("/error/{errorCode}/{errorResp}")
