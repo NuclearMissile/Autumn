@@ -305,7 +305,7 @@ class DispatcherServlet : HttpServlet() {
                             req.method, req.requestURI, req.reader.use { it.readText() },
                             req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
                             req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
-                            req.cookies?.toList()
+                            req.cookies?.toList() ?: emptyList()
                         )
 
                         else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")

@@ -3,6 +3,7 @@ package org.example.autumn.servlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.utils.JsonUtils.toJson
@@ -193,6 +194,18 @@ class MvcController {
         session.setAttribute("signout", true)
         resp.sendRedirect("/signin?name=$name")
         return null
+    }
+
+    @Get("/error/{status}")
+    fun error(@PathVariable status: Int): ResponseEntity {
+        return ResponseEntity(
+            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), "text/html", status
+        )
+    }
+
+    @Post("/echo")
+    fun echo(req: RequestEntity): ResponseEntity {
+        return ResponseEntity(req, "application/json", 200)
     }
 }
 

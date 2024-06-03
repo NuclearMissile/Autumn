@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.InvocationHandlerAdapter
 import org.example.autumn.eventbus.Event
@@ -173,7 +174,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @Get("/echo")
     fun echo(req: RequestEntity): ResponseEntity {
-        return ResponseEntity(req, 200, "application/json")
+        return ResponseEntity(req, "application/json", 200)
     }
 }
 
@@ -195,9 +196,11 @@ class RestApiController {
         throw Exception("api test error")
     }
 
-    @Get("/400")
-    fun error400(req: RequestEntity): ResponseEntity {
-        return ResponseEntity("400 error", 400)
+    @Get("/error/{status}")
+    fun error(@PathVariable status: Int): ResponseEntity {
+        return ResponseEntity(
+            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), "text/html", status
+        )
     }
 
     @Get("/error/{errorCode}/{errorResp}")

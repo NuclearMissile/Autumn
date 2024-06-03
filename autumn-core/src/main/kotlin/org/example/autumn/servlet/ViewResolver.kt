@@ -86,7 +86,7 @@ class FreeMarkerViewResolver(
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
         } catch (e: Exception) {
             resp.sendError(
-                statusCode, DEFAULT_ERROR_MSG.getOrDefault(statusCode, "<h1>Status: $statusCode</h1>")
+                statusCode, DEFAULT_ERROR_MSG.getOrDefault(statusCode, "<h1>Error: Status $statusCode</h1>")
             )
             return
         }

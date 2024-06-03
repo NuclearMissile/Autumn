@@ -5,12 +5,12 @@ import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.utils.JsonUtils.toJson
 
 data class ResponseEntity(
-    val body: Any?, val status: Int = 200, val contentType: String = "text/plain",
-    val headers: Map<String, String>? = null, val cookies: List<Cookie>? = null,
+    val body: Any?, val contentType: String, val status: Int = 200,
+    val headers: List<Pair<String, String>>? = null, val cookies: List<Cookie>? = null,
 )
 
 fun HttpServletResponse.setUp(respEntity: ResponseEntity) {
-    respEntity.headers?.forEach { (k, v) -> setHeader(k, v) }
+    respEntity.headers?.forEach { (k, v) -> addHeader(k, v) }
     respEntity.cookies?.forEach { addCookie(it) }
     status = respEntity.status
     contentType = respEntity.contentType
@@ -27,5 +27,5 @@ data class RequestEntity(
     val body: String,
     val headers: Map<String, List<String>>,
     val reqParams: Map<String, List<String>>,
-    val cookies: List<Cookie>?,
+    val cookies: List<Cookie>,
 )

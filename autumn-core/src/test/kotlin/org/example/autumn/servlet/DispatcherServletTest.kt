@@ -1,9 +1,11 @@
 package org.example.autumn.servlet
 
 import jakarta.servlet.ServletException
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.resolver.Config
 import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
+import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.BeforeEach
@@ -292,6 +294,59 @@ class DispatcherServletTest {
         assertEquals(true, req.session!!.getAttribute("signout"))
     }
 
+    @Test
+    fun getErrorStatus() {
+        for (status in 400..599) {
+            val req = createMockRequest("GET", "/error/$status", null)
+            val resp = createMockResponse()
+            dispatcherServlet.service(req, resp)
+            assertEquals(status, resp.status)
+            assertEquals(resp.contentAsString, DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"))
+        }
+    }
+
+    @Test
+    fun testEcho() {
+        val req = createMockRequest("POST", "/echo", "test echo")
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        val respEntity = resp.contentAsString.readJson<Map<*, *>>()!!
+        assertEquals(200, resp.status)
+        assertEquals("application/json", resp.contentType)
+        assertEquals(req.contentAsString, respEntity["body"])
+        assertEquals("POST", respEntity["method"])
+        assertTrue((respEntity["reqParams"] as Map<*, *>).isEmpty())
+        assertTrue((respEntity["cookies"] as List<*>).isEmpty())
+    }
+
+    @Test
+    fun testEcho1() {
+        val req = createMockRequest("POST", "/echo", null)
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        val respEntity = resp.contentAsString.readJson<Map<*, *>>()!!
+        assertEquals(200, resp.status)
+        assertEquals("application/json", resp.contentType)
+        assertEquals("", respEntity["body"])
+        assertEquals("POST", respEntity["method"])
+        assertTrue((respEntity["reqParams"] as Map<*, *>).isEmpty())
+        assertTrue((respEntity["cookies"] as List<*>).isEmpty())
+    }
+
+    @Test
+    fun testEcho2() {
+        val req = createMockRequest("POST", "/echo", "")
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        val respEntity = resp.contentAsString.readJson<Map<*, *>>()!!
+        assertEquals(200, resp.status)
+        assertEquals("application/json", resp.contentType)
+        assertEquals("", respEntity["body"])
+        assertEquals("POST", respEntity["method"])
+        assertTrue((respEntity["reqParams"] as Map<*, *>).isEmpty())
+        assertTrue((respEntity["cookies"] as List<*>).isEmpty())
+    }
+
     @BeforeEach
     fun init() {
         ctx = createMockServletContext()
@@ -322,9 +377,10 @@ class DispatcherServletTest {
     }
 
     private fun createMockRequest(
-        method: String, path: String, body: Any? = null, params: Map<String, String>? = null
+        method: String, path: String, body: Any? = null, params: Map<String, String>? = null,
     ): MockHttpServletRequest {
         val req = MockHttpServletRequest(ctx, method, path)
+        req.characterEncoding = "UTF-8"
         if (method == "GET" && params != null) {
             params.forEach { (k, v) -> req.setParameter(k, v) }
         } else if (method == "POST") {
