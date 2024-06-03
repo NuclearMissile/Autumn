@@ -6,6 +6,7 @@ import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.InvocationHandlerAdapter
@@ -55,8 +56,12 @@ class LogFilter : FilterRegistrationBean() {
         override fun doFilter(req: ServletRequest, resp: ServletResponse, chain: FilterChain) {
             val startTime = System.currentTimeMillis()
             val httpReq = req as HttpServletRequest
+            val httpResp = resp as HttpServletResponse
             chain.doFilter(req, resp)
-            logger.info("{}: {} ${System.currentTimeMillis() - startTime}ms", httpReq.method, httpReq.requestURI)
+            logger.info(
+                "{}: {} [{}, ${System.currentTimeMillis() - startTime}ms]",
+                httpReq.method, httpReq.requestURI, httpResp.status
+            )
         }
     }
 }
@@ -168,7 +173,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @Get("/echo")
     fun echo(req: RequestEntity): ResponseEntity {
-        return ResponseEntity(req)
+        return ResponseEntity(req, 200, "application/json")
     }
 }
 
@@ -191,7 +196,7 @@ class RestApiController {
     }
 
     @Get("/400")
-    fun responseEntityTest(req: RequestEntity): ResponseEntity {
+    fun error400(req: RequestEntity): ResponseEntity {
         return ResponseEntity("400 error", 400)
     }
 

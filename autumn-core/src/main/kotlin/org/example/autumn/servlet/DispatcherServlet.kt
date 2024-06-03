@@ -15,7 +15,6 @@ import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.example.autumn.utils.JsonUtils.readJson
-import org.example.autumn.utils.JsonUtils.toJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
@@ -125,15 +124,7 @@ class DispatcherServlet : HttpServlet() {
                 }
             }
 
-            ret is ResponseEntity -> {
-                resp.status = ret.status
-                resp.contentType = ret.contentType
-                when (ret.body) {
-                    is String -> resp.writer.apply { write(ret.body) }.flush()
-                    is ByteArray -> resp.outputStream.apply { write(ret.body) }.flush()
-                    else -> resp.writer.apply { write(ret.body.toJson()) }.flush()
-                }
-            }
+            ret is ResponseEntity -> resp.setUp(ret)
 
             !dispatcher.isVoid -> {
                 resp.writer.writeJson(ret).flush()
@@ -145,15 +136,7 @@ class DispatcherServlet : HttpServlet() {
         val ret = dispatcher.process(url, req, resp)
         if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "text/html" }
         when (ret) {
-            is ResponseEntity -> {
-                resp.status = ret.status
-                resp.contentType = ret.contentType
-                when (ret.body) {
-                    is String -> resp.writer.apply { write(ret.body) }.flush()
-                    is ByteArray -> resp.outputStream.apply { write(ret.body) }.flush()
-                    else -> resp.writer.apply { write(ret.body.toJson()) }.flush()
-                }
-            }
+            is ResponseEntity -> resp.setUp(ret)
 
             is String -> {
                 if (dispatcher.isResponseBody) {
@@ -321,7 +304,8 @@ class DispatcherServlet : HttpServlet() {
                         RequestEntity::class.java -> RequestEntity(
                             req.method, req.requestURI, req.reader.use { it.readText() },
                             req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
-                            req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() }
+                            req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
+                            req.cookies?.toList()
                         )
 
                         else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
