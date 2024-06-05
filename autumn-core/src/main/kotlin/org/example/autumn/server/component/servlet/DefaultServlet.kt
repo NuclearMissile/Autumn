@@ -80,7 +80,7 @@ class DefaultServlet : HttpServlet() {
 
             Files.isReadable(path) -> {
                 logger.atDebug().log("read file: {}", path)
-                resp.contentType = servletContext.getMimeType(uri)
+                resp.contentType = servletContext.getMimeType(uri) ?: "application/octet-stream"
                 path.toFile().inputStream().use {
                     it.transferTo(resp.outputStream)
                 }

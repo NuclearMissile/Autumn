@@ -320,11 +320,10 @@ class ServletContextImpl(
         return 0
     }
 
-    override fun getMimeType(file: String): String {
-        val default = config.getRequiredString("server.mime-default")
+    override fun getMimeType(file: String): String? {
         val n = file.lastIndexOf(".")
         return if (n < 0)
-            default else config.getString("server.mime-types${file.substring(n).lowercase()}", default)
+            null else config.getString("server.mime-types${file.substring(n).lowercase()}")
     }
 
     override fun getResourcePaths(path: String): MutableSet<String>? {

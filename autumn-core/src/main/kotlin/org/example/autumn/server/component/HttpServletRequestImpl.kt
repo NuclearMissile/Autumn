@@ -93,8 +93,8 @@ class HttpServletRequestImpl(
 
     override fun getScheme(): String {
         var scheme = "http"
-        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-proto")
-        if (forwarded.isNotEmpty()) {
+        val forwarded = config.getString("server.forwarded-headers.forwarded-proto")
+        if (!forwarded.isNullOrEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
                 scheme = forwardedHeader
@@ -105,8 +105,8 @@ class HttpServletRequestImpl(
 
     override fun getServerName(): String {
         var serverName = getHeader("Host")
-        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-host")
-        if (forwarded.isNotEmpty()) {
+        val forwarded = config.getString("server.forwarded-headers.forwarded-host")
+        if (!forwarded.isNullOrEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
                 serverName = forwardedHeader
@@ -129,8 +129,8 @@ class HttpServletRequestImpl(
 
     override fun getRemoteAddr(): String {
         var addr: String? = null
-        val forwarded = config.getRequiredString("server.forwarded-headers.forwarded-for")
-        if (forwarded.isNotEmpty()) {
+        val forwarded = config.getString("server.forwarded-headers.forwarded-for")
+        if (!forwarded.isNullOrEmpty()) {
             val forwardedHeader = getHeader(forwarded)
             if (forwardedHeader != null) {
                 val n = forwardedHeader.indexOf(',')
