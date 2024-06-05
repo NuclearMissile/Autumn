@@ -182,20 +182,11 @@ class DispatcherServlet : HttpServlet() {
         if (resp.isCommitted) return
         resp.reset()
         resp.status = e.statusCode
+        resp.contentType = "text/plain"
         when {
-            isRest -> {
-                resp.contentType = "text/plain"
-                resp.writer.apply { write(e.responseBody ?: "") }.flush()
-            }
-
-            e.responseBody != null -> {
-                resp.contentType = "text/html"
-                resp.writer.apply { write(e.responseBody) }.flush()
-            }
-
-            else -> {
-                viewResolver.renderError(e.statusCode, null, req, resp)
-            }
+            isRest -> resp.writer.apply { write(e.responseBody ?: "") }.flush()
+            e.responseBody != null -> resp.writer.apply { write(e.responseBody) }.flush()
+            else -> viewResolver.renderError(e.statusCode, null, req, resp)
         }
     }
 
