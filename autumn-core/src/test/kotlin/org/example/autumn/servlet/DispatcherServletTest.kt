@@ -285,6 +285,16 @@ class DispatcherServletTest {
     }
 
     @Test
+    fun testEchoStringBody1() {
+        val req = createMockRequest("POST", "/api/echo-string-body", null)
+        val resp = createMockResponse()
+        dispatcherServlet.service(req, resp)
+        assertEquals(200, resp.status)
+        assertEquals("text/plain", resp.contentType)
+        assertEquals("", resp.contentAsString)
+    }
+
+    @Test
     fun postSignout() {
         val req = createMockRequest("POST", "/signout", null, mapOf("name" to "Bob"))
         val resp = createMockResponse()

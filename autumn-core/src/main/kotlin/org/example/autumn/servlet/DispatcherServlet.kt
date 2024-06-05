@@ -114,7 +114,7 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "application/json" }
+        if (!resp.isCommitted && dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
         when {
             dispatcher.isResponseBody -> {
                 when (ret) {
@@ -134,7 +134,7 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted) resp.contentType = dispatcher.produce.ifEmpty { "text/html" }
+        if (!resp.isCommitted && dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
         when (ret) {
             is ResponseEntity -> resp.setUp(ret)
 

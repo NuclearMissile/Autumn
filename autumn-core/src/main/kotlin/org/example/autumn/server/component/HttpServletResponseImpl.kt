@@ -18,7 +18,7 @@ class HttpServletResponseImpl(
 
     private var status = 200
     private var bufferSize = 1024
-    private var contentType = config.getRequiredString("server.mime-default")
+    private var contentType = config.getString("server.mime-default")
     private var charset = Charset.forName(config.getRequiredString("server.response-encoding"))
     private var contentLength = 0L
     private var locale = Locale.getDefault()
@@ -43,7 +43,7 @@ class HttpServletResponseImpl(
         return charset.name()
     }
 
-    override fun getContentType(): String {
+    override fun getContentType(): String? {
         return contentType
     }
 
@@ -77,12 +77,16 @@ class HttpServletResponseImpl(
         contentLength = len
     }
 
-    override fun setContentType(type: String) {
+    override fun setContentType(type: String?) {
         contentType = type
-        if (type.startsWith("text/")) {
-            setHeader("Content-Type", "$contentType; charset=$characterEncoding")
+        if (type == null) {
+            headers.remove("Content-Type")
         } else {
-            setHeader("Content-Type", contentType)
+            if (type.startsWith("text/")) {
+                setHeader("Content-Type", "$type; charset=$characterEncoding")
+            } else {
+                setHeader("Content-Type", type)
+            }
         }
     }
 

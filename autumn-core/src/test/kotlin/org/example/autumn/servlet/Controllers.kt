@@ -24,7 +24,7 @@ class FileObj(
 
 class SigninObj(
     var name: String? = null,
-    var password: String? = null
+    var password: String? = null,
 )
 
 @RestController
@@ -46,7 +46,7 @@ class RestApiController {
         throw Exception("test")
     }
 
-    @Get("/api/hello/{name}")
+    @Get("/api/hello/{name}", produce = "application/json")
     @ResponseBody
     fun hello(@PathVariable("name") name: String): String {
         return mapOf("name" to name).toJson()
@@ -58,18 +58,18 @@ class RestApiController {
         return name
     }
 
-    @Get("/api/greeting")
+    @Get("/api/greeting", produce = "application/json")
     fun greeting(
         @RequestParam(value = "action", defaultValue = "Hello") action: String,
-        @RequestParam("name") name: String
+        @RequestParam("name") name: String,
     ): Map<String, Any> {
         return mapOf("action" to mapOf("name" to name))
     }
 
-    @Get("/api/download/{file}")
+    @Get("/api/download/{file}", produce = "application/json")
     fun download(
         @PathVariable("file") file: String, @RequestParam("time") downloadTime: Float, @RequestParam("md5") md5: String,
-        @RequestParam("length") length: Int, @RequestParam("hasChecksum") checksum: Boolean
+        @RequestParam("length") length: Int, @RequestParam("hasChecksum") checksum: Boolean,
     ): FileObj {
         return FileObj(file, length, downloadTime, md5, "A".repeat(length).toByteArray(StandardCharsets.UTF_8))
     }
@@ -81,7 +81,7 @@ class RestApiController {
         @RequestParam("md5") md5: String,
         @RequestParam("length") length: Int,
         @RequestParam("hasChecksum") checksum: Boolean,
-        resp: HttpServletResponse
+        resp: HttpServletResponse,
     ) {
         val f = FileObj(file, length, downloadTime, md5, "A".repeat(length).toByteArray(StandardCharsets.UTF_8))
         resp.contentType = "application/json"
@@ -92,7 +92,7 @@ class RestApiController {
     fun register(@RequestBody signin: SigninObj, resp: HttpServletResponse) {
         resp.contentType = "application/json"
         val pw = resp.writer
-        pw.write("[\"${signin.name}\",true,12345]")
+        pw.write("[\"${signin!!.name}\",true,12345]")
         pw.flush()
     }
 
@@ -111,7 +111,8 @@ class MvcController {
 
     @Get("/hello/{name}")
     @ResponseBody
-    fun hello(@PathVariable("name") name: String): String {
+    fun hello(@PathVariable name: String, resp: HttpServletResponse): String {
+        resp.contentType = "text/html"
         return "Hello, $name"
     }
 
@@ -119,7 +120,7 @@ class MvcController {
     @ResponseBody
     fun greeting(
         @RequestParam(value = "action", defaultValue = "Hello") action: String,
-        @RequestParam("name") name: String
+        @RequestParam("name") name: String,
     ): String {
         return "$action, $name"
     }
@@ -131,7 +132,7 @@ class MvcController {
         @RequestParam("time") downloadTime: Float,
         @RequestParam("md5") md5: String,
         @RequestParam("length") length: Int,
-        @RequestParam("hasChecksum") checksum: Boolean
+        @RequestParam("hasChecksum") checksum: Boolean,
     ): ByteArray {
         return "A".repeat(length).toByteArray(StandardCharsets.UTF_8)
     }
@@ -146,7 +147,7 @@ class MvcController {
         @RequestParam(required = false) checksum: Boolean?,
         @Header header1: String?,
         @Header(defaultValue = "test_header2") header2: String,
-        @Header(required = false) header3: String?
+        @Header(required = false) header3: String?,
     ): ByteArray {
         assert(checksum == null)
         assert(downloadTime == 10f)
