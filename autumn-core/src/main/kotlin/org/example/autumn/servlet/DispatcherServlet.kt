@@ -113,8 +113,9 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
+        if (dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted && dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
+        if (resp.isCommitted) return
         when {
             dispatcher.isResponseBody -> {
                 when (ret) {
@@ -124,7 +125,7 @@ class DispatcherServlet : HttpServlet() {
                 }
             }
 
-            ret is ResponseEntity -> resp.setUp(ret)
+            ret is ResponseEntity -> resp.set(ret)
 
             !dispatcher.isVoid -> {
                 resp.writer.writeJson(ret).flush()
@@ -133,10 +134,11 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
+        if (dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
         val ret = dispatcher.process(url, req, resp)
-        if (!resp.isCommitted && dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
+        if (resp.isCommitted) return
         when (ret) {
-            is ResponseEntity -> resp.setUp(ret)
+            is ResponseEntity -> resp.set(ret)
 
             is String -> {
                 if (dispatcher.isResponseBody) {

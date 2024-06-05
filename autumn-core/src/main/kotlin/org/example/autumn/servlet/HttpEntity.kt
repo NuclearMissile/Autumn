@@ -9,15 +9,16 @@ data class ResponseEntity(
     val headers: List<Pair<String, String>>? = null, val cookies: List<Cookie>? = null,
 )
 
-fun HttpServletResponse.setUp(respEntity: ResponseEntity) {
-    respEntity.headers?.forEach { (k, v) -> addHeader(k, v) }
-    respEntity.cookies?.forEach { addCookie(it) }
-    status = respEntity.status
-    contentType = respEntity.contentType
-    when (respEntity.body) {
-        is String -> writer.apply { write(respEntity.body) }.flush()
-        is ByteArray -> outputStream.apply { write(respEntity.body) }.flush()
-        else -> writer.apply { write(respEntity.body.toJson()) }.flush()
+fun HttpServletResponse.set(entity: ResponseEntity) {
+    if (isCommitted) throw IllegalStateException("HttpServletResponse $this is already committed")
+    entity.headers?.forEach { (k, v) -> addHeader(k, v) }
+    entity.cookies?.forEach { addCookie(it) }
+    status = entity.status
+    contentType = entity.contentType
+    when (entity.body) {
+        is String -> writer.apply { write(entity.body) }.flush()
+        is ByteArray -> outputStream.apply { write(entity.body) }.flush()
+        else -> writer.apply { write(entity.body.toJson()) }.flush()
     }
 }
 
