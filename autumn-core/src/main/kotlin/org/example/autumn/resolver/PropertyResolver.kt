@@ -1,5 +1,6 @@
 package org.example.autumn.resolver
 
+import org.example.autumn.utils.ClassUtils.toPrimitive
 import org.example.autumn.utils.YamlUtils.loadYamlAsPlainMap
 import java.time.*
 import java.util.*
@@ -95,22 +96,7 @@ class Config(props: Properties) : PropertyResolver {
     @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
     override fun <T> get(key: String, clazz: Class<T>): T? {
         val value = getString(key) ?: return null
-        return when {
-            String::class.java.isAssignableFrom(clazz) -> value
-            Boolean::class.java.isAssignableFrom(clazz) -> value.toBoolean()
-            java.lang.Boolean::class.java.isAssignableFrom(clazz) -> value.toBoolean()
-            Byte::class.java.isAssignableFrom(clazz) -> value.toByte()
-            java.lang.Byte::class.java.isAssignableFrom(clazz) -> value.toByte()
-            Short::class.java.isAssignableFrom(clazz) -> value.toShort()
-            java.lang.Short::class.java.isAssignableFrom(clazz) -> value.toShort()
-            Int::class.java.isAssignableFrom(clazz) -> value.toInt()
-            java.lang.Integer::class.java.isAssignableFrom(clazz) -> value.toInt()
-            Long::class.java.isAssignableFrom(clazz) -> value.toLong()
-            java.lang.Long::class.java.isAssignableFrom(clazz) -> value.toLong()
-            Float::class.java.isAssignableFrom(clazz) -> value.toFloat()
-            java.lang.Float::class.java.isAssignableFrom(clazz) -> value.toFloat()
-            Double::class.java.isAssignableFrom(clazz) -> value.toDouble()
-            java.lang.Double::class.java.isAssignableFrom(clazz) -> value.toDouble()
+        return value.toPrimitive(clazz) ?: when {
             LocalDate::class.java.isAssignableFrom(clazz) -> LocalDate.parse(value)
             LocalTime::class.java.isAssignableFrom(clazz) -> LocalTime.parse(value)
             LocalDateTime::class.java.isAssignableFrom(clazz) -> LocalDateTime.parse(value)
@@ -119,7 +105,7 @@ class Config(props: Properties) : PropertyResolver {
             ZoneId::class.java.isAssignableFrom(clazz) -> ZoneId.of(value)
             Iterable::class.java.isAssignableFrom(clazz) -> value.split(',').map(String::trim)
             else -> throw IllegalArgumentException("unsupported type to convert: $clazz")
-        } as T
+        } as T?
     }
 
     override fun <T> get(key: String, default: T, clazz: Class<T>): T {

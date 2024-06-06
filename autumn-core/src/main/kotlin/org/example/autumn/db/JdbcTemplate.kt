@@ -201,6 +201,7 @@ val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
         if (rs.getObject(label) == null) null else rs.getDouble(label)
     },
 
+    java.lang.String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
     String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
     Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as? Number },
     ByteArray::class.java to ColumnExtractor { rs, label -> rs.getBytes(label) },
@@ -255,6 +256,7 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                 if (it.getObject(1) == null) null else it.getDouble(1)
             })
 
+            put(java.lang.String::class.java, ResultSetExtractor { it.getString(1) })
             put(String::class.java, ResultSetExtractor { it.getString(1) })
             put(Number::class.java, ResultSetExtractor { it.getObject(1) as? Number })
             put(ByteArray::class.java, ResultSetExtractor { it.getBytes(1) })

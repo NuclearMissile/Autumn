@@ -112,4 +112,19 @@ object ClassUtils {
         else
             (targetException as InvocationTargetException).extractTarget()
     }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> String.toPrimitive(clazz: Class<T>): T? {
+        return when (clazz) {
+            java.lang.String::class.java, String::class.java -> this
+            java.lang.Boolean::class.java, Boolean::class.java -> toBoolean()
+            java.lang.Integer::class.java, Int::class.java -> toInt()
+            java.lang.Long::class.java, Long::class.java -> toLong()
+            java.lang.Byte::class.java, Byte::class.java -> toByte()
+            java.lang.Short::class.java, Short::class.java -> toShort()
+            java.lang.Float::class.java, Float::class.java -> toFloat()
+            java.lang.Double::class.java, Double::class.java -> toDouble()
+            else -> null
+        } as T?
+    }
 }

@@ -14,6 +14,7 @@ import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
+import org.example.autumn.utils.ClassUtils.toPrimitive
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
@@ -261,7 +262,8 @@ class DispatcherServlet : HttpServlet() {
             val args = methodParams.map { param ->
                 when (param.paramAnno) {
                     is PathVariable -> try {
-                        urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toType(param.paramType)
+                        urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
+                            ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                     } catch (e: Exception) {
                         throw RequestErrorException("Path variable '${param.name}' is required.")
                     }
@@ -277,7 +279,8 @@ class DispatcherServlet : HttpServlet() {
                             else
                                 return@map null
                         }
-                        value.toType(param.paramType)
+                        value.toPrimitive(param.paramType)
+                            ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                     }
 
                     is Header -> {
@@ -311,20 +314,6 @@ class DispatcherServlet : HttpServlet() {
                 handlerMethod.invoke(controller, *args.toTypedArray())
             } catch (e: InvocationTargetException) {
                 throw e.extractTarget()
-            }
-        }
-
-        private fun String.toType(classType: Class<*>): Any {
-            return when (classType) {
-                String::class.java -> this
-                Boolean::class.javaPrimitiveType, Boolean::class.java -> toBoolean()
-                Int::class.javaPrimitiveType, Int::class.java -> toInt()
-                Long::class.javaPrimitiveType, Long::class.java -> toLong()
-                Byte::class.javaPrimitiveType, Byte::class.java -> toByte()
-                Short::class.javaPrimitiveType, Short::class.java -> toShort()
-                Float::class.javaPrimitiveType, Float::class.java -> toFloat()
-                Double::class.javaPrimitiveType, Double::class.java -> toDouble()
-                else -> throw ServerErrorException("Could not determine argument type: $classType")
             }
         }
     }

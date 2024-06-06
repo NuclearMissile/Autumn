@@ -81,6 +81,7 @@ class EntityProperty(val field: Field) {
 
         private val DEFAULT_COLUMN_TYPES = mapOf(
             String::class.java to "VARCHAR($1)",
+            java.lang.String::class.java to "VARCHAR($1)",
             Boolean::class.java to "BIT",
             java.lang.Boolean::class.java to "BIT",
             Byte::class.java to "BIT",
