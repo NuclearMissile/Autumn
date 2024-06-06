@@ -361,16 +361,7 @@ class DispatcherServletTest {
     fun init() {
         ctx = createMockServletContext()
         WebMvcConfiguration.servletContext = ctx
-        val config = Config(
-            mapOf(
-                "app.title" to "Scan App",
-                "app.version" to "v1.0",
-                "autumn.web.favicon-path" to "/icon/favicon.ico",
-                "autumn.web.freemarker.template-path" to "/WEB-INF/templates",
-                "jdbc.username" to "",
-                "jdbc.password" to "",
-            ).toProperties()
-        )
+        val config = Config.load()
         AnnotationConfigApplicationContext(ControllerConfiguration::class.java, config)
         dispatcherServlet = DispatcherServlet()
         dispatcherServlet.init()

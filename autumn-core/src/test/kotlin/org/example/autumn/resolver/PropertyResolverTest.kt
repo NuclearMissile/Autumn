@@ -18,7 +18,7 @@ class PropertyResolverTest {
     @Test
     fun testConfigLoad() {
         val config = Config.loadYaml("/config.yml")
-        assertEquals("Autumn Webapp", config.getRequiredString("server.web-app.name"))
+        assertEquals("Test", config.getRequiredString("server.web-app.name"))
         config.set("server.web-app.name", "dummy")
         assertEquals("dummy", config.getRequiredString("server.web-app.name"))
 

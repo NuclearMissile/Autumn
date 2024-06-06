@@ -134,24 +134,17 @@ class OrmTest {
             "CREATE TABLE password_auths (userId INTEGER PRIMARY KEY AUTOINCREMENT, random TEXT NOT NULL, passwd TEXT NOT NULL);"
         const val CREATE_TEST_ENTITIES =
             "CREATE TABLE test_entities (id INTEGER PRIMARY KEY AUTOINCREMENT, string TEXT NOT NULL, nullableString TEXT, enum TEXT NOT NULL, nullableEnum TEXT," +
-                    "long INTEGER NOT NULL, nullableLong INTEGER, int INTEGER NOT NULL, nullableInt INTEGER, " +
-                    "short INTEGER NOT NULL, nullableShort INTEGER, double REAL NOT NULL, nullableDouble REAL, " +
-                    "float REAL NOT NULL, nullableFloat REAL, boolean BOOLEAN NOT NULL, nullableBoolean BOOLEAN, blob BLOB, " +
-                    "timestamp TIMESTAMP, time TIMESTAMP, date DATE);"
+                "long INTEGER NOT NULL, nullableLong INTEGER, int INTEGER NOT NULL, nullableInt INTEGER, " +
+                "short INTEGER NOT NULL, nullableShort INTEGER, double REAL NOT NULL, nullableDouble REAL, " +
+                "float REAL NOT NULL, nullableFloat REAL, boolean BOOLEAN NOT NULL, nullableBoolean BOOLEAN, blob BLOB, " +
+                "timestamp TIMESTAMP, time TIMESTAMP, date DATE);"
     }
 
-    private val config = Config(
-        mapOf(
-            "autumn.datasource.url" to "jdbc:sqlite:test_orm.db",
-            "autumn.datasource.username" to "",
-            "autumn.datasource.password" to "",
-            "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
-        ).toProperties()
-    )
+    private val config = Config.load()
 
     @BeforeEach
     fun setUp() {
-        Files.deleteIfExists(Path("test_orm.db"))
+        Files.deleteIfExists(Path("test_jdbc.db"))
         AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean<JdbcTemplate>("jdbcTemplate")
             jdbcTemplate.update(CREATE_USERS)

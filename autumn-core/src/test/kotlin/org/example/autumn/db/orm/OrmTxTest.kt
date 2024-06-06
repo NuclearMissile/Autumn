@@ -24,18 +24,11 @@ class OrmTxTest {
             "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL);"
     }
 
-    private val config = Config(
-        mapOf(
-            "autumn.datasource.url" to "jdbc:sqlite:test_orm_tx.db",
-            "autumn.datasource.username" to "",
-            "autumn.datasource.password" to "",
-            "autumn.datasource.driver-class-name" to "org.sqlite.JDBC",
-        ).toProperties()
-    )
+    private val config = Config.load()
 
     @BeforeEach
     fun setUp() {
-        Files.deleteIfExists(Path("test_orm_tx.db"))
+        Files.deleteIfExists(Path("test_jdbc.db"))
         AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             ctx.getBean<JdbcTemplate>("jdbcTemplate").update(CREATE_USERS)
         }

@@ -8,8 +8,8 @@ data class PropertyExpr(val key: String, val defaultValue: String?)
 
 interface PropertyResolver {
     fun contains(key: String): Boolean
-    fun set(key: String, value: String)
-    fun addAll(map: Map<String, String>)
+    fun set(key: String, value: String): PropertyResolver
+    fun addAll(map: Map<String, String>): PropertyResolver
     fun getString(key: String): String?
     fun getString(key: String, defaultValue: String): String
     fun <T> get(key: String, clazz: Class<T>): T?
@@ -88,12 +88,14 @@ class Config(props: Properties) : PropertyResolver {
 
     override fun contains(key: String) = properties.containsKey(key)
 
-    override fun set(key: String, value: String) {
+    override fun set(key: String, value: String): PropertyResolver {
         properties[key] = value
+        return this
     }
 
-    override fun addAll(map: Map<String, String>) {
+    override fun addAll(map: Map<String, String>): PropertyResolver {
         properties += map
+        return this
     }
 
     override fun getString(key: String): String? {

@@ -41,14 +41,7 @@ open class JdbcTestBase {
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"
     }
 
-    val config = Config(
-        mapOf(
-            "autumn.datasource.url" to "jdbc:sqlite:test_jdbc.db",
-            "autumn.datasource.username" to "",
-            "autumn.datasource.password" to "",
-            "autumn.datasource.driver-class-name" to "org.sqlite.JDBC"
-        ).toProperties()
-    )
+    val config = Config.load()
 
     @BeforeEach
     fun beforeEach() {
