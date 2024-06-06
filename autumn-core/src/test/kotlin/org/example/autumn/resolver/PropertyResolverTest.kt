@@ -8,10 +8,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 
 class PropertyResolverTest {
@@ -24,6 +21,9 @@ class PropertyResolverTest {
 
         val test = Config.loadYaml("/test.yml")
         assertEquals("Apple,Orange,Pear", test.getRequiredString("other.list"))
+        assertContentEquals(listOf("Apple", "Orange", "Pear"), test.getRequired("other.list"))
+        assertEquals("A", test.getRequiredString("other.map.a"))
+        assertEquals("D", test.getRequiredString("other.map.c.d"))
     }
 
     @Test

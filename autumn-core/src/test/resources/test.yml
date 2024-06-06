@@ -28,6 +28,7 @@ other:
     - Orange
     - Pear
   list2: [ ]
+  map: { a: A, b: B, c: { d: D } }
 
 convert:
   boolean: true

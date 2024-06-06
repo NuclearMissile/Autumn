@@ -90,7 +90,9 @@ class DispatcherServlet : HttpServlet() {
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
-                resp.setHeader("Cache-Control", "max-age=604800")
+                val cacheControlHeader = config.getString("resource-cache-control")
+                if (!cacheControlHeader.isNullOrEmpty())
+                    resp.setHeader("Cache-Control", cacheControlHeader)
                 val output = resp.outputStream
                 input.transferTo(output)
                 output.flush()

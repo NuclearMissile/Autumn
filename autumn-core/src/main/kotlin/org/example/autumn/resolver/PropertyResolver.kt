@@ -47,29 +47,6 @@ class Config(props: Properties) : PropertyResolver {
     }
 
     private val properties: MutableMap<String, String> = mutableMapOf()
-    private val converters: MutableMap<Class<*>, (String) -> Any> = mutableMapOf(
-        String::class.java to { s -> s },
-        Boolean::class.java to { s -> s.toBoolean() },
-        java.lang.Boolean::class.java to { s -> s.toBoolean() },
-        Byte::class.java to { s -> s.toByte() },
-        java.lang.Byte::class.java to { s -> s.toByte() },
-        Short::class.java to { s -> s.toShort() },
-        java.lang.Short::class.java to { s -> s.toShort() },
-        Int::class.java to { s -> s.toInt() },
-        java.lang.Integer::class.java to { s -> s.toInt() },
-        Long::class.java to { s -> s.toLong() },
-        java.lang.Long::class.java to { s -> s.toLong() },
-        Float::class.java to { s -> s.toFloat() },
-        java.lang.Float::class.java to { s -> s.toFloat() },
-        Double::class.java to { s -> s.toDouble() },
-        java.lang.Double::class.java to { s -> s.toDouble() },
-        LocalDate::class.java to LocalDate::parse,
-        LocalTime::class.java to LocalTime::parse,
-        LocalDateTime::class.java to LocalDateTime::parse,
-        ZonedDateTime::class.java to ZonedDateTime::parse,
-        Duration::class.java to Duration::parse,
-        ZoneId::class.java to ZoneId::of,
-    )
 
     init {
         properties += System.getenv()
@@ -115,9 +92,34 @@ class Config(props: Properties) : PropertyResolver {
         return getString(key) ?: parseValue(defaultValue)
     }
 
+    @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
     override fun <T> get(key: String, clazz: Class<T>): T? {
         val value = getString(key) ?: return null
-        return getConverter(clazz).invoke(value)
+        return when {
+            String::class.java.isAssignableFrom(clazz) -> value
+            Boolean::class.java.isAssignableFrom(clazz) -> value.toBoolean()
+            java.lang.Boolean::class.java.isAssignableFrom(clazz) -> value.toBoolean()
+            Byte::class.java.isAssignableFrom(clazz) -> value.toByte()
+            java.lang.Byte::class.java.isAssignableFrom(clazz) -> value.toByte()
+            Short::class.java.isAssignableFrom(clazz) -> value.toShort()
+            java.lang.Short::class.java.isAssignableFrom(clazz) -> value.toShort()
+            Int::class.java.isAssignableFrom(clazz) -> value.toInt()
+            java.lang.Integer::class.java.isAssignableFrom(clazz) -> value.toInt()
+            Long::class.java.isAssignableFrom(clazz) -> value.toLong()
+            java.lang.Long::class.java.isAssignableFrom(clazz) -> value.toLong()
+            Float::class.java.isAssignableFrom(clazz) -> value.toFloat()
+            java.lang.Float::class.java.isAssignableFrom(clazz) -> value.toFloat()
+            Double::class.java.isAssignableFrom(clazz) -> value.toDouble()
+            java.lang.Double::class.java.isAssignableFrom(clazz) -> value.toDouble()
+            LocalDate::class.java.isAssignableFrom(clazz) -> LocalDate.parse(value)
+            LocalTime::class.java.isAssignableFrom(clazz) -> LocalTime.parse(value)
+            LocalDateTime::class.java.isAssignableFrom(clazz) -> LocalDateTime.parse(value)
+            ZonedDateTime::class.java.isAssignableFrom(clazz) -> ZonedDateTime.parse(value)
+            Duration::class.java.isAssignableFrom(clazz) -> Duration.parse(value)
+            ZoneId::class.java.isAssignableFrom(clazz) -> ZoneId.of(value)
+            Iterable::class.java.isAssignableFrom(clazz) -> value.split(',').map(String::trim)
+            else -> throw IllegalArgumentException("unsupported type to convert: $clazz")
+        } as T
     }
 
     override fun <T> get(key: String, default: T, clazz: Class<T>): T {
@@ -129,11 +131,6 @@ class Config(props: Properties) : PropertyResolver {
 
     override fun <T> getRequired(key: String, clazz: Class<T>) =
         get(key, clazz) ?: throw IllegalArgumentException("key: $key not found")
-
-    private fun <T> getConverter(clazz: Class<T>): (String) -> T {
-        @Suppress("UNCHECKED_CAST")
-        return converters[clazz] as? (String) -> T ?: throw IllegalArgumentException("unsupported type: $clazz")
-    }
 
     private fun parseValue(value: String): String {
         val valueExpr = parsePropertyExpr(value) ?: return value
