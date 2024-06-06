@@ -11,7 +11,9 @@ import java.nio.charset.Charset
 import java.util.*
 
 class HttpServletResponseImpl(
-    config: PropertyResolver, private val exchangeResp: HttpExchangeResponse,
+    config: PropertyResolver,
+    servletContext: ServletContextImpl,
+    private val exchangeResp: HttpExchangeResponse,
 ) : HttpServletResponse {
     private val headers = exchangeResp.getResponseHeaders()
     private val cookies = mutableListOf<Cookie>()
@@ -19,7 +21,7 @@ class HttpServletResponseImpl(
     private var status = 200
     private var bufferSize = 1024
     private var contentType = config.getString("server.mime-default")
-    private var charset = Charset.forName(config.getRequiredString("server.response-encoding"))
+    private var charset = Charset.forName(servletContext.responseCharacterEncoding)
     private var contentLength = 0L
     private var locale = Locale.getDefault()
     private var isCommitted = false

@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
 
 class HttpConnector(
     private val config: PropertyResolver, private val classLoader: ClassLoader,
-    private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>
+    private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>,
 ) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val initializers = mutableMapOf<ServletContainerInitializer, Set<Class<*>>>()
@@ -39,7 +39,7 @@ class HttpConnector(
         httpServer = HttpServer.create(InetSocketAddress(host, port), backlog)
         httpServer.createContext("/") { exchange ->
             val adapter = HttpExchangeAdapter(exchange)
-            val resp = HttpServletResponseImpl(config, adapter)
+            val resp = HttpServletResponseImpl(config, servletContext, adapter)
             val req = HttpServletRequestImpl(config, servletContext, adapter, resp)
             try {
                 Thread.currentThread().contextClassLoader = classLoader

@@ -4,7 +4,7 @@ import jakarta.servlet.*
 import jakarta.servlet.http.*
 import org.example.autumn.DEFAULT_LOCALE
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.server.component.support.*
+import org.example.autumn.server.component.support.HttpReqParams
 import org.example.autumn.server.connector.HttpExchangeRequest
 import org.example.autumn.utils.DateUtils
 import org.example.autumn.utils.HttpUtils
@@ -31,7 +31,7 @@ class HttpServletRequestImpl(
 
     private var inputStream: ServletInputStream? = null
     private var reader: BufferedReader? = null
-    private var charset = Charset.forName(config.getRequiredString("server.request-encoding"))
+    private var charset = Charset.forName(servletContext.requestCharacterEncoding)
     private val params = HttpReqParams(exchangeReq, charset)
 
     override fun getAttribute(name: String): Any? {

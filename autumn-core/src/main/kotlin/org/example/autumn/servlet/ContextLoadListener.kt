@@ -29,9 +29,8 @@ open class ContextLoadListener : ServletContextListener {
         logger.info("invoke {}", javaClass.name)
 
         val config = Config.load()
-        val encoding = config.getRequiredString("\${autumn.web.character-encoding:UTF-8}")
-        servletContext.requestCharacterEncoding = encoding
-        servletContext.responseCharacterEncoding = encoding
+        servletContext.requestCharacterEncoding = config.getRequiredString("server.request-encoding")
+        servletContext.responseCharacterEncoding = config.getRequiredString("server.response-encoding")
         val configClassName = config.getRequiredString("autumn.config-class-name")
         val applicationContext = createApplicationContext(configClassName, config)
         logger.info("Application context created: {}", applicationContext)

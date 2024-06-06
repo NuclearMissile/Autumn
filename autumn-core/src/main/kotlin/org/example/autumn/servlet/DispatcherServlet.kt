@@ -37,9 +37,8 @@ class DispatcherServlet : HttpServlet() {
     private val context = ApplicationContextHolder.required
     private val config = context.getConfig()
     private val viewResolver = context.getBean(ViewResolver::class.java)
-    private val resourcePath = config
-        .getString("\${autumn.web.static-path:/static/}")!!.removeSuffix("/") + "/"
-    private val faviconPath = config.getRequiredString("\${autumn.web.favicon-path:/favicon.ico}")
+    private val resourcePath = config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
+    private val faviconPath = config.getRequiredString("autumn.web.favicon-path")
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
 

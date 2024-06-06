@@ -1,11 +1,21 @@
 # default autumn configuration:
 autumn:
   config-class-name: # org.example.autumn.hello.HelloConfiguration
+  web:
+    static-path: /static/
+    favicon-path: /favicon.ico
+    template-path: /WEB-INF/templates/
+    error-template-path: /WEB-INF/errors/
+    template-encoding: UTF-8
+
   datasource:
     url: # jdbc:sqlite:hello-autumn.db
     driver-class-name: # org.sqlite.JDBC
     username:
     password:
+    maximum-pool-size: 20
+    minimum-pool-size: 1
+    connection-timeout: 3000
 
 # default server configuration:
 server:
