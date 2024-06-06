@@ -22,13 +22,14 @@ open class ContextLoadListener : ServletContextListener {
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
 
-        if (servletContext.getAttribute("autumn_server_flg") != true) {
-            // show banner
+        val configFromCtx = servletContext.getAttribute("autumn_config") as PropertyResolver?
+        if (configFromCtx == null) {
+            // show banner, starting from non-autumn server
             logger.info(readStringFromClassPath("/banner.txt"))
         }
         logger.info("invoke {}", javaClass.name)
 
-        val config = Config.load()
+        val config = configFromCtx ?: Config.load()
         servletContext.requestCharacterEncoding = config.getRequiredString("server.request-encoding")
         servletContext.responseCharacterEncoding = config.getRequiredString("server.response-encoding")
         val configClassName = config.getRequiredString("autumn.config-class-name")
@@ -69,7 +70,7 @@ open class ContextLoadListener : ServletContextListener {
     }
 
     private fun createApplicationContext(
-        configClassName: String, config: PropertyResolver
+        configClassName: String, config: PropertyResolver,
     ): ApplicationContext {
         logger.info("init ApplicationContext by configuration: {}", configClassName)
         if (configClassName.isEmpty()) {
