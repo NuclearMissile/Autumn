@@ -45,13 +45,9 @@ class HttpConnector(
                 Thread.currentThread().contextClassLoader = classLoader
                 servletContext.process(req, resp)
             } catch (e: Throwable) {
-                // fall-over error handling
+                // fallback error handling
                 logger.error("unhandled exception caught:", e)
-                try {
-                    resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
-                } catch (e: IllegalStateException) {
-                    logger.warn("response has already been committed.")
-                }
+                if (!resp.isCommitted) resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
             } finally {
                 Thread.currentThread().contextClassLoader = null
                 resp.cleanup()
@@ -67,7 +63,9 @@ class HttpConnector(
     }
 
     override fun close() {
+        logger.info("Autumn server closing...")
+        httpServer.stop(3)
         servletContext.close()
-        httpServer.stop(0)
+        logger.info("Autumn server closed.")
     }
 }

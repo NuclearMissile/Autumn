@@ -199,8 +199,12 @@ class AutumnServer {
                 5, config.getRequired("server.thread-pool-size"), 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
             )
 
+            val connector = HttpConnector(config, classLoader, webRoot, executor, annoClasses)
+            // for gracefully exiting
+            Runtime.getRuntime().addShutdownHook(Thread { connector.close() })
+
             try {
-                HttpConnector(config, classLoader, webRoot, executor, annoClasses).use {
+                connector.use {
                     it.start()
                     // started info:
                     val endTime = System.currentTimeMillis()

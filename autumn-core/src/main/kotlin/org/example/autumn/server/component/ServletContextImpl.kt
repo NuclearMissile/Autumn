@@ -277,14 +277,14 @@ class ServletContextImpl(
 
     override fun close() {
         // destroy filter and servlet:
-        filterMappings.forEach { mapping: FilterMapping ->
+        filterMappings.forEach { mapping ->
             try {
                 mapping.filter.destroy()
             } catch (e: Exception) {
                 logger.error("destroy filter: ${mapping.filter} failed.", e)
             }
         }
-        servletMappings.forEach { mapping: ServletMapping ->
+        servletMappings.forEach { mapping ->
             try {
                 mapping.servlet.destroy()
             } catch (e: Exception) {

@@ -505,7 +505,7 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun close() {
-        logger.info("Closing {}...", this.javaClass.name)
+        logger.info("{} closing...", this.javaClass.name)
         sortedInfos.forEach {
             invokeMethod(getOriginalInstance(it), it.destroyMethod, it.destroyMethodName)
         }
