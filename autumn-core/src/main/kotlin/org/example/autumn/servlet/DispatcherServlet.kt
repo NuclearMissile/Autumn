@@ -90,7 +90,7 @@ class DispatcherServlet : HttpServlet() {
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
-                val cacheControlHeader = config.getString("resource-cache-control")
+                val cacheControlHeader = config.getString("autumn.web.resource-cache-control")
                 if (!cacheControlHeader.isNullOrEmpty())
                     resp.setHeader("Cache-Control", cacheControlHeader)
                 val output = resp.outputStream
