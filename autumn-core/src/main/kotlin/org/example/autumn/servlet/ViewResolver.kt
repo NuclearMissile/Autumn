@@ -17,11 +17,11 @@ import java.io.*
 interface ViewResolver {
     fun init()
     fun render(
-        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse,
     )
 
     fun renderError(
-        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse
+        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse,
     )
 }
 
@@ -36,17 +36,16 @@ class FreeMarkerViewResolver(
     private lateinit var freeMarkerErrorConfig: Configuration
 
     override fun init() {
-        fun createConfig(templatePath: String): Configuration {
-            return Configuration(Configuration.VERSION_2_3_32).apply {
-                outputFormat = HTMLOutputFormat.INSTANCE
-                defaultEncoding = templateEncoding
-                templateLoader = ServletTemplateLoader(servletContext, templatePath)
-                templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
-                autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
-                localizedLookup = false
-                objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_32).also { it.isExposeFields = true }
-            }
+        fun createConfig(templatePath: String) = Configuration(Configuration.VERSION_2_3_33).apply {
+            outputFormat = HTMLOutputFormat.INSTANCE
+            defaultEncoding = templateEncoding
+            templateLoader = ServletTemplateLoader(servletContext, templatePath)
+            templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
+            autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
+            localizedLookup = false
+            objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_33).apply { isExposeFields = true }
         }
+
         logger.info(
             "init {}, set template path: {}, error template path: {}",
             javaClass.simpleName, templatePath, errorTemplatePath
@@ -56,7 +55,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun render(
-        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse
+        viewName: String, model: Map<String, Any>?, statusCode: Int, req: HttpServletRequest, resp: HttpServletResponse,
     ) {
         resp.status = statusCode
         resp.contentType = "text/html"
@@ -77,7 +76,7 @@ class FreeMarkerViewResolver(
     }
 
     override fun renderError(
-        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse
+        statusCode: Int, model: Map<String, Any>?, req: HttpServletRequest, resp: HttpServletResponse,
     ) {
         resp.status = statusCode
         resp.contentType = "text/html"
