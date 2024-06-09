@@ -14,7 +14,6 @@ import org.example.autumn.server.classloader.WebAppClassLoader
 import org.example.autumn.server.connector.HttpConnector
 import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
-import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -173,8 +172,6 @@ class AutumnServer {
             webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>,
             startTime: Long = System.currentTimeMillis(),
         ) {
-            // show banner
-            logger.info(readStringFromClassPath("/banner.txt"))
             // start info:
             val jvmVersion = Runtime.version().feature()
             val pid = ManagementFactory.getRuntimeMXBean().pid
@@ -182,7 +179,7 @@ class AutumnServer {
             val pwd = Paths.get("").toAbsolutePath().toString()
             val enableVirtualThread = config.getRequired<Boolean>("server.enable-virtual-thread")
             logger.info(
-                "starting using Java {} with PID {} (started by {} in {})", jvmVersion, pid, user, pwd
+                "starting with Java {}, PID {} (by {} in {})", jvmVersion, pid, user, pwd
             )
 
             // virtual thread related check
@@ -192,7 +189,6 @@ class AutumnServer {
                 )
             }
             val executor = if (enableVirtualThread && jvmVersion >= 21) {
-                logger.info("virtual thread executor enabled")
                 @Suppress("Since15")
                 Executors.newVirtualThreadPerTaskExecutor()
             } else ThreadPoolExecutor(

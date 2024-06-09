@@ -15,21 +15,15 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.Objects.requireNonNull
 
-open class ContextLoadListener : ServletContextListener {
+abstract class ContextLoadListener : ServletContextListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun contextInitialized(sce: ServletContextEvent) {
+        // show banner
+        logger.info(readStringFromClassPath("/banner.txt"))
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
-
-        val configFromCtx = servletContext.getAttribute("autumn_config") as PropertyResolver?
-        if (configFromCtx == null) {
-            // show banner, starting from non-autumn server
-            logger.info(readStringFromClassPath("/banner.txt"))
-        }
-        logger.info("invoke {}", javaClass.name)
-
-        val config = configFromCtx ?: Config.load()
+        val config = servletContext.getAttribute("autumn_config") as PropertyResolver? ?: Config.load()
         servletContext.requestCharacterEncoding = config.getRequiredString("server.request-encoding")
         servletContext.responseCharacterEncoding = config.getRequiredString("server.response-encoding")
         val configClassName = config.getRequiredString("autumn.config-class-name")
