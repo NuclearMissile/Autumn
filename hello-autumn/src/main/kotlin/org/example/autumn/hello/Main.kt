@@ -14,6 +14,7 @@ import org.example.autumn.aop.InvocationHandlerAdapter
 import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
+import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
@@ -161,7 +162,8 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @Get("/logoff")
     fun logoff(session: HttpSession): String {
-        val user = session.getAttribute(USER_SESSION_KEY) as User
+        val user = session.getAttribute(USER_SESSION_KEY) as User?
+            ?: throw RequestErrorException("cannot logoff due to not logged in")
         session.removeAttribute(USER_SESSION_KEY)
         eventBus.post(LogoffEvent(user))
         return "redirect:/login"
