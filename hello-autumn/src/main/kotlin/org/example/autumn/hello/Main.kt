@@ -49,6 +49,17 @@ class BeforeLogInvocationHandler : InvocationHandlerAdapter {
     }
 }
 
+@Component
+class AfterLogInvocationHandler : InvocationHandlerAdapter {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun after(proxy: Any, returnValue: Any?, method: Method, args: Array<Any?>?): Any? {
+        val ret = super.after(proxy, returnValue, method, args)
+        logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
+        return ret
+    }
+}
+
 @Order(100)
 @Component
 class LogFilter : FilterRegistrationBean() {

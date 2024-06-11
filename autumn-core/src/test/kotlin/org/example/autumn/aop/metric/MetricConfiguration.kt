@@ -15,7 +15,7 @@ import java.security.MessageDigest
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @MustBeDocumented
-annotation class Metric(val value: String)
+annotation class Metric(val value: Array<String>)
 
 @Configuration
 @ComponentScan
@@ -32,7 +32,7 @@ class MetricInvocationHandler : InvocationHandler {
         val metric = method.getAnnotation(Metric::class.java)
             ?: // do not do performance test:
             return method.invoke(proxy, *(args ?: emptyArray()))
-        val name: String = metric.value
+        val name: String = metric.value.first()
         val start = System.currentTimeMillis()
         return try {
             method.invoke(proxy, *(args ?: emptyArray()))
@@ -45,9 +45,9 @@ class MetricInvocationHandler : InvocationHandler {
     }
 }
 
-@Metric("metricInvocationHandler")
+@Metric(["metricInvocationHandler"])
 abstract class BaseWorker {
-    @Metric("MD5")
+    @Metric(["MD5"])
     open fun md5(input: String): String {
         return hash("MD5", input)
     }
@@ -65,17 +65,17 @@ abstract class BaseWorker {
 
 @Component
 class HashWorker : BaseWorker() {
-    @Metric("SHA-1f")
+    @Metric(["SHA-1f"])
     final fun sha1_f(input: String): String {
         return hash("SHA-1", input)
     }
 
-    @Metric("SHA-1")
+    @Metric(["SHA-1"])
     fun sha1(input: String): String {
         return hash("SHA-1", input)
     }
 
-    @Metric("SHA-256")
+    @Metric(["SHA-256"])
     fun sha256(input: String): String {
         return hash("SHA-256", input)
     }

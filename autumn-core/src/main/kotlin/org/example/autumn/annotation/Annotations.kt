@@ -111,7 +111,7 @@ annotation class Around(
     /**
      * Invocation handler bean name.
      */
-    val value: String,
+    val value: Array<String> = [],
 )
 
 @Target(AnnotationTarget.FUNCTION)
@@ -124,7 +124,7 @@ annotation class Transactional
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Inherited
-annotation class TransactionalBean(val value: String = "transactionManager")
+annotation class TransactionalBean(val value: Array<String> = ["transactionManager"])
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

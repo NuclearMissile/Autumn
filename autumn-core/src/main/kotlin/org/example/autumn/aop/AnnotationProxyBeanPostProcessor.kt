@@ -29,11 +29,10 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         private val logger = LoggerFactory.getLogger(Companion::class.java)
         private val byteBuddy = ByteBuddy()
 
-        @OptIn(ExperimentalStdlibApi::class)
         fun <T> createProxy(bean: T, handler: InvocationHandler): T {
             val targetClass = bean!!.javaClass
             if (logger.isDebugEnabled) {
-                logger.debug("create proxy for bean {} @{}", targetClass.name, bean.hashCode().toHexString())
+                logger.debug("create proxy for bean {}", targetClass.name)
             }
             val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
                 .method(ElementMatchers.isPublic())
@@ -57,25 +56,23 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
     }
 
     override fun beforeInitialization(bean: Any, beanName: String): Any {
+        originalBeans[beanName] = bean
         val anno = bean.javaClass.getAnnotation(annotationClass) ?: return bean
+        val context = ApplicationContextHolder.required
 
-        val handlerName = try {
-            anno.annotationClass.java.getMethod("value").invoke(anno)
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            anno.annotationClass.java.getMethod("value").invoke(anno) as Array<String>
         } catch (e: ReflectiveOperationException) {
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
-        } as String
-        val context = ApplicationContextHolder.required
-        val handlerInfo = context.findBeanMetaInfo(handlerName) ?: throw AopConfigException(
-            "@${annotationClass.simpleName} proxy handler '$handlerName' not found."
-        )
-        val handler = handlerInfo.instance ?: context.createEarlySingleton(handlerInfo)
-        val proxy = if (handler is InvocationHandler)
-            createProxy(bean, handler)
-        else throw AopConfigException(
-            "@${annotationClass.simpleName} proxy handler '$handlerName' is not type of ${InvocationHandler::class.java.name}.",
-        )
-        originalBeans[beanName] = bean
-        return proxy
+        }.map {
+            val info = context.findBeanMetaInfo(it) ?: throw AopConfigException(
+                "@${annotationClass.simpleName} proxy handler '$it' not found."
+            )
+            (info.instance ?: context.createEarlySingleton(info)) as? InvocationHandler ?: throw AopConfigException(
+                "@${annotationClass.simpleName} proxy handler '$it' is not type of ${InvocationHandler::class.java.name}."
+            )
+        }.fold(bean, ::createProxy)
     }
 
     override fun beforePropertySet(bean: Any, beanName: String): Any {
