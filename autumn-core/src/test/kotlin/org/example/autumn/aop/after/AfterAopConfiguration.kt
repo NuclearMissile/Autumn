@@ -15,7 +15,7 @@ class AfterAopConfiguration {
 }
 
 @Component
-@Around(["politeInvocationHandler"])
+@Around("politeInvocationHandler")
 class GreetingBean {
     fun hello(name: String): String {
         return "Hello, $name."

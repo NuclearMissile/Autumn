@@ -48,7 +48,7 @@ class AddressService(
 
 @Component
 @TransactionalBean
-@Around(["aroundLogInvocationHandler"])
+@Around("aroundLogInvocationHandler")
 class UserService(
     @Autowired val jdbcTemplate: JdbcTemplate,
 ) {

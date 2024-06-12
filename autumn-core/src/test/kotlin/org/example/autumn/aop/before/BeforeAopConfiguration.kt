@@ -16,7 +16,7 @@ class BeforeAopConfiguration {
 }
 
 @Component
-@Around(["logInvocationHandler"])
+@Around("logInvocationHandler")
 class BusinessBean {
     private val logger = LoggerFactory.getLogger(javaClass)
 

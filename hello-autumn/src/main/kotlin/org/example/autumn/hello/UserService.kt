@@ -26,7 +26,7 @@ import org.example.autumn.utils.SecureRandomUtils
 //    }
 //}
 
-@Around(["beforeLogInvocationHandler", "afterLogInvocationHandler"])
+@Around("beforeLogInvocationHandler", "afterLogInvocationHandler")
 @Component
 @TransactionalBean
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {

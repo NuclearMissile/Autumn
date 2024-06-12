@@ -32,7 +32,7 @@ class PoliteInvocationHandler : InvocationHandler {
 }
 
 @Component
-@Around(["politeInvocationHandler"])
+@Around("politeInvocationHandler")
 class OriginBean {
     @Value("\${customer.name}")
     var name: String? = null

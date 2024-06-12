@@ -15,7 +15,6 @@ import org.example.autumn.server.connector.HttpConnector
 import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.FileNotFoundException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
@@ -72,7 +71,7 @@ class AutumnServer {
 
                 val tmpPath = Files.createTempDirectory("Autumn_Server_")
                 Runtime.getRuntime().addShutdownHook(Thread {
-                    Files.walk(tmpPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete)
+                    Files.walk(tmpPath).sorted(Comparator.reverseOrder()).forEach { it.toFile().delete() }
                 })
 
                 logger.debug("extract {} to {}", warPath, tmpPath)
