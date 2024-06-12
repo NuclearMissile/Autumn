@@ -16,6 +16,7 @@ import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
+import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.resolver.Config
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.*
@@ -164,7 +165,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @Post("/login")
     fun login(@RequestParam email: String, @RequestParam password: String, session: HttpSession): ModelAndView {
-        val user = userService.login(email, password)
+        val user = userService.validate(email, password)
             ?: return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         session.setAttribute(USER_SESSION_KEY, user)
         eventBus.post(LoginEvent(user))
@@ -178,6 +179,36 @@ class IndexController @Autowired constructor(private val userService: UserServic
         session.removeAttribute(USER_SESSION_KEY)
         eventBus.post(LogoffEvent(user))
         return "redirect:/login"
+    }
+
+    @Get("/changePassword")
+    fun changePassword(session: HttpSession): ModelAndView {
+        session.getAttribute(USER_SESSION_KEY)
+            ?: throw RequestErrorException("cannot change password due to not logged in")
+        return ModelAndView("/changePassword.ftl")
+    }
+
+    @Post("/changePassword")
+    fun changePassword(
+        @RequestParam("old_password") oldPassword: String,
+        @RequestParam("new_password") newPassword: String,
+        @RequestParam("new_password_repeat") newPasswordRepeat: String,
+        session: HttpSession,
+    ): ModelAndView {
+        val user = session.getAttribute(USER_SESSION_KEY) as User?
+            ?: throw RequestErrorException("cannot change password due to not logged in")
+        if (newPassword != newPasswordRepeat)
+            return ModelAndView("/changePassword.ftl", mapOf("error" to "passwords are different"))
+        if (newPassword == oldPassword)
+            return ModelAndView("/changePassword.ftl", mapOf("error" to "new password must be different from old one"))
+        userService.validate(user.email, oldPassword)
+            ?: return ModelAndView("/changePassword.ftl", mapOf("error" to "old password is incorrect"))
+        if (userService.changePassword(user, newPassword)) {
+            session.removeAttribute(USER_SESSION_KEY)
+            return ModelAndView("redirect:/login")
+        } else {
+            throw ServerErrorException("change password failed due to internal error")
+        }
     }
 
     @Get("/error/{errorCode}")

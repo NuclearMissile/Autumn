@@ -9,6 +9,7 @@
             <p>Welcome, ${user.name}!</p>
             <p>Email: ${user.email}</p>
             <p><a href="/logoff">Log Off</a></p>
+            <p><a href="/changePassword">Change Password</a></p>
         </div>
     </div>
 </div>

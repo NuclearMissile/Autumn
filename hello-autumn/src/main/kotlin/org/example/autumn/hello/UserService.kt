@@ -4,6 +4,7 @@ import org.example.autumn.annotation.*
 import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.utils.HashUtils
 import org.example.autumn.utils.SecureRandomUtils
+import org.slf4j.LoggerFactory
 
 //@Entity
 //@Table(name = "users")
@@ -35,10 +36,19 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
             "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @PostConstruct
     fun init() {
         naiveOrm.jdbcTemplate.update(CREATE_USERS)
-        register("test@test.com", "test", "test")
+        val pwdSalt = SecureRandomUtils.genRandomString(32)
+        val pwdHash = HashUtils.hmacSha256("test", pwdSalt)
+        val user = User(-1, "test@test.com", "test", pwdSalt, pwdHash)
+        try {
+            naiveOrm.insert(user)
+        } catch (_: Exception) {
+
+        }
     }
 
     fun getUserByEmail(email: String): User? {
@@ -54,11 +64,25 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
             naiveOrm.insert(user)
             user
         } catch (e: Exception) {
+            logger.warn(e.message, e)
             null
         }
     }
 
-    fun login(email: String, password: String): User? {
+    @Transactional
+    fun changePassword(user: User, newPassword: String): Boolean {
+        user.pwdSalt = SecureRandomUtils.genRandomString(32)
+        user.pwdHash = HashUtils.hmacSha256(newPassword, user.pwdSalt)
+        return try {
+            naiveOrm.update(user)
+            true
+        } catch (e: Exception) {
+            logger.warn(e.message, e)
+            false
+        }
+    }
+
+    fun validate(email: String, password: String): User? {
         val user = getUserByEmail(email) ?: return null
         val pwdHash = HashUtils.hmacSha256(password, user.pwdSalt)
         return if (pwdHash == user.pwdHash) user else null
