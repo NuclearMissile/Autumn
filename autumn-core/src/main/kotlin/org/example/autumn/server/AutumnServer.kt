@@ -59,22 +59,19 @@ class AutumnServer {
         }
 
         private fun startWar(war: String, customConfig: String?, startTime: Long) {
-            fun extractWar(warPath: Path): Pair<Path, Path> {
+            fun extractWar(warPath: Path): Triple<Path, Path, Path?> {
                 if (Files.isDirectory(warPath)) {
                     logger.info("war path is already a directory, no need to extract: {}", warPath)
                     val classesPath = warPath.resolve("WEB-INF/classes")
                     val libPath = warPath.resolve("WEB-INF/lib")
                     Files.createDirectories(classesPath)
                     Files.createDirectories(libPath)
-                    return Pair(classesPath, libPath)
+                    return Triple(classesPath, libPath, null)
                 }
 
                 val tmpPath = Files.createTempDirectory("Autumn_Server_")
-                Runtime.getRuntime().addShutdownHook(Thread {
-                    Files.walk(tmpPath).sorted(Comparator.reverseOrder()).forEach { it.toFile().delete() }
-                })
-
                 logger.debug("extract {} to {}", warPath, tmpPath)
+
                 val warFile = JarFile(warPath.toFile())
                 warFile.stream().forEach { entry ->
                     if (!entry.isDirectory) {
@@ -92,7 +89,7 @@ class AutumnServer {
                 val libPath = tmpPath.resolve("WEB-INF/lib")
                 Files.createDirectories(classesPath)
                 Files.createDirectories(libPath)
-                return Pair(classesPath, libPath)
+                return Triple(classesPath, libPath, tmpPath)
             }
 
             val warPath = Path.of(war).toAbsolutePath().normalize()
@@ -103,7 +100,7 @@ class AutumnServer {
                 require(customConfig.endsWith(".yml")) { "customConfigPath must be .yml file" }
             }
 
-            val (classesPath, libPath) = extractWar(warPath)
+            val (classesPath, libPath, tmpPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
             logger.debug("set webRoot as {}", webRoot)
 
@@ -163,13 +160,13 @@ class AutumnServer {
             classLoader.walkClassesPath(handler)
             classLoader.walkLibPaths(handler)
 
-            start(webRoot, config, classLoader, classSet.toList(), startTime)
+            start(webRoot, config, classLoader, classSet.toList(), startTime, tmpPath)
         }
 
         // server entry point
         fun start(
             webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>,
-            startTime: Long = System.currentTimeMillis(),
+            startTime: Long = System.currentTimeMillis(), tmpPath: Path? = null,
         ) {
             // start info:
             val jvmVersion = Runtime.version().feature()
@@ -195,8 +192,14 @@ class AutumnServer {
             )
 
             val connector = HttpConnector(config, classLoader, webRoot, executor, annoClasses)
-            // for gracefully exiting
-            Runtime.getRuntime().addShutdownHook(Thread { connector.close() })
+            // exit gracefully
+            Runtime.getRuntime().addShutdownHook(Thread {
+                connector.close()
+                if (tmpPath != null) {
+                    logger.info("cleanup tmp path: {}", tmpPath)
+                    Files.walk(tmpPath).sorted(Comparator.reverseOrder()).forEach { it.toFile().delete() }
+                }
+            })
 
             try {
                 connector.use {
