@@ -73,10 +73,7 @@ class AnnotationConfigApplicationContext(
             listOf(configClass.packageName) else scanAnno.value.toList()
         logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
 
-        val classNameSet = scanClassNames(scanPackages).also {
-            logger.atDebug().log("class found by component scan: {}", it)
-        }.toMutableSet()
-
+        val classNameSet = scanClassNames(scanPackages).toMutableSet()
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name
             if (classNameSet.contains(importClassName)) {
@@ -86,6 +83,8 @@ class AnnotationConfigApplicationContext(
                 classNameSet.add(importClassName)
             }
         }
+        logger.atDebug().log("class found by component scan: {}", classNameSet)
+
         return classNameSet
     }
 

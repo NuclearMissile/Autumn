@@ -11,14 +11,14 @@ data class Resource(val path: String, val name: String)
 
 class ResourceResolver(private val basePackage: String) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val contextClassLoader: ClassLoader
+    private val classLoader: ClassLoader
         get() = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
 
-    fun <R> scanResources(mapper: (Resource) -> R?): List<R> {
+    fun <T> scanResources(mapper: (Resource) -> T?): List<T> {
         val basePackagePath = basePackage.replace('.', '/')
         logger.atDebug().log("scan resources from path: $basePackagePath")
         return buildList {
-            val en = contextClassLoader.getResources(basePackagePath)
+            val en = classLoader.getResources(basePackagePath)
             while (en.hasMoreElements()) {
                 val uri = en.nextElement().toURI()
                 val uriStr = uri.toString().removeSuffix("/")
@@ -36,13 +36,11 @@ class ResourceResolver(private val basePackage: String) {
     }
 
     private fun jarUriToPath(basePackagePath: String, jarUri: URI): Path {
-        return FileSystems.newFileSystem(jarUri, mutableMapOf<String, Any>()).use {
-            it.getPath(basePackagePath)
-        }
+        return FileSystems.newFileSystem(jarUri, emptyMap<String, Any>()).getPath(basePackagePath)
     }
 
-    private fun <R> scanFile(
-        isJar: Boolean, baseDir: String, root: Path, collector: MutableList<R>, mapper: (Resource) -> R?
+    private fun <T> scanFile(
+        isJar: Boolean, baseDir: String, root: Path, collector: MutableList<T>, mapper: (Resource) -> T?
     ) {
         Files.walk(root).filter { path -> Files.isRegularFile(path) }.forEach { path ->
             val res = if (isJar) {
