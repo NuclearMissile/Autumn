@@ -118,7 +118,7 @@ annotation class Around(
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Inherited
-annotation class Transactional(vararg val value: String = ["transactionManager"], val suffix: String = "WithTx")
+annotation class Transactional(val suffix: String = "WithTx", vararg val value: String = ["transactionManager"])
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
