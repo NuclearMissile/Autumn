@@ -1,7 +1,6 @@
 package org.example.autumn.db
 
 import org.example.autumn.annotation.Transactional
-import org.example.autumn.annotation.TransactionalBean
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.slf4j.LoggerFactory
@@ -15,7 +14,7 @@ interface TransactionManager
 
 class TransactionStatus(val connection: Connection)
 
-class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<TransactionalBean>()
+class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transactional>()
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
     companion object {
@@ -28,7 +27,8 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
 
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         // join current tx
-        if (holder.get() != null || !method.isAnnotationPresent(Transactional::class.java))
+        val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
+        if (holder.get() != null || txAnno == null || !method.name.endsWith(txAnno.suffix))
             return method.invoke(proxy, *(args ?: emptyArray()))
 
         dataSource.connection.use { conn ->

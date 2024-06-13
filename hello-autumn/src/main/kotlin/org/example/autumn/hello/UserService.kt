@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 
 @Around("beforeLogInvocationHandler", "afterLogInvocationHandler")
 @Component
-@TransactionalBean
+@Transactional
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -55,8 +55,7 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
-    @Transactional
-    fun register(email: String, name: String, password: String): User? {
+    fun registerWithTx(email: String, name: String, password: String): User? {
         val pwdSalt = SecureRandomUtils.genRandomString(32)
         val pwdHash = HashUtils.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
@@ -69,8 +68,7 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         }
     }
 
-    @Transactional
-    fun changePassword(user: User, newPassword: String): Boolean {
+    fun changePasswordWithTx(user: User, newPassword: String): Boolean {
         user.pwdSalt = SecureRandomUtils.genRandomString(32)
         user.pwdHash = HashUtils.hmacSha256(newPassword, user.pwdSalt)
         return try {
