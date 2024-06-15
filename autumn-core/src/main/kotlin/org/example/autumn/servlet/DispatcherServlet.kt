@@ -163,6 +163,8 @@ class DispatcherServlet : HttpServlet() {
                 if (ret.status >= 400) {
                     viewResolver.renderError(ret.status, ret.getModel(), req, resp)
                 } else if (viewName.startsWith("redirect:")) {
+                    if (ret.getModel().isNotEmpty())
+                        logger.warn("non-empty model is ignored for 'redirect:' command")
                     resp.sendRedirect(req.contextPath + viewName.substring(9))
                 } else {
                     viewResolver.render(viewName, ret.getModel(), ret.status, req, resp)
