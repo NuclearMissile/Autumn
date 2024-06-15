@@ -30,7 +30,7 @@
         <hikaricp.version>5.1.0</hikaricp.version>
         <freemarker.version>2.3.33</freemarker.version>
         <sqlite.version>3.46.0.0</sqlite.version>
-        <spring.version>6.1.8</spring.version>
+        <spring.version>6.1.9</spring.version>
 
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
         <maven-jar-plugin.version>3.4.1</maven-jar-plugin.version>

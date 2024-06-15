@@ -67,6 +67,19 @@ class AnnotationConfigApplicationContext(
         }
     }
 
+    private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
+    private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
+    private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
+    private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
+    private fun Class<*>.beanCtor() = run {
+        val ctors = declaredConstructors.sortedByDescending { it.parameterCount }
+        ctors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) } ?: ctors.firstOrNull {
+            it.parameters.all { p ->
+                p.isAnnotationPresent(Autowired::class.java) || p.isAnnotationPresent(Value::class.java)
+            }
+        } ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
+    }
+
     private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
         val scanAnno = configClass.getAnnotation(ComponentScan::class.java)
         val scanPackages = if (scanAnno == null || scanAnno.value.isEmpty())
@@ -84,7 +97,6 @@ class AnnotationConfigApplicationContext(
             }
         }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
-
         return classNameSet
     }
 
@@ -106,6 +118,38 @@ class AnnotationConfigApplicationContext(
                 )
             }
             return ms.firstOrNull()
+        }
+
+        /**
+         * Scan factory method that annotated with @Bean:
+         */
+        fun scanFactoryMethods(
+            factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>,
+        ) {
+            for (method in factoryClass.declaredMethods) {
+                val bean = method.getAnnotation(Bean::class.java) ?: continue
+                val mod = method.modifiers
+                if (Modifier.isAbstract(mod))
+                    throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be abstract")
+                if (Modifier.isFinal(mod))
+                    throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be final")
+                if (Modifier.isPrivate(mod))
+                    throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be private")
+                val beanClass = method.returnType
+                if (beanClass.isPrimitive)
+                    throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return primitive type")
+                if (beanClass == Void.TYPE || beanClass == Void::class.java)
+                    throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return void")
+                val beanName = method.getAnnotation(Bean::class.java)!!.value.ifEmpty { method.name }
+                val info = BeanMetaInfo(
+                    beanName, beanClass, method.getOrder(), method.isPrimary(), factoryBeanName,
+                    method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
+                )
+                if (infos.put(info.beanName, info) != null) {
+                    throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
+                }
+                logger.atDebug().log("define bean via factory method: {}", info)
+            }
         }
 
         val infoMap = mutableMapOf<String, BeanMetaInfo>()
@@ -149,51 +193,6 @@ class AnnotationConfigApplicationContext(
             scanFactoryMethods(beanName, clazz, infoMap)
         }
         return infoMap
-    }
-
-    private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
-    private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
-    private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
-    private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
-    private fun Class<*>.beanCtor() = run {
-        val ctors = declaredConstructors.sortedByDescending { it.parameterCount }
-        ctors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) } ?: ctors.firstOrNull {
-            it.parameters.all { p ->
-                p.isAnnotationPresent(Autowired::class.java) || p.isAnnotationPresent(Value::class.java)
-            }
-        } ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
-    }
-
-    /**
-     * Scan factory method that annotated with @Bean:
-     */
-    private fun scanFactoryMethods(
-        factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>,
-    ) {
-        for (method in factoryClass.declaredMethods) {
-            val bean = method.getAnnotation(Bean::class.java) ?: continue
-            val mod = method.modifiers
-            if (Modifier.isAbstract(mod))
-                throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be abstract")
-            if (Modifier.isFinal(mod))
-                throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be final")
-            if (Modifier.isPrivate(mod))
-                throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot be private")
-            val beanClass = method.returnType
-            if (beanClass.isPrimitive)
-                throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return primitive type")
-            if (beanClass == Void.TYPE || beanClass == Void::class.java)
-                throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return void")
-            val beanName = method.getAnnotation(Bean::class.java)!!.value.ifEmpty { method.name }
-            val info = BeanMetaInfo(
-                beanName, beanClass, method.getOrder(), method.isPrimary(), factoryBeanName,
-                method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
-            )
-            if (infos.put(info.beanName, info) != null) {
-                throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
-            }
-            logger.atDebug().log("define bean via factory method: {}", info)
-        }
     }
 
     /**
@@ -297,7 +296,7 @@ class AnnotationConfigApplicationContext(
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
