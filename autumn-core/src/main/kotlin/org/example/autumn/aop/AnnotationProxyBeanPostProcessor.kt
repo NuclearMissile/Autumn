@@ -3,6 +3,7 @@ package org.example.autumn.aop
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy
 import net.bytebuddy.implementation.InvocationHandlerAdapter
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender
 import net.bytebuddy.matcher.ElementMatchers
 import org.example.autumn.annotation.Around
 import org.example.autumn.annotation.Bean
@@ -38,7 +39,9 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
                 .method(ElementMatchers.isPublic())
                 .intercept(InvocationHandlerAdapter.of { _, method, args ->
                     handler.invoke(bean, method, args)
-                }).make().load(targetClass.classLoader).loaded
+                })
+                .attribute(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER)
+                .make().load(targetClass.classLoader).loaded
             return proxyClass.getConstructor().newInstance() as T
         }
     }
