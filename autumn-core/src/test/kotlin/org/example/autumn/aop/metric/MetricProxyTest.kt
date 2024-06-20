@@ -23,7 +23,7 @@ class MetricProxyTest {
             assertEquals(sha256, worker.sha256("test"))
 
             // get metric time:
-            val metrics = ctx.getBean(MetricInvocationHandler::class.java)
+            val metrics = ctx.getBean(MetricInvocation::class.java)
             assertNotNull(metrics.lastProcessedTime["MD5"])
             assertNotNull(metrics.lastProcessedTime["SHA-256"])
             assertNotNull(metrics.lastProcessedTime["SHA-1"])

@@ -2,7 +2,8 @@ package org.example.autumn.aop.around
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
-import java.lang.reflect.InvocationHandler
+import org.example.autumn.aop.Invocation
+import org.example.autumn.aop.InvocationChain
 import java.lang.reflect.Method
 
 @Configuration
@@ -20,10 +21,10 @@ class AroundAopConfiguration {
 annotation class Polite
 
 @Component
-class PoliteInvocationHandler : InvocationHandler {
-    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
+class PoliteInvocation : Invocation {
+    override fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         // 拦截标记了@Polite的方法返回值:
-        val ret = method.invoke(proxy, *(args ?: emptyArray()))
+        val ret = chain.invokeChain(caller, method, args)
         method.getAnnotation(Polite::class.java) ?: return ret
 
         ret as String
@@ -32,7 +33,7 @@ class PoliteInvocationHandler : InvocationHandler {
 }
 
 @Component
-@Around("politeInvocationHandler")
+@Around("politeInvocation")
 class OriginBean {
     @Value("\${customer.name}")
     var name: String? = null

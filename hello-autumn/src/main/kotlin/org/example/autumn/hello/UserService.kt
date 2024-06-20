@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory
 //    }
 //}
 
-@Around("beforeLogInvocationHandler", "afterLogInvocationHandler")
+@Around("beforeLogInvocation", "afterLogInvocation")
 @Component
 @Transactional
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {

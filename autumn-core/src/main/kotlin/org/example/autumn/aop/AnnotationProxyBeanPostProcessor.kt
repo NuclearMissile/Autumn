@@ -62,8 +62,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         originalBeans[beanName] = bean
         val anno = bean.javaClass.getAnnotation(annotationClass) ?: return bean
         val context = ApplicationContextHolder.required
-
-        return try {
+        val handlers = try {
             @Suppress("UNCHECKED_CAST")
             anno.annotationClass.java.getMethod("value").invoke(anno) as Array<String>
         } catch (e: ReflectiveOperationException) {
@@ -72,10 +71,14 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
             val info = context.findBeanMetaInfo(it) ?: throw AopConfigException(
                 "@${annotationClass.simpleName} proxy handler '$it' not found."
             )
-            (info.instance ?: context.createEarlySingleton(info)) as? InvocationHandler ?: throw AopConfigException(
-                "@${annotationClass.simpleName} proxy handler '$it' is not type of ${InvocationHandler::class.java.name}."
+            (info.instance ?: context.createEarlySingleton(info)) as? Invocation ?: throw AopConfigException(
+                "@${annotationClass.simpleName} proxy handler '$it' is not type of ${Invocation::class.java.name}."
             )
-        }.fold(bean, ::createProxy)
+        }
+
+        return createProxy(bean) { proxy, method, args ->
+            InvocationChain(handlers).invokeChain(proxy, method, args)
+        }
     }
 
     override fun beforePropertySet(bean: Any, beanName: String): Any {

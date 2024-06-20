@@ -4,9 +4,10 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.ComponentScan
 import org.example.autumn.annotation.Configuration
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
+import org.example.autumn.aop.Invocation
+import org.example.autumn.aop.InvocationChain
 import org.slf4j.LoggerFactory
 import java.lang.annotation.Inherited
-import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -25,17 +26,18 @@ class MetricConfiguration
 class MetricProxyBeanPostProcessor : AnnotationProxyBeanPostProcessor<Metric>()
 
 @Component
-class MetricInvocationHandler : InvocationHandler {
+class MetricInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
     val lastProcessedTime = mutableMapOf<String, Long>()
-    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
+
+    override fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         val metric = method.getAnnotation(Metric::class.java)
             ?: // do not do performance test:
-            return method.invoke(proxy, *(args ?: emptyArray()))
+            return chain.invokeChain(caller, method, args)
         val name: String = metric.value.first()
         val start = System.currentTimeMillis()
         return try {
-            method.invoke(proxy, *(args ?: emptyArray()))
+            chain.invokeChain(caller, method, args)
         } finally {
             val end = System.currentTimeMillis()
             val execTime = end - start
@@ -45,7 +47,7 @@ class MetricInvocationHandler : InvocationHandler {
     }
 }
 
-@Metric(["metricInvocationHandler"])
+@Metric(["metricInvocation"])
 abstract class BaseWorker {
     @Metric(["MD5"])
     open fun md5(input: String): String {

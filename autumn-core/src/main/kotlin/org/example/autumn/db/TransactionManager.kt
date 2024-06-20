@@ -2,9 +2,10 @@ package org.example.autumn.db
 
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
+import org.example.autumn.aop.Invocation
+import org.example.autumn.aop.InvocationChain
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.slf4j.LoggerFactory
-import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.sql.Connection
@@ -16,7 +17,7 @@ class TransactionStatus(val connection: Connection)
 
 class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transactional>()
 
-class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, InvocationHandler {
+class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, Invocation {
     companion object {
         private val holder = ThreadLocal<TransactionStatus>()
         val connection: Connection?
@@ -25,11 +26,11 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
+    override fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         // join current tx
         val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
         if (holder.get() != null || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
-            return method.invoke(proxy, *(args ?: emptyArray()))
+            return chain.invokeChain(caller, method, args)
 
         dataSource.connection.use { conn ->
             val autoCommit = conn.autoCommit
@@ -38,7 +39,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
             }
             try {
                 holder.set(TransactionStatus(conn))
-                val ret = method.invoke(proxy, *(args ?: emptyArray()))
+                val ret = chain.invokeChain(caller, method, args)
                 conn.commit()
                 return ret
             } catch (e: InvocationTargetException) {

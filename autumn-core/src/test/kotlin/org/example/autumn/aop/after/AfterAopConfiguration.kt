@@ -2,7 +2,8 @@ package org.example.autumn.aop.after
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
-import org.example.autumn.aop.InvocationHandlerAdapter
+import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.InvocationChain
 import java.lang.reflect.Method
 
 @Configuration
@@ -15,7 +16,7 @@ class AfterAopConfiguration {
 }
 
 @Component
-@Around("politeInvocationHandler")
+@Around("politeInvocation")
 class GreetingBean {
     fun hello(name: String): String {
         return "Hello, $name."
@@ -27,8 +28,14 @@ class GreetingBean {
 }
 
 @Component
-class PoliteInvocationHandler : InvocationHandlerAdapter {
-    override fun after(proxy: Any, returnValue: Any?, method: Method, args: Array<Any?>?): Any? {
+class PoliteInvocation : InvocationAdapter {
+    override fun after(
+        proxy: Any,
+        returnValue: Any?,
+        method: Method,
+        chain: InvocationChain,
+        args: Array<Any?>?,
+    ): Any? {
         if (returnValue is String) {
             if (returnValue.endsWith(".")) {
                 return returnValue.substring(0, returnValue.length - 1) + "!"

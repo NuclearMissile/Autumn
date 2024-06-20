@@ -10,7 +10,8 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.InvocationHandlerAdapter
+import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.InvocationChain
 import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
@@ -42,22 +43,27 @@ class HelloContextLoadListener : ContextLoadListener()
 //class HelloConfiguration
 
 @Component
-class BeforeLogInvocationHandler : InvocationHandlerAdapter {
+class BeforeLogInvocation : InvocationAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun before(proxy: Any, method: Method, args: Array<Any?>?) {
+    override fun before(proxy: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
 }
 
 @Component
-class AfterLogInvocationHandler : InvocationHandlerAdapter {
+class AfterLogInvocation : InvocationAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun after(proxy: Any, returnValue: Any?, method: Method, args: Array<Any?>?): Any? {
-        val ret = super.after(proxy, returnValue, method, args)
+    override fun after(
+        proxy: Any,
+        returnValue: Any?,
+        method: Method,
+        chain: InvocationChain,
+        args: Array<Any?>?,
+    ): Any? {
         logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
-        return ret
+        return returnValue
     }
 }
 
