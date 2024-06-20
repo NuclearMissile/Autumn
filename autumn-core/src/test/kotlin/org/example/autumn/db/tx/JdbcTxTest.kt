@@ -24,7 +24,8 @@ class AddressService(
     @Autowired
     lateinit var userService: UserService
 
-    fun addAddressWithTx(vararg addresses: Address) {
+    @Transactional
+    fun addAddress(vararg addresses: Address) {
         for (address in addresses) {
             // check if userId exists:
             userService.getUser(address.userId)
@@ -36,7 +37,8 @@ class AddressService(
         return jdbcTemplate.queryList(JdbcTestBase.SELECT_ADDRESS_BY_USERID, userId)
     }
 
-    fun deleteAddressWithTx(userId: Int) {
+    @Transactional
+    fun deleteAddress(userId: Int) {
         jdbcTemplate.update(JdbcTestBase.DELETE_ADDRESS_BY_USERID, userId)
         if (userId == 1) {
             throw RuntimeException("Rollback delete for user id = 1")
@@ -53,7 +55,8 @@ class UserService(
     @Autowired
     lateinit var addressService: AddressService
 
-    fun createUserWithTx(name: String?, age: Int): User {
+    @Transactional
+    fun createUser(name: String?, age: Int): User {
         val id = jdbcTemplate.insert(JdbcTestBase.INSERT_USER, name, age)
         return User(id.toInt(), name, age)
     }
@@ -62,13 +65,15 @@ class UserService(
         return jdbcTemplate.queryRequired(JdbcTestBase.SELECT_USER, userId)
     }
 
-    fun updateUserWithTx(user: User) {
+    @Transactional
+    fun updateUser(user: User) {
         jdbcTemplate.update(JdbcTestBase.UPDATE_USER, user.name, user.age, user.id)
     }
 
-    fun deleteUserWithTx(user: User) {
+    @Transactional
+    fun deleteUser(user: User) {
         jdbcTemplate.update(JdbcTestBase.DELETE_USER, user.id)
-        addressService.deleteAddressWithTx(user.id)
+        addressService.deleteAddress(user.id)
     }
 }
 
@@ -95,7 +100,7 @@ class JdbcTxTest : JdbcTestBase() {
             assertNull(userServiceField.get(addressService))
 
             // insert user:
-            val bob = userService.createUserWithTx("Bob", 12)
+            val bob = userService.createUser("Bob", 12)
             assertEquals(1, bob.id)
 
             // insert addresses:
@@ -104,19 +109,19 @@ class JdbcTxTest : JdbcTestBase() {
             // user not exist for addr3:
             val addr3 = Address(0, bob.id + 1, "Ocean Drive, Miami, Florida", 33411)
             assertThrows<DataAccessException> {
-                addressService.addAddressWithTx(addr1, addr2, addr3)
+                addressService.addAddress(addr1, addr2, addr3)
             }
 
             // ALL address should not be inserted:
             assertTrue(addressService.getAddresses(bob.id).isEmpty())
 
             // insert addr1, addr2 for Bob only:
-            addressService.addAddressWithTx(addr1, addr2)
+            addressService.addAddress(addr1, addr2)
             assertEquals(2, addressService.getAddresses(bob.id).size)
 
             // now delete bob will cause rollback:
             assertThrows<RuntimeException> {
-                userService.deleteUserWithTx(bob)
+                userService.deleteUser(bob)
             }
 
             // bob and his addresses still exist:

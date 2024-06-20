@@ -39,11 +39,11 @@ class OrmTxTest {
             val userService = ctx.getBean<UserService>("userService")
             // proxied:
             assertNotSame(UserService::class.java, userService.javaClass)
-            val user_0 = userService.insertUserWithTx("test_0", "test_0", "test_0")
+            val user_0 = userService.insertUser("test_0", "test_0", "test_0")
             assertNotEquals(-1, user_0.id)
             val user_1 = User(-1, "test_1", "test_1", "test_1")
             val user_2 = User(-1, "test_2", "test_2", "test_2")
-            assertThrows<DataAccessException> { userService.insertUsersWithTx(listOf(user_1, user_2, user_0)) }
+            assertThrows<DataAccessException> { userService.insertUsers(listOf(user_1, user_2, user_0)) }
             assertEquals(1, userService.getAllUser().size)
         }
     }
@@ -71,13 +71,15 @@ class UserService(@Autowired val naiveOrm: NaiveOrm) {
         return naiveOrm.selectFrom<User>().query()
     }
 
-    fun insertUserWithTx(email: String, name: String, password: String): User {
+    @Transactional
+    fun insertUser(email: String, name: String, password: String): User {
         val user = User(-1, email, name, password)
         naiveOrm.insert(user)
         return user
     }
 
-    fun insertUsersWithTx(users: List<User>) {
+    @Transactional
+    fun insertUsers(users: List<User>) {
         users.forEach { user -> naiveOrm.insert(user) }
     }
 }

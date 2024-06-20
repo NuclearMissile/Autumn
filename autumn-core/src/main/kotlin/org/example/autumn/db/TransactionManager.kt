@@ -28,7 +28,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         // join current tx
         val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
-        if (holder.get() != null || txAnno == null || !method.name.endsWith(txAnno.suffix))
+        if (holder.get() != null || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
             return method.invoke(proxy, *(args ?: emptyArray()))
 
         dataSource.connection.use { conn ->

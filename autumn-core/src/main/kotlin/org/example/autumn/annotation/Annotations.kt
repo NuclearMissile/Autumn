@@ -114,11 +114,11 @@ annotation class Around(
     vararg val value: String = [],
 )
 
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Inherited
-annotation class Transactional(val suffix: String = "WithTx", vararg val value: String = ["transactionManager"])
+annotation class Transactional(vararg val value: String = ["transactionManager"])
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

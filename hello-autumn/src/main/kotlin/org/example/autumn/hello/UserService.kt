@@ -55,7 +55,8 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
-    fun registerWithTx(email: String, name: String, password: String): User? {
+    @Transactional
+    fun register(email: String, name: String, password: String): User? {
         val pwdSalt = SecureRandomUtils.genRandomString(32)
         val pwdHash = HashUtils.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
@@ -68,7 +69,8 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         }
     }
 
-    fun changePasswordWithTx(user: User, newPassword: String): Boolean {
+    @Transactional
+    fun changePassword(user: User, newPassword: String): Boolean {
         user.pwdSalt = SecureRandomUtils.genRandomString(32)
         user.pwdHash = HashUtils.hmacSha256(newPassword, user.pwdSalt)
         return try {

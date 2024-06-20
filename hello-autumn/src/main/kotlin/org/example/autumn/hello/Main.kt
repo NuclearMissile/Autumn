@@ -150,7 +150,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
         @RequestParam email: String, @RequestParam name: String, @RequestParam password: String,
     ): ModelAndView {
         if (name.isBlank()) return ModelAndView("/register.ftl", mapOf("error" to "name is blank"))
-        return if (userService.registerWithTx(email, name, password) != null)
+        return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
         else
             ModelAndView("/register.ftl", mapOf("error" to "email is already registered"))
@@ -203,7 +203,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
             return ModelAndView("/changePassword.ftl", mapOf("error" to "new password must be different from old one"))
         userService.validate(user.email, oldPassword)
             ?: return ModelAndView("/changePassword.ftl", mapOf("error" to "old password is incorrect"))
-        if (userService.changePasswordWithTx(user, newPassword)) {
+        if (userService.changePassword(user, newPassword)) {
             session.removeAttribute(USER_SESSION_KEY)
             return ModelAndView("redirect:/login")
         } else {
