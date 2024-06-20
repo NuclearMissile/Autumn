@@ -76,9 +76,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
             )
         }
 
-        return createProxy(bean) { proxy, method, args ->
-            InvocationChain(handlers).invokeChain(proxy, method, args)
-        }
+        return createProxy(bean, InvocationChain(handlers)::invokeChain)
     }
 
     override fun beforePropertySet(bean: Any, beanName: String): Any {
