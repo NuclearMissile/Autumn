@@ -7,15 +7,17 @@ class InvocationChain(private val handlers: List<Invocation>) {
     private var tasks = handlers.iterator()
 
     fun invokeChain(caller: Any, method: Method, args: Array<Any?>?): Any? {
-        if (tasks.hasNext()) {
-            val handler = tasks.next()
-            result = handler.invoke(caller, method, this, args)
-        } else {
-            result = method.invoke(caller, *(args ?: emptyArray()))
-            // reset the iterator otherwise the next method which should be proxied will not be handled
-            tasks = handlers.iterator()
+        synchronized(tasks) {
+            if (tasks.hasNext()) {
+                val handler = tasks.next()
+                result = handler.invoke(caller, method, this, args)
+            } else {
+                result = method.invoke(caller, *(args ?: emptyArray()))
+                // reset the iterator otherwise the next method which should be proxied will not be handled
+                tasks = handlers.iterator()
+            }
+            return result
         }
-        return result
     }
 }
 
