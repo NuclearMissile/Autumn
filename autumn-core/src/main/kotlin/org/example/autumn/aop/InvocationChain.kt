@@ -2,31 +2,26 @@ package org.example.autumn.aop
 
 import java.lang.reflect.Method
 
-class InvocationChain(private val handlers: List<Invocation>) {
+class InvocationChain(handlers: List<Invocation>) {
     private var result: Any? = null
-    private var tasks = handlers.iterator()
+    private var handlersIt = handlers.iterator()
 
     fun invokeChain(caller: Any, method: Method, args: Array<Any?>?): Any? {
-        synchronized(tasks) {
-            if (tasks.hasNext()) {
-                val handler = tasks.next()
-                result = handler.invoke(caller, method, this, args)
-            } else {
-                result = method.invoke(caller, *(args ?: emptyArray()))
-                // reset the iterator otherwise the next method which should be proxied will not be handled
-                tasks = handlers.iterator()
-            }
-            return result
+        result = if (handlersIt.hasNext()) {
+            handlersIt.next().invoke(caller, method, this, args)
+        } else {
+            method.invoke(caller, *(args ?: emptyArray()))
         }
+        return result
     }
 }
 
 interface InvocationAdapter : Invocation {
-    fun before(proxy: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+    fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         // do nothing
     }
 
-    fun after(proxy: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
+    fun after(caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         // do nothing
         return returnValue
     }

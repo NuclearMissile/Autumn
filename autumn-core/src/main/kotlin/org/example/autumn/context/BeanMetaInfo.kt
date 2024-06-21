@@ -1,12 +1,13 @@
 package org.example.autumn.context
 
 import org.example.autumn.annotation.Configuration
+import org.example.autumn.aop.Invocation
 import org.example.autumn.exception.BeanCreationException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
 class BeanMetaInfo private constructor(
-    val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean
+    val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean,
 ) : Comparable<BeanMetaInfo> {
     var beanCtor: Constructor<*>? = null
         private set
@@ -36,12 +37,13 @@ class BeanMetaInfo private constructor(
             "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
         )
 
+    val aopHandlers = mutableListOf<Invocation>()
     val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
     val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, beanCtor: Constructor<*>,
-        initMethod: Method?, destroyMethod: Method?
+        initMethod: Method?, destroyMethod: Method?,
     ) : this(beanName, beanClass, order, isPrimary) {
         beanCtor.isAccessible = true
         this.beanCtor = beanCtor
@@ -53,7 +55,7 @@ class BeanMetaInfo private constructor(
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, factoryName: String,
-        factoryMethod: Method, initMethodName: String?, destroyMethodName: String?
+        factoryMethod: Method, initMethodName: String?, destroyMethodName: String?,
     ) : this(beanName, beanClass, order, isPrimary) {
         this.factoryName = factoryName
         this.factoryMethod = factoryMethod
@@ -69,7 +71,7 @@ class BeanMetaInfo private constructor(
 
     override fun toString(): String {
         return "BeanMetaInfo(beanName='$beanName', beanClass=$beanClass, order=$order, isPrimary=$isPrimary, " +
-                "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
-                "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
+            "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
+            "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
     }
 }

@@ -1,6 +1,7 @@
 package org.example.autumn.context
 
 import org.example.autumn.annotation.*
+import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
@@ -296,7 +297,7 @@ class AnnotationConfigApplicationContext(
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
@@ -451,6 +452,10 @@ class AnnotationConfigApplicationContext(
                 logger.atDebug().log("Bean {} was replaced by post processor {}", info.beanName, it.javaClass.name)
                 info.instance = proceed
             }
+        }
+        if (info.aopHandlers.isNotEmpty()) {
+            logger.atDebug().log("Bean {} was replaced for adding aop handlers", info.beanName)
+            info.instance = createProxy(info.instance, info.aopHandlers)
         }
         return info.requiredInstance
     }

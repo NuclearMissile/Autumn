@@ -46,7 +46,7 @@ class HelloContextLoadListener : ContextLoadListener()
 class BeforeLogInvocation : InvocationAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun before(proxy: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+    override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
 }
@@ -56,7 +56,7 @@ class AfterLogInvocation : InvocationAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(
-        proxy: Any,
+        caller: Any,
         returnValue: Any?,
         method: Method,
         chain: InvocationChain,

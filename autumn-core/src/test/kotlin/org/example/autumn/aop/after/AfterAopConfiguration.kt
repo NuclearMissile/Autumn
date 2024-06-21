@@ -30,7 +30,7 @@ class GreetingBean {
 @Component
 class PoliteInvocation : InvocationAdapter {
     override fun after(
-        proxy: Any,
+        caller: Any,
         returnValue: Any?,
         method: Method,
         chain: InvocationChain,
