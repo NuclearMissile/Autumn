@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
 import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
@@ -43,7 +43,7 @@ class HelloContextLoadListener : ContextLoadListener()
 //class HelloConfiguration
 
 @Component
-class BeforeLogInvocation : InvocationAdapter {
+class BeforeLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
@@ -52,7 +52,7 @@ class BeforeLogInvocation : InvocationAdapter {
 }
 
 @Component
-class AfterLogInvocation : InvocationAdapter {
+class AfterLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(

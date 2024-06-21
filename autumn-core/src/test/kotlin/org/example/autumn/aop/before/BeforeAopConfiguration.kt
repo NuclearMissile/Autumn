@@ -2,7 +2,7 @@ package org.example.autumn.aop.before
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
-import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
@@ -33,7 +33,7 @@ class BusinessBean {
 }
 
 @Component
-class LogInvocation : InvocationAdapter {
+class LogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {

@@ -2,7 +2,7 @@ package org.example.autumn.aop.after
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AroundProxyBeanPostProcessor
-import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
 import java.lang.reflect.Method
 
@@ -28,7 +28,7 @@ class GreetingBean {
 }
 
 @Component
-class PoliteInvocation : InvocationAdapter {
+class PoliteInvocation : Invocation {
     override fun after(
         caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
     ): Any? {

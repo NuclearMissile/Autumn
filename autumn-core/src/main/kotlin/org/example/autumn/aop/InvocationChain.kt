@@ -16,7 +16,7 @@ class InvocationChain(handlers: List<Invocation>) {
     }
 }
 
-interface InvocationAdapter : Invocation {
+interface Invocation {
     fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         // do nothing
     }
@@ -26,13 +26,9 @@ interface InvocationAdapter : Invocation {
         return returnValue
     }
 
-    override fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
+    fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         before(caller, method, chain, args)
         val ret = chain.invokeChain(caller, method, args)
         return after(caller, ret, method, chain, args)
     }
-}
-
-interface Invocation {
-    fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any?
 }

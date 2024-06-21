@@ -5,7 +5,7 @@ import org.example.autumn.annotation.Around
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
-import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.db.JdbcTemplate
@@ -70,7 +70,7 @@ data class User(
 )
 
 @Component
-class BeforeLogInvocation : InvocationAdapter {
+class BeforeLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
@@ -79,7 +79,7 @@ class BeforeLogInvocation : InvocationAdapter {
 }
 
 @Component
-class AfterLogInvocation : InvocationAdapter {
+class AfterLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(
