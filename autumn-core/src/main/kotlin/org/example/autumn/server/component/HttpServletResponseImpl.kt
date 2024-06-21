@@ -189,6 +189,15 @@ class HttpServletResponseImpl(
         commitHeaders(-1)
     }
 
+    override fun sendRedirect(location: String, sc: Int, clearBuffer: Boolean) {
+        require(!isCommitted) {
+            throw IllegalStateException("cannot sendRedirect after committed")
+        }
+        status = sc
+        headers["Location"] = location
+        commitHeaders(-1)
+    }
+
     override fun setDateHeader(name: String, date: Long) {
         require(!isCommitted) {
             throw IllegalStateException("cannot setDateHeader after committed")
