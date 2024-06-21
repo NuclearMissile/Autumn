@@ -2,10 +2,8 @@ package org.example.autumn.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.example.autumn.annotation.Autowired
-import org.example.autumn.annotation.Bean
-import org.example.autumn.annotation.Configuration
-import org.example.autumn.annotation.Value
+import org.example.autumn.DEFAULT_TX_MANAGER_ORDER
+import org.example.autumn.annotation.*
 import org.example.autumn.db.orm.NaiveOrm
 import javax.sql.DataSource
 
@@ -48,6 +46,7 @@ class DbConfiguration {
         return TransactionalBeanPostProcessor()
     }
 
+    @Order(DEFAULT_TX_MANAGER_ORDER)
     @Bean
     fun transactionManager(@Autowired dataSource: DataSource): TransactionManager {
         return DataSourceTransactionManager(dataSource)

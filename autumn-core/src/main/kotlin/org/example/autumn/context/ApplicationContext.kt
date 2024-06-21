@@ -1,5 +1,6 @@
 package org.example.autumn.context
 
+import org.example.autumn.DEFAULT_ORDER
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
 import org.example.autumn.aop.Invocation
@@ -69,8 +70,8 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
-    private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: Int.MAX_VALUE
+    private fun Class<*>.getOrder() = getAnnotation(Order::class.java)?.value ?: DEFAULT_ORDER
+    private fun Method.getOrder() = getAnnotation(Order::class.java)?.value ?: DEFAULT_ORDER
     private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
     private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
     private fun Class<*>.beanCtor() = run {
@@ -298,7 +299,7 @@ class AnnotationConfigApplicationContext(
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }

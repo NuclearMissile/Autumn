@@ -46,9 +46,9 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
     override fun beforeInitialization(bean: Any, beanName: String): Any {
         originalBeans[beanName] = bean
         val anno = bean.javaClass.getAnnotation(annotationClass) ?: return bean
-
         val context = ApplicationContextHolder.required
         val beanInfo = context.findBeanMetaInfo(beanName)!!
+
         beanInfo.aopBeanInfos += try {
             @Suppress("UNCHECKED_CAST")
             anno.annotationClass.java.getMethod("value").invoke(anno) as Array<String>
