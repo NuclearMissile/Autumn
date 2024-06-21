@@ -2,6 +2,7 @@ package org.example.autumn.context
 
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
+import org.example.autumn.aop.Invocation
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
@@ -453,9 +454,13 @@ class AnnotationConfigApplicationContext(
                 info.instance = proceed
             }
         }
-        if (info.aopHandlers.isNotEmpty()) {
+        if (info.aopBeanInfos.isNotEmpty()) {
             logger.atDebug().log("Bean {} was replaced for adding aop handlers", info.beanName)
-            info.instance = createProxy(info.instance, info.aopHandlers)
+            info.instance = createProxy(info.instance, info.aopBeanInfos.sorted().map {
+                (it.instance ?: createEarlySingleton(it)) as? Invocation ?: throw AopConfigException(
+                    "@${it.javaClass.simpleName} proxy handler '${it.beanName}' is not type of ${Invocation::class.java.name}."
+                )
+            })
         }
         return info.requiredInstance
     }

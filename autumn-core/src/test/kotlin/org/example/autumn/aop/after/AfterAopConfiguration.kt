@@ -30,11 +30,7 @@ class GreetingBean {
 @Component
 class PoliteInvocation : InvocationAdapter {
     override fun after(
-        caller: Any,
-        returnValue: Any?,
-        method: Method,
-        chain: InvocationChain,
-        args: Array<Any?>?,
+        caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
     ): Any? {
         if (returnValue is String) {
             if (returnValue.endsWith(".")) {

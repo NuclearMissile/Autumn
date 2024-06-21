@@ -3,6 +3,7 @@ package org.example.autumn.db.orm
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.annotation.*
+import org.example.autumn.aop.AroundProxyBeanPostProcessor
 import org.example.autumn.db.DataSourceTransactionManager
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.db.TransactionManager
@@ -13,7 +14,7 @@ import javax.sql.DataSource
 @Configuration
 class OrmTestConfiguration {
     @Bean(destroyMethod = "close")
-    fun dataSource( // properties:
+    fun dataSource(
         @Value("autumn.datasource.url") url: String,
         @Value("autumn.datasource.username") username: String,
         @Value("autumn.datasource.password") password: String,
@@ -52,5 +53,14 @@ class OrmTestConfiguration {
     @Bean
     fun transactionManager(@Autowired dataSource: DataSource): TransactionManager {
         return DataSourceTransactionManager(dataSource)
+    }
+}
+
+
+@Configuration
+class AroundAopConfiguration {
+    @Bean
+    fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
+        return AroundProxyBeanPostProcessor()
     }
 }

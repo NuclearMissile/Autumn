@@ -56,11 +56,7 @@ class AfterLogInvocation : InvocationAdapter {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(
-        caller: Any,
-        returnValue: Any?,
-        method: Method,
-        chain: InvocationChain,
-        args: Array<Any?>?,
+        caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
     ): Any? {
         logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
         return returnValue
@@ -92,12 +88,12 @@ class LoginEventListener {
 
     @Subscribe(EventMode.SYNC)
     fun onLogin(e: LoginEvent) {
-        logger.info("[Login] ${e.user}")
+        logger.info("{Login} ${e.user}")
     }
 
     @Subscribe(EventMode.ASYNC)
     fun onLogoff(e: LogoffEvent) {
-        logger.info("[Logoff] ${e.user}")
+        logger.info("{Logoff} ${e.user}")
     }
 }
 

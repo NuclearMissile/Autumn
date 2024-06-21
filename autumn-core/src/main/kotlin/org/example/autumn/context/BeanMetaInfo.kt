@@ -37,7 +37,7 @@ class BeanMetaInfo private constructor(
             "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
         )
 
-    val aopHandlers = mutableListOf<Invocation>()
+    val aopBeanInfos = mutableListOf<BeanMetaInfo>()
     val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
     val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 

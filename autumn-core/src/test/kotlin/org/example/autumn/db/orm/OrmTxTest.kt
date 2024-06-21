@@ -1,15 +1,20 @@
 package org.example.autumn.db.orm
 
 import jakarta.persistence.*
+import org.example.autumn.annotation.Around
 import org.example.autumn.annotation.Autowired
 import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
+import org.example.autumn.aop.InvocationAdapter
+import org.example.autumn.aop.InvocationChain
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.exception.DataAccessException
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
+import org.slf4j.LoggerFactory
+import java.lang.reflect.Method
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.Test
@@ -65,6 +70,28 @@ data class User(
 )
 
 @Component
+class BeforeLogInvocation : InvocationAdapter {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+        logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
+    }
+}
+
+@Component
+class AfterLogInvocation : InvocationAdapter {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun after(
+        caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
+    ): Any? {
+        logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
+        return returnValue
+    }
+}
+
+@Component
+@Around("beforeLogInvocation", "afterLogInvocation")
 @Transactional
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     fun getAllUser(): List<User> {
