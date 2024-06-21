@@ -3,16 +3,14 @@ package org.example.autumn.aop
 import java.lang.reflect.Method
 
 class InvocationChain(handlers: List<Invocation>) {
-    private var result: Any? = null
-    private var handlersIt = handlers.iterator()
+    private val iter = handlers.iterator()
 
     fun invokeChain(caller: Any, method: Method, args: Array<Any?>?): Any? {
-        result = if (handlersIt.hasNext()) {
-            handlersIt.next().invoke(caller, method, this, args)
+        return if (iter.hasNext()) {
+            iter.next().invoke(caller, method, this, args)
         } else {
             method.invoke(caller, *(args ?: emptyArray()))
         }
-        return result
     }
 }
 
