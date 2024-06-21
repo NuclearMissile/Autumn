@@ -91,7 +91,17 @@ class AfterLogInvocation : Invocation {
 }
 
 @Component
-@Around("beforeLogInvocation", "afterLogInvocation")
+class OnErrorInvocation : Invocation {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun onError(caller: Any, method: Method, chain: InvocationChain, e: Throwable, args: Array<Any?>?) {
+        logger.info("[Error] {}", e.toString())
+        throw e
+    }
+}
+
+@Component
+@Around("beforeLogInvocation", "afterLogInvocation", "onErrorInvocation")
 @Transactional
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     fun getAllUser(): List<User> {
