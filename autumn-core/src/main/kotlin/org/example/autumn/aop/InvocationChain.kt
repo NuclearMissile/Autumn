@@ -24,12 +24,12 @@ interface Invocation {
         return returnValue
     }
 
-    fun onError(caller: Any, method: Method, chain: InvocationChain, e: Throwable, args: Array<Any?>?) {
+    fun error(caller: Any, method: Method, chain: InvocationChain, e: Throwable, args: Array<Any?>?) {
         // do nothing but throw
         throw e
     }
 
-    fun onFinally(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+    fun finally(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         // do nothing
     }
 
@@ -39,9 +39,9 @@ interface Invocation {
             val returnValue = chain.invokeChain(caller, method, args)
             after(caller, returnValue, method, chain, args)
         } catch (e: Throwable) {
-            onError(caller, method, chain, e, args)
+            error(caller, method, chain, e, args)
         } finally {
-            onFinally(caller, method, chain, args)
+            finally(caller, method, chain, args)
         }
     }
 }

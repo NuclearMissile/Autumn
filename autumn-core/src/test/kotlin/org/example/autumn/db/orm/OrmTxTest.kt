@@ -70,17 +70,12 @@ data class User(
 )
 
 @Component
-class BeforeLogInvocation : Invocation {
+class AroundLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
-}
-
-@Component
-class AfterLogInvocation : Invocation {
-    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(
         caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
@@ -88,20 +83,19 @@ class AfterLogInvocation : Invocation {
         logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
         return returnValue
     }
-}
 
-@Component
-class OnErrorInvocation : Invocation {
-    private val logger = LoggerFactory.getLogger(javaClass)
-
-    override fun onError(caller: Any, method: Method, chain: InvocationChain, e: Throwable, args: Array<Any?>?) {
+    override fun error(caller: Any, method: Method, chain: InvocationChain, e: Throwable, args: Array<Any?>?) {
         logger.info("[Error] {}", e.toString())
         throw e
+    }
+
+    override fun finally(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+        logger.info("[Finally] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
 }
 
 @Component
-@Around("beforeLogInvocation", "afterLogInvocation", "onErrorInvocation")
+@Around("aroundLogInvocation")
 @Transactional
 class UserService(@Autowired val naiveOrm: NaiveOrm) {
     fun getAllUser(): List<User> {
