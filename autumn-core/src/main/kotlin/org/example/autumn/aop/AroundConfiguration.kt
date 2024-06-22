@@ -5,7 +5,7 @@ import org.example.autumn.annotation.Bean
 import org.example.autumn.annotation.Configuration
 
 @Configuration
-class AroundAopConfiguration {
+class AroundConfiguration {
     @Bean
     fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {
         return AroundProxyBeanPostProcessor()
