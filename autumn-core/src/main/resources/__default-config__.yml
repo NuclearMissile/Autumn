@@ -27,6 +27,7 @@ server:
   name: Autumn Web Server/1.0
   thread-pool-size: 200
   enable-virtual-thread: true
+  stop-delay: 1
 
   # default one and only one web app:
   web-app:

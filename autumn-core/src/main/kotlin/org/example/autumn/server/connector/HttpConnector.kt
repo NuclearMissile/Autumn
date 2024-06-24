@@ -64,7 +64,7 @@ class HttpConnector(
 
     override fun close() {
         logger.info("Autumn server closing...")
-        httpServer.stop(3)
+        httpServer.stop(config.getRequired("server.stop-delay"))
         servletContext.close()
         logger.info("Autumn server closed.")
     }
