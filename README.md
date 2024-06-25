@@ -10,7 +10,7 @@ Yet another web application framework imitating Spring with homemade http server
 ## Features
 
 - [x] DI + AOP + EventBus + MVC web framework
-- [x] Homemade Jakarta Servlet 6.0 http server
+- [x] Homemade Jakarta Servlet 6.1 http server
 - [x] JdbcTemplate and naive ORM, support @Transactional annotation
 - [x] Standard .war packaging
 - [x] Demo webapp
@@ -54,15 +54,15 @@ docker run -p 8080:8080 -t hello-autumn
 <summary>Code</summary>
 
 ```kotlin
-// Main.kt
+// Main.kt (part of)
 @Controller
-class IndexController(
-    @Autowired private val userService: UserService,
-    @Autowired private val eventBus: EventBus,
-) {
+class IndexController @Autowired constructor(private val userService: UserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
+
+    @Autowired
+    private lateinit var eventBus: EventBus
 
     @PostConstruct
     fun init() {
@@ -86,12 +86,13 @@ class IndexController(
 
     @Post("/register")
     fun register(
-        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String
+        @RequestParam email: String, @RequestParam name: String, @RequestParam password: String,
     ): ModelAndView {
+        if (name.isBlank()) return ModelAndView("/register.ftl", mapOf("error" to "name is blank"))
         return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
         else
-            ModelAndView("/register.ftl", mapOf("error" to "$email already registered"))
+            ModelAndView("/register.ftl", mapOf("error" to "email is already registered"))
     }
 
     @Get("/login")
@@ -103,7 +104,7 @@ class IndexController(
 
     @Post("/login")
     fun login(@RequestParam email: String, @RequestParam password: String, session: HttpSession): ModelAndView {
-        val user = userService.login(email, password)
+        val user = userService.validate(email, password)
             ?: return ModelAndView("/login.ftl", mapOf("error" to "email or password is incorrect"))
         session.setAttribute(USER_SESSION_KEY, user)
         eventBus.post(LoginEvent(user))
@@ -112,63 +113,51 @@ class IndexController(
 
     @Get("/logoff")
     fun logoff(session: HttpSession): String {
+        val user = session.getAttribute(USER_SESSION_KEY) as User?
+            ?: throw RequestErrorException("cannot logoff due to not logged in")
         session.removeAttribute(USER_SESSION_KEY)
+        eventBus.post(LogoffEvent(user))
         return "redirect:/login"
     }
-}
 
-// UserService.kt
-@Entity
-@Table(name = "users")
-data class User(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, updatable = false)
-    var id: Long,
-    @Column(nullable = false, unique = true)
-    var email: String,
-    @Column(nullable = false)
-    var name: String,
-    @Column(name = "pwd_salt", nullable = false)
-    val pwdSalt: String,
-    @Column(name = "pwd_hash", nullable = false)
-    val pwdHash: String,
-)
-
-@Component
-@Transactional
-class UserService(@Autowired val naiveOrm: NaiveOrm) {
-    companion object {
-        const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+    @Get("/changePassword")
+    fun changePassword(session: HttpSession): ModelAndView {
+        session.getAttribute(USER_SESSION_KEY)
+            ?: throw RequestErrorException("cannot change password due to not logged in")
+        return ModelAndView("/changePassword.ftl")
     }
 
-    @PostConstruct
-    fun init() {
-        naiveOrm.jdbcTemplate.update(CREATE_USERS)
-        register("test@test.com", "test", "test")
-    }
-
-    fun getUserByEmail(email: String): User? {
-        return naiveOrm.selectFrom<User>().where("email = ?", email).first()
-    }
-
-    fun register(email: String, name: String, password: String): User? {
-        val pwdSalt = SecureRandomUtil.genRandomString(32)
-        val pwdHash = HashUtil.hmacSha256(password, pwdSalt)
-        val user = User(-1, email, name, pwdSalt, pwdHash)
-        return try {
-            naiveOrm.insert(user)
-            user
-        } catch (e: Exception) {
-            null
+    @Post("/changePassword")
+    fun changePassword(
+        @RequestParam("old_password") oldPassword: String,
+        @RequestParam("new_password") newPassword: String,
+        @RequestParam("new_password_repeat") newPasswordRepeat: String,
+        session: HttpSession,
+    ): ModelAndView {
+        val user = session.getAttribute(USER_SESSION_KEY) as User?
+            ?: throw RequestErrorException("cannot change password due to not logged in")
+        if (newPassword != newPasswordRepeat)
+            return ModelAndView("/changePassword.ftl", mapOf("error" to "passwords are different"))
+        if (newPassword == oldPassword)
+            return ModelAndView("/changePassword.ftl", mapOf("error" to "new password must be different from old one"))
+        userService.validate(user.email, oldPassword)
+            ?: return ModelAndView("/changePassword.ftl", mapOf("error" to "old password is incorrect"))
+        if (userService.changePassword(user, newPassword)) {
+            session.removeAttribute(USER_SESSION_KEY)
+            return ModelAndView("redirect:/login")
+        } else {
+            throw ServerErrorException("change password failed due to internal error")
         }
     }
 
-    fun login(email: String, password: String): User? {
-        val user = getUserByEmail(email) ?: return null
-        val pwdHash = HashUtil.hmacSha256(password, user.pwdSalt)
-        return if (pwdHash == user.pwdHash) user else null
+    @Get("/error/{errorCode}")
+    fun error(@PathVariable errorCode: Int) {
+        throw ResponseErrorException(errorCode, "test")
+    }
+
+    @Get("/echo")
+    fun echo(req: RequestEntity): ResponseEntity {
+        return ResponseEntity(req, "application/json", 200)
     }
 }
 
