@@ -65,7 +65,8 @@ class AfterLogInvocation : Invocation {
 
 @Order(100)
 @Component
-class LogFilter : FilterRegistrationBean() {
+class LogFilterRegistration : FilterRegistration() {
+    override val name = "logFilter"
     override val urlPatterns = listOf("/*")
     override val filter = object : Filter {
         private val logger = LoggerFactory.getLogger(javaClass)
