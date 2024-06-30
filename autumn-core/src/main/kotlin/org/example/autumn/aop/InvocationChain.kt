@@ -34,8 +34,8 @@ interface Invocation {
     }
 
     fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
-        before(caller, method, chain, args)
         return try {
+            before(caller, method, chain, args)
             val returnValue = chain.invokeChain(caller, method, args)
             after(caller, returnValue, method, chain, args)
         } catch (e: Throwable) {
