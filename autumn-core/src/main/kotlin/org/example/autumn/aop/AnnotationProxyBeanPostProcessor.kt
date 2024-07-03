@@ -21,7 +21,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
             val targetClass = bean!!.javaClass
             logger.atDebug().log("create proxy for bean {}", targetClass.name)
             val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
-                .method(ElementMatchers.isPublic())
+                .method(ElementMatchers.any())
                 .intercept(InvocationHandlerAdapter.of { _, method, args ->
                     InvocationChain(aopHandlers).invokeChain(bean, method, args)
                 })
