@@ -22,11 +22,11 @@
         <commons-cli.version>1.8.0</commons-cli.version>
         <jakarta.persistence-api.verion>3.2.0</jakarta.persistence-api.verion>
         <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
-        <jackson.version>2.17.1</jackson.version>
+        <jackson.version>2.17.2</jackson.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <logback.version>1.5.6</logback.version>
         <slf4j.version>2.0.13</slf4j.version>
-        <bytebuddy.version>1.14.17</bytebuddy.version>
+        <bytebuddy.version>1.14.18</bytebuddy.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <freemarker.version>2.3.33</freemarker.version>
         <sqlite.version>3.46.0.0</sqlite.version>
