@@ -1,6 +1,5 @@
 package org.example.autumn.server.classloader
 
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
 import java.net.URL
@@ -15,7 +14,7 @@ import kotlin.io.path.isRegularFile
 data class Resource(val path: Path, val name: String)
 
 class WarClassLoader(classesPath: Path, libPath: Path?) :
-    URLClassLoader("WebAppClassLoader", createUrls(classesPath, libPath), ClassLoader.getSystemClassLoader()) {
+    URLClassLoader("WarClassLoader", createUrls(classesPath, libPath), ClassLoader.getSystemClassLoader()) {
     companion object {
         private fun Path.absPath(): String {
             return "/" + this.toAbsolutePath().normalize().toString().replace("\\", "/").removePrefix("/")
@@ -37,23 +36,17 @@ class WarClassLoader(classesPath: Path, libPath: Path?) :
             return Files.list(this).filter { it.extension == "jar" }.toList()
         }
 
-        private fun createUrls(classPath: Path, libPath: Path?): Array<URL> {
+        private fun createUrls(classesPath: Path, libPath: Path?): Array<URL> {
             return buildList {
-                add(classPath.dirUrl())
+                add(classesPath.dirUrl())
                 if (libPath != null)
                     addAll(libPath.scanJars().map { it.jarUrl() })
             }.toTypedArray()
         }
     }
 
-    private val logger = LoggerFactory.getLogger(javaClass)
     private val classesPath = classesPath.toAbsolutePath().normalize()
     private val libPaths = libPath?.scanJars() ?: emptyList()
-
-    init {
-        logger.info("set class path: ${this.classesPath.absPath()}")
-        libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
-    }
 
     fun walkLibPaths(visitor: Consumer<Resource>) {
         libPaths.forEach { libPath ->

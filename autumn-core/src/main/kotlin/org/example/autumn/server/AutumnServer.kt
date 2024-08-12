@@ -70,8 +70,6 @@ class AutumnServer {
                 }
 
                 val tmpPath = Files.createTempDirectory("Autumn_Server_")
-                logger.info("extract {} to {}", warPath, tmpPath)
-
                 val warFile = JarFile(warPath.toFile())
                 warFile.stream().forEach { entry ->
                     if (!entry.isDirectory) {
@@ -102,7 +100,7 @@ class AutumnServer {
 
             val (classesPath, libPath, tmpPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
-            logger.info("set webRoot as {}", webRoot)
+            logger.info("set WEBROOT as {}", webRoot)
 
             val classLoader = WarClassLoader(classesPath, libPath)
             val config = withClassLoader(classLoader) {
