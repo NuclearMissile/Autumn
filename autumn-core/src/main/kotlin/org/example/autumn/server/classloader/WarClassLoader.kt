@@ -14,7 +14,7 @@ import kotlin.io.path.isRegularFile
 
 data class Resource(val path: Path, val name: String)
 
-class WebAppClassLoader(classesPath: Path, libPath: Path?) :
+class WarClassLoader(classesPath: Path, libPath: Path?) :
     URLClassLoader("WebAppClassLoader", createUrls(classesPath, libPath), ClassLoader.getSystemClassLoader()) {
     companion object {
         private fun Path.absPath(): String {
@@ -51,8 +51,8 @@ class WebAppClassLoader(classesPath: Path, libPath: Path?) :
     private val libPaths = libPath?.scanJars() ?: emptyList()
 
     init {
-        logger.debug("set class path: ${this.classesPath.absPath()}")
-        libPaths.forEach { logger.debug("set jar path: ${it.absPath()}") }
+        logger.info("set class path: ${this.classesPath.absPath()}")
+        libPaths.forEach { logger.info("set jar path: ${it.absPath()}") }
     }
 
     fun walkLibPaths(visitor: Consumer<Resource>) {

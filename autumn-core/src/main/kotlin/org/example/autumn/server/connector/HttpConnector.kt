@@ -55,7 +55,7 @@ class HttpConnector(
         }
         httpServer.executor = executor
         httpServer.start()
-        logger.info("Autumn server started at http://{}:{}...", host, port)
+        logger.info("Autumn server started at http://{}:{}", host, port)
     }
 
     fun addServletContainerInitializer(sci: ServletContainerInitializer, classes: Set<Class<*>>) {

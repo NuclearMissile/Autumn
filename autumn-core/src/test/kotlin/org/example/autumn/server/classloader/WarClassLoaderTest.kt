@@ -6,11 +6,11 @@ import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 import kotlin.test.*
 
-class WebAppClassLoaderTest {
+class WarClassLoaderTest {
     private val classLoader = run {
         val classPath = Path.of("src", "test", "resources", "test-classpath", "WEB-INF", "classes")
         val libPath = Path.of("src", "test", "resources", "test-classpath", "WEB-INF", "lib")
-        WebAppClassLoader(classPath, libPath)
+        WarClassLoader(classPath, libPath)
     }
 
     @Test

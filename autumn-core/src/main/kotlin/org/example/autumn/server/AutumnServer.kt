@@ -10,7 +10,7 @@ import org.example.autumn.resolver.Config
 import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.classloader.Resource
-import org.example.autumn.server.classloader.WebAppClassLoader
+import org.example.autumn.server.classloader.WarClassLoader
 import org.example.autumn.server.connector.HttpConnector
 import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
@@ -70,7 +70,7 @@ class AutumnServer {
                 }
 
                 val tmpPath = Files.createTempDirectory("Autumn_Server_")
-                logger.debug("extract {} to {}", warPath, tmpPath)
+                logger.info("extract {} to {}", warPath, tmpPath)
 
                 val warFile = JarFile(warPath.toFile())
                 warFile.stream().forEach { entry ->
@@ -102,9 +102,9 @@ class AutumnServer {
 
             val (classesPath, libPath, tmpPath) = extractWar(warPath)
             val webRoot = classesPath.parent.parent.toString()
-            logger.debug("set webRoot as {}", webRoot)
+            logger.info("set webRoot as {}", webRoot)
 
-            val classLoader = WebAppClassLoader(classesPath, libPath)
+            val classLoader = WarClassLoader(classesPath, libPath)
             val config = withClassLoader(classLoader) {
                 // load correct logger config
                 try {
