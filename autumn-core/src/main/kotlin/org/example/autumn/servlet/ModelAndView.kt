@@ -9,12 +9,12 @@ class ModelAndView(
 
     fun getModel(): Map<String, Any> = model
 
-    fun addModel(map: Map<String, Any>): ModelAndView {
+    fun add(map: Map<String, Any>): ModelAndView {
         model += map
         return this
     }
 
-    fun addModel(key: String, value: Any): ModelAndView {
+    fun add(key: String, value: Any): ModelAndView {
         model[key] = value
         return this
     }

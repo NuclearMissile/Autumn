@@ -1,6 +1,6 @@
 # autumn configuration:
 autumn:
-  config-class-name: org.example.autumn.hello.HelloConfiguration
+  config-class-name: org.example.autumn.hello.HelloConfig
   datasource:
     url: jdbc:sqlite:hello-autumn.db
     driver-class-name: org.sqlite.JDBC

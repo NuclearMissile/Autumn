@@ -38,9 +38,8 @@ object Main {
 class HelloContextLoadListener : ContextLoadListener()
 
 //@ComponentScan
-//@Configuration
 //@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
-//class HelloConfiguration
+//class HelloConfig
 
 @Component
 class BeforeLogInvocation : Invocation {
