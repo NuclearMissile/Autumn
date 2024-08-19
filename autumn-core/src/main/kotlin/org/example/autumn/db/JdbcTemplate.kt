@@ -48,7 +48,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     fun insert(sql: String, vararg args: Any?): Long {
-        return execute(preparedStatementCreator(sql, *args)) { ps: PreparedStatement ->
+        return execute(preparedStatementCreator(sql, *args)) { ps ->
             val n = ps.executeUpdate()
             if (n == 0) {
                 throw DataAccessException("0 rows inserted.")
@@ -104,21 +104,15 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
-        return executeWithTx { conn ->
-            psc.createPreparedStatement(conn).use { ps -> callback.doInPreparedStatement(ps) }
-        }
-    }
-
-    fun <T> executeWithTx(callback: ConnectionCallback<T>): T? {
+    private fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
         val txConn = DataSourceTransactionManager.connection
         return try {
             if (txConn != null)
-                callback.doInConnection(txConn)
+                psc.createPreparedStatement(txConn).use { ps -> callback.doWithPreparedStatement(ps) }
             else dataSource.connection.use { newConn ->
                 val autoCommit = newConn.autoCommit
                 if (!autoCommit) newConn.autoCommit = true
-                val result = callback.doInConnection(newConn)
+                val result = psc.createPreparedStatement(newConn).use { ps -> callback.doWithPreparedStatement(ps) }
                 if (!autoCommit) newConn.autoCommit = false
                 result
             }
@@ -137,12 +131,8 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 }
 
-fun interface ConnectionCallback<T> {
-    fun doInConnection(conn: Connection): T?
-}
-
 fun interface PreparedStatementCallback<T> {
-    fun doInPreparedStatement(ps: PreparedStatement): T?
+    fun doWithPreparedStatement(ps: PreparedStatement): T?
 }
 
 fun interface PreparedStatementCreator {
