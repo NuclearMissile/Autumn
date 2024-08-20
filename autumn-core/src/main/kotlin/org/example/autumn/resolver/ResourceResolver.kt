@@ -11,12 +11,13 @@ data class Resource(val path: String, val name: String)
 
 class ResourceResolver(private val basePackage: String) {
     private val logger = LoggerFactory.getLogger(javaClass)
+    private val classLoader: ClassLoader
+        get() = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
 
     fun <T> scanResources(mapper: (Resource) -> T?): List<T> {
         val basePackagePath = basePackage.replace('.', '/')
         logger.atDebug().log("scan resources from path: $basePackagePath")
         return buildList {
-            val classLoader = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
             val en = classLoader.getResources(basePackagePath)
             while (en.hasMoreElements()) {
                 val uri = en.nextElement().toURI()
