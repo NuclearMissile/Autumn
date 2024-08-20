@@ -11,7 +11,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
 
     private val classMapping by lazy {
         ApplicationContextHolder.required.managedClassNames
-            .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
+            .map { Thread.currentThread().contextClassLoader.loadClass(it) }
             .filter { it.isAnnotationPresent(Entity::class.java) }
             .associateWith { Mapper(it) }
     }

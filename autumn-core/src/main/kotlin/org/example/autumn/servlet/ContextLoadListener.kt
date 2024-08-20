@@ -32,7 +32,7 @@ abstract class ContextLoadListener : ServletContextListener {
             throw AutumnException("Cannot init ApplicationContext for missing configClassName", null)
         }
         val configClass = try {
-            Class.forName(configClassName, true, Thread.currentThread().contextClassLoader)
+            Thread.currentThread().contextClassLoader.loadClass(configClassName)
         } catch (e: ClassNotFoundException) {
             throw AutumnException("Could not load autumn config class: $configClassName", null)
         }

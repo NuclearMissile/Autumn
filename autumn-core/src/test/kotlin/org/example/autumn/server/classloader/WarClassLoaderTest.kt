@@ -42,9 +42,7 @@ class WarClassLoaderTest {
             assertEquals("test error", target.message)
         }
 
-        val servletClass = Class.forName(
-            "jakarta.servlet.http.HttpServlet", true, Thread.currentThread().contextClassLoader
-        )
+        val servletClass = Thread.currentThread().contextClassLoader.loadClass("jakarta.servlet.http.HttpServlet")
         assertNotSame(classLoader, servletClass.classLoader)
 
         val dummyClassName = "org.example.autumn.hello.Dummy"

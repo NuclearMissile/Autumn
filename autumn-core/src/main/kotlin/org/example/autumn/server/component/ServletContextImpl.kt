@@ -25,9 +25,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class ServletContextImpl(
-    private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String,
-) : ServletContext, AutoCloseable {
+class ServletContextImpl(private val config: PropertyResolver, webRoot: String) : ServletContext, AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()
     private val attributes = ConcurrentHashMap<String, Any>()
@@ -569,7 +567,7 @@ class ServletContextImpl(
     }
 
     override fun getClassLoader(): ClassLoader {
-        return classLoader
+        return Thread.currentThread().contextClassLoader
     }
 
     override fun declareRoles(vararg roleNames: String) {

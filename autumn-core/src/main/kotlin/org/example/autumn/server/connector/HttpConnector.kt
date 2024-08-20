@@ -8,14 +8,13 @@ import org.example.autumn.resolver.getRequired
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
-import org.example.autumn.utils.ClassUtils.withClassLoader
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.util.concurrent.Executor
 
 class HttpConnector(
-    private val config: PropertyResolver, private val classLoader: ClassLoader,
-    private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>,
+    private val config: PropertyResolver, private val webRoot: String, private val executor: Executor,
+    private val scannedClasses: List<Class<*>>,
 ) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val initializers = mutableMapOf<ServletContainerInitializer, Set<Class<*>>>()
@@ -28,12 +27,10 @@ class HttpConnector(
         val backlog = config.getRequired<Int>("server.backlog")
 
         // init servlet context:
-        withClassLoader(classLoader) {
-            servletContext = ServletContextImpl(classLoader, config, webRoot)
-            servletContext.setAttribute("autumn_config", config)
-            initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
-            servletContext.init(scannedClasses)
-        }
+        servletContext = ServletContextImpl(config, webRoot)
+        servletContext.setAttribute("autumn_config", config)
+        initializers.forEach { (key, value) -> key.onStartup(value, servletContext) }
+        servletContext.init(scannedClasses)
 
         // start http server
         httpServer = HttpServer.create(InetSocketAddress(host, port), backlog)
@@ -41,17 +38,15 @@ class HttpConnector(
             val adapter = HttpExchangeAdapter(exchange)
             val resp = HttpServletResponseImpl(config, servletContext, adapter)
             val req = HttpServletRequestImpl(config, servletContext, adapter, resp)
-            withClassLoader(classLoader) {
-                try {
-                    servletContext.process(req, resp)
-                } catch (e: Throwable) {
-                    // fallback error handling
-                    logger.error("unhandled exception caught:", e)
-                    if (!resp.isCommitted)
-                        resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
-                } finally {
-                    resp.cleanup()
-                }
+            try {
+                servletContext.process(req, resp)
+            } catch (e: Throwable) {
+                // fallback error handling
+                logger.error("unhandled exception caught:", e)
+                if (!resp.isCommitted)
+                    resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
+            } finally {
+                resp.cleanup()
             }
         }
         httpServer.executor = executor
