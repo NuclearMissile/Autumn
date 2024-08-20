@@ -5,7 +5,7 @@ import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.resolver.getRequired
 
 class SessionCookieConfigImpl(
-    private val config: PropertyResolver
+    private val config: PropertyResolver,
 ) : SessionCookieConfig {
     private val attributes = mutableMapOf<String, String>()
     private var maxAge = config.getRequired<Int>("server.web-app.session-timeout") * 60

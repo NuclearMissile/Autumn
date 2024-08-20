@@ -9,7 +9,7 @@ open class BeanCreationException(message: String, cause: Throwable? = null) :
     AutumnException(message, cause)
 
 open class ResponseErrorException(
-    val statusCode: Int, message: String, val responseBody: String? = null, cause: Throwable? = null
+    val statusCode: Int, message: String, val responseBody: String? = null, cause: Throwable? = null,
 ) : AutumnException(message, cause)
 
 class BeanTypeException(message: String) : BeanDefinitionException(message)

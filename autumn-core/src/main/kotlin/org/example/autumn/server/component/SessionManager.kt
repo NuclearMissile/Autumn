@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class SessionManager(
-    private val servletContext: ServletContextImpl, private val sessionTimeout: Int
+    private val servletContext: ServletContextImpl, private val sessionTimeout: Int,
 ) : Runnable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<String, HttpSessionImpl>()

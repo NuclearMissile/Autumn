@@ -1,7 +1,6 @@
 package org.example.autumn.context
 
 import org.example.autumn.annotation.Configuration
-import org.example.autumn.aop.Invocation
 import org.example.autumn.exception.BeanCreationException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method

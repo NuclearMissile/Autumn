@@ -4,7 +4,7 @@ import jakarta.servlet.*
 import java.util.*
 
 class FilterRegistrationImpl(
-    private val servletContext: ServletContext, private val filterName: String, val filter: Filter
+    private val servletContext: ServletContext, private val filterName: String, val filter: Filter,
 ) : FilterRegistration.Dynamic {
     private val urlPatterns = mutableListOf<String>()
     private val initParams = mutableMapOf<String, String>()
@@ -71,7 +71,7 @@ class FilterRegistrationImpl(
     }
 
     override fun addMappingForServletNames(
-        dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg servletNames: String
+        dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg servletNames: String,
     ) {
         throw UnsupportedOperationException("addMappingForServletNames")
     }
@@ -81,7 +81,7 @@ class FilterRegistrationImpl(
     }
 
     override fun addMappingForUrlPatterns(
-        dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg urlPatterns: String
+        dispatcherTypes: EnumSet<DispatcherType>, isMatchAfter: Boolean, vararg urlPatterns: String,
     ) {
         require(!initialized) {
             throw IllegalStateException("addMappingForUrlPatterns after initialization.")

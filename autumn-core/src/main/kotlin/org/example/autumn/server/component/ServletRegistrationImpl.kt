@@ -4,7 +4,7 @@ import jakarta.servlet.*
 import java.util.*
 
 class ServletRegistrationImpl(
-    private val servletContext: ServletContext, private val servletName: String, val servlet: Servlet
+    private val servletContext: ServletContext, private val servletName: String, val servlet: Servlet,
 ) : ServletRegistration.Dynamic {
     private val urlPatterns = mutableListOf<String>()
     private val initParams = mutableMapOf<String, String>()

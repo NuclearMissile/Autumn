@@ -40,7 +40,7 @@ class ResourceResolver(private val basePackage: String) {
     }
 
     private fun <T> scanFile(
-        isJar: Boolean, baseDir: String, root: Path, collector: MutableList<T>, mapper: (Resource) -> T?
+        isJar: Boolean, baseDir: String, root: Path, collector: MutableList<T>, mapper: (Resource) -> T?,
     ) {
         Files.walk(root).filter { path -> Files.isRegularFile(path) }.forEach { path ->
             val res = if (isJar) {

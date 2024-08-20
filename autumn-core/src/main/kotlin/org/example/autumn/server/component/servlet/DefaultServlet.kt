@@ -20,9 +20,9 @@ class DefaultServlet : HttpServlet() {
     companion object {
         private fun formatTr(file: Path, size: Long, name: String): String {
             return "<tr>" +
-                    "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
-                    "<td>${formatSize(size)}</td>" +
-                    "<td>${formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
+                "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
+                "<td>${formatSize(size)}</td>" +
+                "<td>${formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
         }
 
         private fun formatSize(size: Long): String {

@@ -17,7 +17,7 @@ class WebMvcConfiguration {
         @Autowired servletContext: ServletContext,
         @Value("autumn.web.template-path") templatePath: String,
         @Value("autumn.web.error-template-path") errorTemplatePath: String,
-        @Value("autumn.web.template-encoding") templateEncoding: String
+        @Value("autumn.web.template-encoding") templateEncoding: String,
     ): ViewResolver {
         return FreeMarkerViewResolver(servletContext, templatePath, errorTemplatePath, templateEncoding)
     }

@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 class HttpSessionImpl(
     private val servletContext: ServletContextImpl,
     private var sessionId: String?,
-    private var sessionTimeout: Int
+    private var sessionTimeout: Int,
 ) : HttpSession {
     private val creationTime = System.currentTimeMillis()
     private val attributes = ConcurrentHashMap<String, Any>()

@@ -41,16 +41,17 @@ class HttpConnector(
             val adapter = HttpExchangeAdapter(exchange)
             val resp = HttpServletResponseImpl(config, servletContext, adapter)
             val req = HttpServletRequestImpl(config, servletContext, adapter, resp)
-            try {
-                Thread.currentThread().contextClassLoader = classLoader
-                servletContext.process(req, resp)
-            } catch (e: Throwable) {
-                // fallback error handling
-                logger.error("unhandled exception caught:", e)
-                if (!resp.isCommitted) resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
-            } finally {
-                Thread.currentThread().contextClassLoader = null
-                resp.cleanup()
+            withClassLoader(classLoader) {
+                try {
+                    servletContext.process(req, resp)
+                } catch (e: Throwable) {
+                    // fallback error handling
+                    logger.error("unhandled exception caught:", e)
+                    if (!resp.isCommitted)
+                        resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
+                } finally {
+                    resp.cleanup()
+                }
             }
         }
         httpServer.executor = executor

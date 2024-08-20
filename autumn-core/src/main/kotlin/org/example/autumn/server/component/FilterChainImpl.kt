@@ -3,7 +3,7 @@ package org.example.autumn.server.component
 import jakarta.servlet.*
 
 class FilterChainImpl(
-    filters: List<Filter>, private val servlet: Servlet
+    filters: List<Filter>, private val servlet: Servlet,
 ) : FilterChain {
     private val iter = filters.iterator()
 

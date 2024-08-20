@@ -7,7 +7,7 @@ import java.util.*
 
 class HttpReqParams(
     private val exchangeReq: HttpExchangeRequest,
-    private var charset: Charset
+    private var charset: Charset,
 ) {
     private var params = initParams()
 
