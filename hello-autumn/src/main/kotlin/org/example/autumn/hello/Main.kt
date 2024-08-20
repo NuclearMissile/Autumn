@@ -29,7 +29,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         AutumnServer.start(
-            "src/main/webapp", Config.load(), listOf(HelloContextLoadListener::class.java), javaClass.classLoader
+            "src/main/webapp", Config.load(), javaClass.classLoader, listOf(HelloContextLoadListener::class.java)
         )
     }
 }

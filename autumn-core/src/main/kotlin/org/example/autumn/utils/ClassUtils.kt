@@ -89,7 +89,7 @@ object ClassUtils {
     }
 
     fun <T> createInstance(className: String): T {
-        return createInstance(Thread.currentThread().contextClassLoader.loadClass(className)) as T
+        return createInstance(Class.forName(className, true, Thread.currentThread().contextClassLoader)) as T
     }
 
     fun <T> createInstance(clazz: Class<T>): T {
@@ -98,7 +98,7 @@ object ClassUtils {
 
     fun <T> withClassLoader(classLoader: ClassLoader, supplier: Supplier<T>): T {
         val original = Thread.currentThread().contextClassLoader
-        return if (classLoader === original) supplier.get() else try {
+        return try {
             Thread.currentThread().contextClassLoader = classLoader
             supplier.get()
         } finally {

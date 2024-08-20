@@ -159,7 +159,7 @@ class AnnotationConfigApplicationContext(
         for (className in classNames) {
             // 获取Class:
             val clazz = try {
-                Thread.currentThread().contextClassLoader.loadClass(className)
+                Class.forName(className, true, Thread.currentThread().contextClassLoader)
             } catch (e: ClassNotFoundException) {
                 throw BeanCreationException("Class not found for name: $className", e)
             }
