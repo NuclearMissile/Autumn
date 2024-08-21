@@ -37,7 +37,6 @@ object Main {
 @WebListener
 class HelloContextLoadListener : ContextLoadListener()
 
-//@ComponentScan
 //@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
 //class HelloConfig
 

@@ -30,7 +30,11 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
         // join current tx
         val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
         if (holder.get() != null || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
-            return chain.invokeChain(caller, method, args)
+            return try {
+                chain.invokeChain(caller, method, args)
+            } catch (e: InvocationTargetException) {
+                throw e.extractTarget()
+            }
 
         dataSource.connection.use { conn ->
             val autoCommit = conn.autoCommit

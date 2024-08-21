@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 
 @Configuration
-@ComponentScan
 class BeforeAopConfiguration {
     @Bean
     fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {

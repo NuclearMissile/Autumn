@@ -18,8 +18,6 @@ import java.security.MessageDigest
 @MustBeDocumented
 annotation class Metric(val value: Array<String>)
 
-@Configuration
-@ComponentScan
 class MetricConfiguration
 
 @Component

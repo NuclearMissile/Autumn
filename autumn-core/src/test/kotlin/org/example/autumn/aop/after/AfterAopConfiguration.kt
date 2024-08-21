@@ -7,7 +7,6 @@ import org.example.autumn.aop.InvocationChain
 import java.lang.reflect.Method
 
 @Configuration
-@ComponentScan
 class AfterAopConfiguration {
     @Bean
     fun aroundProxyBeanPostProcessor(): AroundProxyBeanPostProcessor {

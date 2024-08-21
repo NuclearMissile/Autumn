@@ -11,8 +11,6 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@ComponentScan
-@Configuration
 @Import(DbConfiguration::class)
 class JdbcTxTestConfiguration
 

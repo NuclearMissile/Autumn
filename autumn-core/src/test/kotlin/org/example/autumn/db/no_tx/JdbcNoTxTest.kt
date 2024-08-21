@@ -12,7 +12,6 @@ import org.junit.jupiter.api.assertThrows
 import javax.sql.DataSource
 import kotlin.test.*
 
-@ComponentScan
 @Configuration
 class JdbcNoTxConfiguration {
     @Bean(destroyMethod = "close")

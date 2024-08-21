@@ -1,6 +1,9 @@
 package org.example.autumn.eventbus
 
-import org.example.autumn.annotation.*
+import org.example.autumn.annotation.Component
+import org.example.autumn.annotation.Import
+import org.example.autumn.annotation.Order
+import org.example.autumn.annotation.Subscribe
 import org.example.autumn.context.AnnotationConfigApplicationContext
 import org.example.autumn.resolver.Config
 import org.junit.jupiter.api.BeforeEach
@@ -10,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@ComponentScan
+
 @Import(EventBusConfiguration::class)
 class EventBusTestConfiguration
 

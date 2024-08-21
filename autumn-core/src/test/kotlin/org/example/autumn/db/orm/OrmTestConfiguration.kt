@@ -10,7 +10,6 @@ import org.example.autumn.db.TransactionManager
 import org.example.autumn.db.TransactionalBeanPostProcessor
 import javax.sql.DataSource
 
-@ComponentScan
 @Configuration
 class OrmTestConfiguration {
     @Bean(destroyMethod = "close")
