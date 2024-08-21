@@ -99,24 +99,6 @@ class LoginEventListener {
 data class LoginEvent(val user: User) : Event
 data class LogoffEvent(val user: User) : Event
 
-@Controller("/hello")
-class HelloController {
-    @Get("/")
-    fun hello(): ModelAndView {
-        return ModelAndView("/hello.html")
-    }
-
-    @Get("/error")
-    fun error(): ModelAndView {
-        return ModelAndView("/hello.html", mapOf(), 400)
-    }
-
-    @Get("/error/{errorCode}/{errorResp}")
-    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp)
-    }
-}
-
 @Controller
 class IndexController @Autowired constructor(private val userService: UserService) {
     companion object {
@@ -210,6 +192,24 @@ class IndexController @Autowired constructor(private val userService: UserServic
         } else {
             throw ServerErrorException("change password failed due to internal error")
         }
+    }
+}
+
+@Controller("/hello")
+class HelloController {
+    @Get("/")
+    fun hello(): ModelAndView {
+        return ModelAndView("/hello.html")
+    }
+
+    @Get("/error")
+    fun error(): ModelAndView {
+        return ModelAndView("/hello.html", mapOf(), 400)
+    }
+
+    @Get("/error/{errorCode}/{errorResp}")
+    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
+        throw ResponseErrorException(errorCode, "test", errorResp)
     }
 
     @Get("/error/{errorCode}")
