@@ -84,11 +84,9 @@ class AnnotationConfigApplicationContext(
     }
 
     private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
-        val scanAnno = configClass.getAnnotation(ComponentScan::class.java)
-        val scanPackages = if (scanAnno == null || scanAnno.value.isEmpty())
-            listOf(configClass.packageName) else scanAnno.value.toList()
-        logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
-
+        val scanPackages = configClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
+            ?: listOf(configClass.packageName)
+        logger.info("component scan in packages: {}", scanPackages.joinToString())
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name

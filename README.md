@@ -34,10 +34,10 @@ mvn war:war            # build .war package for hello-autumn project
 
 # start web application with homemade http server
 ls                     # current path: xxx/autumn
-cp ./hello-autumn/target/hello-autumn-1.0.1.war ./autumn-core/target/hello-autumn-1.0.1.war
+cp ./hello-autumn/target/hello-autumn-1.0.2.war ./autumn-core/target/hello-autumn-1.0.2.war
 cd ./autumn-core/target/
-# execute hello-autumn-1.0.1.war with homemade http server in autumn-core
-java -jar autumn-core-1.0.1.jar -w hello-autumn-1.0.1.war
+# execute hello-autumn-1.0.2.war with homemade http server in autumn-core
+java -jar autumn-core-1.0.2.jar -w hello-autumn-1.0.2.war
 
 # or start web application with Tomcat and docker
 ls                     # current path: xxx/autumn
