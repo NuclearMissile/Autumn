@@ -3,14 +3,9 @@ package org.example.autumn.context
 import org.example.autumn.DEFAULT_ORDER
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
-import org.example.autumn.aop.AroundConfiguration
 import org.example.autumn.aop.Invocation
-import org.example.autumn.db.DbConfiguration
-import org.example.autumn.eventbus.EventBus
-import org.example.autumn.eventbus.EventBusConfiguration
 import org.example.autumn.exception.*
 import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
@@ -95,13 +90,6 @@ class AnnotationConfigApplicationContext(
         logger.atInfo().log("component scan in packages: {}", scanPackages.joinToString())
 
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
-
-        // import builtin configurations
-        classNameSet.add(WebMvcConfiguration::class.java.name)
-        classNameSet.add(DbConfiguration::class.java.name)
-        classNameSet.add(AroundConfiguration::class.java.name)
-        classNameSet.add(EventBusConfiguration::class.java.name)
-
         configClass.getAnnotation(Import::class.java)?.value?.forEach {
             val importClassName = it.java.name
             if (classNameSet.contains(importClassName)) {

@@ -8,5 +8,6 @@ import org.example.autumn.eventbus.EventBusConfiguration;
 import org.example.autumn.servlet.WebMvcConfiguration;
 
 @ComponentScan
+@Import({WebMvcConfiguration.class, DbConfiguration.class, AroundConfiguration.class, EventBusConfiguration.class})
 class HelloConfig {
 }
