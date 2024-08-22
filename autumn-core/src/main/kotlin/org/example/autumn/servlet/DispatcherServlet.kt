@@ -46,7 +46,7 @@ class DispatcherServlet : HttpServlet() {
     override fun init() {
         logger.info("init {}.", javaClass.name)
         // scan @Controller and @RestController:
-        for (info in context.findBeanMetaInfos(Any::class.java)) {
+        for (info in context.findBeanInfos(Any::class.java)) {
             val beanClass = info.beanClass
             val bean = info.requiredInstance
             val controllerAnno = beanClass.getAnnotation(Controller::class.java)
@@ -244,13 +244,9 @@ class DispatcherServlet : HttpServlet() {
                 methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
             }
             logger.atDebug().log(
-                "mapping {} to handler {}.{}", urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name
+                "mapping {} to handler {}.{}, parameters: {}",
+                urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
             )
-            if (logger.isDebugEnabled) {
-                for (p in methodParams) {
-                    logger.debug("parameter: {}", p)
-                }
-            }
         }
 
         fun match(url: String): Boolean {

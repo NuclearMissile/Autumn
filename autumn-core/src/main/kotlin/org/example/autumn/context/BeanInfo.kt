@@ -5,9 +5,9 @@ import org.example.autumn.exception.BeanCreationException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
-class BeanMetaInfo private constructor(
+class BeanInfo private constructor(
     val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean,
-) : Comparable<BeanMetaInfo> {
+) : Comparable<BeanInfo> {
     var beanCtor: Constructor<*>? = null
         private set
     var factoryName: String? = null
@@ -36,7 +36,7 @@ class BeanMetaInfo private constructor(
             "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
         )
 
-    val aopBeanInfos = mutableListOf<BeanMetaInfo>()
+    val aopBeanInfos = mutableListOf<BeanInfo>()
     val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
     val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 
@@ -63,13 +63,13 @@ class BeanMetaInfo private constructor(
         this.destroyMethodName = destroyMethodName
     }
 
-    override fun compareTo(other: BeanMetaInfo): Int {
+    override fun compareTo(other: BeanInfo): Int {
         val orderCmp = order.compareTo(other.order)
         return if (orderCmp == 0) beanName.compareTo(other.beanName) else orderCmp
     }
 
     override fun toString(): String {
-        return "BeanMetaInfo(beanName='$beanName', beanClass=$beanClass, order=$order, isPrimary=$isPrimary, " +
+        return "BeanInfo(beanName='$beanName', beanClass=$beanClass, order=$order, isPrimary=$isPrimary, " +
             "instance=$instance, beanCtor=$beanCtor, factoryName=$factoryName, " +
             "initMethodName=$initMethodName, destroyMethodName=$destroyMethodName)"
     }

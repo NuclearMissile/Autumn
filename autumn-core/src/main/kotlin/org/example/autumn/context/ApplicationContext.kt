@@ -23,8 +23,8 @@ class AnnotationConfigApplicationContext(
 ) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private val infoMap: MutableMap<String, BeanMetaInfo>
-    private val sortedInfos: List<BeanMetaInfo>
+    private val beanInfoMap: MutableMap<String, BeanInfo>
+    private val sortedBeanInfos: List<BeanInfo>
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
@@ -33,18 +33,18 @@ class AnnotationConfigApplicationContext(
     init {
         // register this to app context holder
         ApplicationContextHolder.instance = this
-        infoMap = createBeanMetaInfos(managedClassNames)
-        sortedInfos = infoMap.values.sorted()
+        beanInfoMap = createBeanInfos(managedClassNames)
+        sortedBeanInfos = beanInfoMap.values.sorted()
         // init @Configuration beans
-        sortedInfos.filter { it.isConfiguration }.forEach(::createEarlySingleton)
+        sortedBeanInfos.filter { it.isConfiguration }.forEach(::createEarlySingleton)
         // init BeanPostProcessor beans
-        postProcessors += sortedInfos.filter { it.isBeanPostProcessor }.map {
+        postProcessors += sortedBeanInfos.filter { it.isBeanPostProcessor }.map {
             createEarlySingleton(it) as BeanPostProcessor
         }
         // init naive beans
-        sortedInfos.forEach { it.instance ?: createEarlySingleton(it) }
+        sortedBeanInfos.forEach { it.instance ?: createEarlySingleton(it) }
         // inject depends via field or setter
-        sortedInfos.forEach {
+        sortedBeanInfos.forEach {
             try {
                 injectProperties(it, it.beanClass, getOriginalInstance(it))
             } catch (e: ReflectiveOperationException) {
@@ -52,7 +52,7 @@ class AnnotationConfigApplicationContext(
             }
         }
         // call init method
-        sortedInfos.forEach { info ->
+        sortedBeanInfos.forEach { info ->
             invokeMethod(getOriginalInstance(info), info.initMethod, info.initMethodName)
             postProcessors.forEach { postProcessor ->
                 val processed = postProcessor.afterInitialization(info.requiredInstance, info.beanName)
@@ -66,7 +66,7 @@ class AnnotationConfigApplicationContext(
             }
         }
         if (logger.isDebugEnabled) {
-            sortedInfos.forEach { logger.debug("bean initialized: $it") }
+            sortedBeanInfos.forEach { logger.debug("bean initialized: $it") }
         }
     }
 
@@ -101,7 +101,7 @@ class AnnotationConfigApplicationContext(
         return classNameSet
     }
 
-    private fun createBeanMetaInfos(classNames: Collection<String>): MutableMap<String, BeanMetaInfo> {
+    private fun createBeanInfos(classNames: Collection<String>): MutableMap<String, BeanInfo> {
         /**
          * Get non-arg method by @PostConstruct or @PreDestroy. Not search in super class.
          */
@@ -125,7 +125,7 @@ class AnnotationConfigApplicationContext(
          * Scan factory method that annotated with @Bean:
          */
         fun scanFactoryMethods(
-            factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanMetaInfo>,
+            factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanInfo>,
         ) {
             for (method in factoryClass.declaredMethods) {
                 val bean = method.getAnnotation(Bean::class.java) ?: continue
@@ -142,18 +142,18 @@ class AnnotationConfigApplicationContext(
                 if (beanClass == Void.TYPE || beanClass == Void::class.java)
                     throw BeanDefinitionException("@Bean method ${factoryClass.name}.${method.name} cannot return void")
                 val beanName = method.getAnnotation(Bean::class.java)!!.value.ifEmpty { method.name }
-                val info = BeanMetaInfo(
+                val info = BeanInfo(
                     beanName, beanClass, method.getOrder(), method.isPrimary(), factoryBeanName,
                     method, bean.initMethod.ifEmpty { null }, bean.destroyMethod.ifEmpty { null }
                 )
                 if (infos.put(info.beanName, info) != null) {
                     throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
                 }
-                logger.atDebug().log("define bean via factory method: {}", info)
+                logger.atDebug().log("define bean info via factory method: {}", info)
             }
         }
 
-        val infoMap = mutableMapOf<String, BeanMetaInfo>()
+        val infoMap = mutableMapOf<String, BeanInfo>()
         for (className in classNames) {
             // 获取Class:
             val clazz = try {
@@ -167,7 +167,6 @@ class AnnotationConfigApplicationContext(
 
             // 是否标注@Component?
             clazz.findNestedAnnotation(Component::class.java) ?: continue
-            logger.atDebug().log("found component: {}", clazz.name)
             val mod = clazz.modifiers
             if (Modifier.isAbstract(mod)) {
                 throw BeanDefinitionException("@Component class ${clazz.name} must not be abstract.")
@@ -177,14 +176,14 @@ class AnnotationConfigApplicationContext(
             }
 
             val beanName = clazz.getBeanName()
-            val info = BeanMetaInfo(
+            val info = BeanInfo(
                 beanName, clazz, clazz.getOrder(), clazz.isPrimary(), clazz.beanCtor(),
                 clazz.findLifecycleMethod(PostConstruct::class.java), clazz.findLifecycleMethod(PreDestroy::class.java)
             )
             if (infoMap.put(info.beanName, info) != null) {
                 throw BeanDefinitionException("Duplicate bean name: ${info.beanName}")
             }
-            logger.atDebug().log("define bean via @Component: {}", info)
+            logger.atDebug().log("define bean info via @Component: {}", info)
 
             // handle factory method
             clazz.getAnnotation(Configuration::class.java) ?: continue
@@ -199,7 +198,7 @@ class AnnotationConfigApplicationContext(
     /**
      * 注入属性
      */
-    private fun injectProperties(info: BeanMetaInfo, clazz: Class<*>, bean: Any) {
+    private fun injectProperties(info: BeanInfo, clazz: Class<*>, bean: Any) {
         fun Member.checkModifier() {
             when {
                 Modifier.isStatic(modifiers) -> {
@@ -217,7 +216,7 @@ class AnnotationConfigApplicationContext(
             }
         }
 
-        fun doInject(info: BeanMetaInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
+        fun doInject(info: BeanInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
             val valueAnno = acc.getAnnotation(Value::class.java)
             val autowiredAnno = acc.getAnnotation(Autowired::class.java)
             if (valueAnno == null && autowiredAnno == null) return
@@ -315,16 +314,16 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    override fun findBeanMetaInfos(type: Class<*>): List<BeanMetaInfo> {
-        return sortedInfos.filter { type.isAssignableFrom(it.beanClass) }
+    override fun findBeanInfos(type: Class<*>): List<BeanInfo> {
+        return sortedBeanInfos.filter { type.isAssignableFrom(it.beanClass) }
     }
 
     /**
      * 根据Type查找某个BeanDefinition，如果不存在返回null，如果存在多个返回@Primary标注的一个，如果有多个@Primary标注，
      * 或没有@Primary标注但找到多个，均抛出NoUniqueBeanDefinitionException
      */
-    override fun findBeanMetaInfo(type: Class<*>): BeanMetaInfo? {
-        val infos = findBeanMetaInfos(type)
+    override fun findBeanInfo(type: Class<*>): BeanInfo? {
+        val infos = findBeanInfos(type)
         if (infos.isEmpty()) return null
         if (infos.size == 1) return infos.single()
 
@@ -337,15 +336,15 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    override fun findBeanMetaInfo(name: String): BeanMetaInfo? {
-        return infoMap[name]
+    override fun findBeanInfo(name: String): BeanInfo? {
+        return beanInfoMap[name]
     }
 
     /**
      * 根据Name和Type查找BeanDefinition，如果Name不存在，返回null，如果Name存在，但Type不匹配，抛出异常。
      */
-    override fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo? {
-        val info = infoMap[name] ?: return null
+    override fun findBeanInfo(name: String, requiredType: Class<*>): BeanInfo? {
+        val info = beanInfoMap[name] ?: return null
         if (!requiredType.isAssignableFrom(info.beanClass)) {
             throw BeanTypeException(
                 "Autowire required type '$requiredType' but bean '$name' has actual type '${info.beanClass}'."
@@ -358,7 +357,7 @@ class AnnotationConfigApplicationContext(
      * 创建一个Bean，然后使用BeanPostProcessor处理，但不进行字段和方法级别的注入。
      * 如果创建的Bean不是Configuration或BeanPostProcessor，则在构造方法中注入的依赖Bean会自动创建。
      */
-    override fun createEarlySingleton(info: BeanMetaInfo): Any {
+    override fun createEarlySingleton(info: BeanInfo): Any {
         logger.atDebug().log("Try to create bean {} as early singleton: {}", info.beanName, info.beanClass.name)
         if (!creatingBeanNames.add(info.beanName)) {
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
@@ -407,7 +406,7 @@ class AnnotationConfigApplicationContext(
                 paramAutowiredAnno != null -> {
                     val name = paramAutowiredAnno.name
                     val required = paramAutowiredAnno.value
-                    val dependsOnInfo = if (name.isEmpty()) findBeanMetaInfo(type) else findBeanMetaInfo(name, type)
+                    val dependsOnInfo = if (name.isEmpty()) findBeanInfo(type) else findBeanInfo(name, type)
                     if (required && dependsOnInfo == null) {
                         throw BeanCreationException(
                             "Missing autowired bean with type '${type.name}' when create bean '${info.beanName}': ${info.beanClass.name}."
@@ -469,7 +468,7 @@ class AnnotationConfigApplicationContext(
     }
 
     override fun contains(name: String): Boolean {
-        return infoMap.contains(name)
+        return beanInfoMap.contains(name)
     }
 
     override fun <T> getBean(name: String): T {
@@ -490,38 +489,38 @@ class AnnotationConfigApplicationContext(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> getBeans(clazz: Class<T>): List<T> {
-        return findBeanMetaInfos(clazz).map { it.requiredInstance as T }
+        return findBeanInfos(clazz).map { it.requiredInstance as T }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(name: String): T? {
-        val info = findBeanMetaInfo(name) ?: return null
+        val info = findBeanInfo(name) ?: return null
         return info.requiredInstance as T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(name: String, clazz: Class<T>): T? {
-        val info = findBeanMetaInfo(name, clazz) ?: return null
+        val info = findBeanInfo(name, clazz) ?: return null
         return info.requiredInstance as T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> tryGetBean(clazz: Class<T>): T? {
-        val info = findBeanMetaInfo(clazz) ?: return null
+        val info = findBeanInfo(clazz) ?: return null
         return info.requiredInstance as T
     }
 
     override fun close() {
         logger.info("{} closing...", this.javaClass.name)
-        sortedInfos.forEach {
+        sortedBeanInfos.forEach {
             invokeMethod(getOriginalInstance(it), it.destroyMethod, it.destroyMethodName)
         }
-        infoMap.clear()
+        beanInfoMap.clear()
         logger.info("{} closed.", this.javaClass.name)
         ApplicationContextHolder.instance = null
     }
 
-    private fun getOriginalInstance(info: BeanMetaInfo): Any {
+    private fun getOriginalInstance(info: BeanInfo): Any {
         var ret = info.requiredInstance
         // 如果Proxy改变了原始Bean，又希望注入到原始Bean，则由BeanPostProcessor指定原始Bean:
         postProcessors.reversed().forEach {
@@ -582,15 +581,15 @@ interface ApplicationContext : AutoCloseable {
 
     fun <T> tryGetBean(clazz: Class<T>): T?
 
-    fun findBeanMetaInfos(type: Class<*>): List<BeanMetaInfo>
+    fun findBeanInfos(type: Class<*>): List<BeanInfo>
 
-    fun findBeanMetaInfo(type: Class<*>): BeanMetaInfo?
+    fun findBeanInfo(type: Class<*>): BeanInfo?
 
-    fun findBeanMetaInfo(name: String): BeanMetaInfo?
+    fun findBeanInfo(name: String): BeanInfo?
 
-    fun findBeanMetaInfo(name: String, requiredType: Class<*>): BeanMetaInfo?
+    fun findBeanInfo(name: String, requiredType: Class<*>): BeanInfo?
 
-    fun createEarlySingleton(info: BeanMetaInfo): Any
+    fun createEarlySingleton(info: BeanInfo): Any
 
     fun getConfig(): PropertyResolver
 
