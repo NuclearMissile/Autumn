@@ -165,6 +165,15 @@ class AnnotationApplicationContextTest {
         }
     }
 
+    @Test
+    fun testInterface() {
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            ctx.getUniqueBean(IInterfaceBean::class.java)
+            assertIs<InterfaceBean2>(ctx.getUniqueBean(IInterfaceBean2::class.java))
+            assertIs<InterfaceBean22>(ctx.getBean("interfaceBean22"))
+        }
+    }
+
     val config = ConfigProperties(
         mapOf(
             "app.title" to "Scan App",
