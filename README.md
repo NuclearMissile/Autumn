@@ -149,16 +149,6 @@ class IndexController @Autowired constructor(private val userService: UserServic
             throw ServerErrorException("change password failed due to internal error")
         }
     }
-
-    @Get("/error/{errorCode}")
-    fun error(@PathVariable errorCode: Int) {
-        throw ResponseErrorException(errorCode, "test")
-    }
-
-    @Get("/echo")
-    fun echo(req: RequestEntity): ResponseEntity {
-        return ResponseEntity(req, "application/json", 200)
-    }
 }
 
 ```

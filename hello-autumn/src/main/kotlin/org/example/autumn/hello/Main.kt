@@ -63,7 +63,7 @@ class AfterLogInvocation : Invocation {
 
 @Order(100)
 @Component
-class LogFilterRegistration : FilterRegistration() {
+class LogFilter : FilterRegistration() {
     override val name = "logFilter"
     override val urlPatterns = listOf("/*")
     override val filter = object : Filter {

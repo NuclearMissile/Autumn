@@ -22,7 +22,7 @@
                 </div>
                 <div class="mb-3">
                     <button type="submit" class="btn btn-primary">Log In</button>
-                    <a href="/register" class="ms-4">Do not have an account yet?</a>
+                    <a href="/register" class="ms-4">Do not have an account?</a>
                 </div>
             </form>
         </div>
