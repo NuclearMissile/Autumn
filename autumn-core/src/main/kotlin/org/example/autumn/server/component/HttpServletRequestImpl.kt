@@ -3,7 +3,7 @@ package org.example.autumn.server.component
 import jakarta.servlet.*
 import jakarta.servlet.http.*
 import org.example.autumn.DEFAULT_LOCALE
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.utils.IProperties
 import org.example.autumn.server.component.support.HttpReqParams
 import org.example.autumn.server.connector.HttpExchangeRequest
 import org.example.autumn.utils.DateUtils
@@ -17,7 +17,7 @@ import java.time.format.DateTimeParseException
 import java.util.*
 
 class HttpServletRequestImpl(
-    private val config: PropertyResolver,
+    private val config: IProperties,
     private val servletContext: ServletContextImpl,
     private val exchangeReq: HttpExchangeRequest,
     private val resp: HttpServletResponse,

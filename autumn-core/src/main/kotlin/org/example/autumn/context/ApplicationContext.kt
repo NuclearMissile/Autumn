@@ -5,12 +5,76 @@ import org.example.autumn.annotation.*
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
 import org.example.autumn.aop.Invocation
 import org.example.autumn.exception.*
-import org.example.autumn.resolver.PropertyResolver
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
+import org.example.autumn.utils.IProperties
 import org.slf4j.LoggerFactory
 import java.lang.reflect.*
+
+interface ApplicationContext : AutoCloseable {
+    /**
+     * all bean classnames managed by ctx
+     */
+    val managedClassNames: List<String>
+
+    /**
+     * all BeanInfos associated with bean names
+     */
+    val beanInfoMap: Map<String, IBeanInfo>
+
+    val config: IProperties
+
+    fun getBeanInfos(type: Class<*>): List<IBeanInfo>
+
+    fun <T> tryGetBean(name: String, requiredType: Class<T>? = null): T?
+
+    fun <T> tryGetUniqueBean(type: Class<T>): T?
+
+    /**
+     * find bean instance by name, if not found, throw NoSuchBeanException,
+     * if found but not fit into requireType, throw BeanTypeException
+     */
+    fun <T> getBean(name: String, requiredType: Class<T>? = null): T =
+        tryGetBean(name, requiredType) ?: throw NoSuchBeanException("No bean with name: $name")
+
+    fun <T> getUniqueBean(type: Class<T>): T =
+        tryGetUniqueBean(type) ?: throw NoSuchBeanException("No bean defined with type '$type'.")
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getBeans(type: Class<T>) = getBeanInfos(type).map { it.requiredInstance as T }
+
+    /**
+     * 创建一个Bean，然后使用BeanPostProcessor处理，但不进行字段和方法级别的注入。
+     * 如果创建的Bean不是Configuration或BeanPostProcessor，则在构造方法中注入的依赖Bean会自动创建。
+     */
+    fun createEarlySingleton(info: IBeanInfo): Any
+
+    override fun close()
+}
+
+interface BeanPostProcessor {
+    /**
+     * Invoked after new Bean(), before @PostConstruct bean.init().
+     */
+    fun beforeInitialization(bean: Any, beanName: String): Any {
+        return bean
+    }
+
+    /**
+     * Invoked after @PostConstruct bean.init() called.
+     */
+    fun afterInitialization(bean: Any, beanName: String): Any {
+        return bean
+    }
+
+    /**
+     * Invoked before bean.setXyz() called.
+     */
+    fun beforePropertySet(bean: Any, beanName: String): Any {
+        return bean
+    }
+}
 
 object ApplicationContextHolder {
     internal var instance: ApplicationContext? = null
@@ -18,21 +82,19 @@ object ApplicationContextHolder {
         get() = requireNotNull(instance) { "ApplicationContext is not set." }
 }
 
-class AnnotationConfigApplicationContext(
-    configClass: Class<*>, private val config: PropertyResolver,
-) : ApplicationContext {
+class AnnotationApplicationContext(configClass: Class<*>, override val config: IProperties) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
-
-    private val beanInfoMap: MutableMap<String, BeanInfo>
-    private val sortedBeanInfos: List<BeanInfo>
+    private val sortedBeanInfos: List<IBeanInfo>
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
-    override val managedClassNames = scanClassNamesOnConfigClass(configClass)
+    override val managedClassNames: List<String>
+    override val beanInfoMap: MutableMap<String, IBeanInfo>
 
     init {
         // register this to app context holder
         ApplicationContextHolder.instance = this
+        managedClassNames = scanClassNamesOnConfigClass(configClass)
         beanInfoMap = createBeanInfos(managedClassNames)
         sortedBeanInfos = beanInfoMap.values.sorted()
         // init @Configuration beans
@@ -83,7 +145,7 @@ class AnnotationConfigApplicationContext(
         } ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
     }
 
-    private fun scanClassNamesOnConfigClass(configClass: Class<*>): Set<String> {
+    private fun scanClassNamesOnConfigClass(configClass: Class<*>): List<String> {
         val scanPackages = configClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
             ?: listOf(configClass.packageName)
         logger.info("component scan in packages: {}", scanPackages.joinToString())
@@ -98,10 +160,10 @@ class AnnotationConfigApplicationContext(
             }
         }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
-        return classNameSet
+        return classNameSet.toList()
     }
 
-    private fun createBeanInfos(classNames: Collection<String>): MutableMap<String, BeanInfo> {
+    private fun createBeanInfos(classNames: Collection<String>): MutableMap<String, IBeanInfo> {
         /**
          * Get non-arg method by @PostConstruct or @PreDestroy. Not search in super class.
          */
@@ -125,7 +187,7 @@ class AnnotationConfigApplicationContext(
          * Scan factory method that annotated with @Bean:
          */
         fun scanFactoryMethods(
-            factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, BeanInfo>,
+            factoryBeanName: String, factoryClass: Class<*>, infos: MutableMap<String, IBeanInfo>,
         ) {
             for (method in factoryClass.declaredMethods) {
                 val bean = method.getAnnotation(Bean::class.java) ?: continue
@@ -153,7 +215,7 @@ class AnnotationConfigApplicationContext(
             }
         }
 
-        val infoMap = mutableMapOf<String, BeanInfo>()
+        val infoMap = mutableMapOf<String, IBeanInfo>()
         for (className in classNames) {
             // 获取Class:
             val clazz = try {
@@ -195,10 +257,7 @@ class AnnotationConfigApplicationContext(
         return infoMap
     }
 
-    /**
-     * 注入属性
-     */
-    private fun injectProperties(info: BeanInfo, clazz: Class<*>, bean: Any) {
+    private fun injectProperties(info: IBeanInfo, clazz: Class<*>, bean: Any) {
         fun Member.checkModifier() {
             when {
                 Modifier.isStatic(modifiers) -> {
@@ -216,7 +275,7 @@ class AnnotationConfigApplicationContext(
             }
         }
 
-        fun doInject(info: BeanInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
+        fun doInject(info: IBeanInfo, clazz: Class<*>, bean: Any, acc: AccessibleObject) {
             val valueAnno = acc.getAnnotation(Value::class.java)
             val autowiredAnno = acc.getAnnotation(Autowired::class.java)
             if (valueAnno == null && autowiredAnno == null) return
@@ -269,7 +328,8 @@ class AnnotationConfigApplicationContext(
                 autowiredAnno != null -> {
                     val name = autowiredAnno.name
                     val required = autowiredAnno.value
-                    val depends = if (name.isEmpty()) tryGetBean(accessibleType) else tryGetBean(name, accessibleType)
+                    val depends =
+                        if (name.isEmpty()) tryGetUniqueBean(accessibleType) else tryGetBean(name, accessibleType)
                     if (required && depends == null) {
                         throw DependencyException(
                             "Dependency bean not found when inject ${clazz.simpleName}.$accessibleName for bean '${info.beanName}': ${info.beanClass.name}"
@@ -314,16 +374,13 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    override fun findBeanInfos(type: Class<*>): List<BeanInfo> {
-        return sortedBeanInfos.filter { type.isAssignableFrom(it.beanClass) }
-    }
-
     /**
-     * 根据Type查找某个BeanDefinition，如果不存在返回null，如果存在多个返回@Primary标注的一个，如果有多个@Primary标注，
-     * 或没有@Primary标注但找到多个，均抛出NoUniqueBeanDefinitionException
+     * find IBeanInfo by type, if not found, return null;
+     * if found multiple, return the one have @Primary anno,
+     * if multiple or none @Primary anno found, throw NoUniqueBeanException
      */
-    override fun findBeanInfo(type: Class<*>): BeanInfo? {
-        val infos = findBeanInfos(type)
+    private fun getUniqueBeanInfo(type: Class<*>): IBeanInfo? {
+        val infos = getBeanInfos(type)
         if (infos.isEmpty()) return null
         if (infos.size == 1) return infos.single()
 
@@ -336,28 +393,25 @@ class AnnotationConfigApplicationContext(
         }
     }
 
-    override fun findBeanInfo(name: String): BeanInfo? {
-        return beanInfoMap[name]
-    }
-
     /**
-     * 根据Name和Type查找BeanDefinition，如果Name不存在，返回null，如果Name存在，但Type不匹配，抛出异常。
+     * find IBeanInfo by name and requiredType, if name not found, return null;
+     * if type not fit, throw BeanTypeException
      */
-    override fun findBeanInfo(name: String, requiredType: Class<*>): BeanInfo? {
-        val info = beanInfoMap[name] ?: return null
-        if (!requiredType.isAssignableFrom(info.beanClass)) {
-            throw BeanTypeException(
-                "Autowire required type '$requiredType' but bean '$name' has actual type '${info.beanClass}'."
-            )
+    private fun getBeanInfo(name: String, requiredType: Class<*>? = null): IBeanInfo? {
+        if (requiredType == null) {
+            return beanInfoMap[name]
+        } else {
+            val info = beanInfoMap[name] ?: return null
+            if (!requiredType.isAssignableFrom(info.beanClass)) {
+                throw BeanTypeException(
+                    "Autowire required type '$requiredType' but bean '$name' has actual type '${info.beanClass}'."
+                )
+            }
+            return info
         }
-        return info
     }
 
-    /**
-     * 创建一个Bean，然后使用BeanPostProcessor处理，但不进行字段和方法级别的注入。
-     * 如果创建的Bean不是Configuration或BeanPostProcessor，则在构造方法中注入的依赖Bean会自动创建。
-     */
-    override fun createEarlySingleton(info: BeanInfo): Any {
+    override fun createEarlySingleton(info: IBeanInfo): Any {
         logger.atDebug().log("Try to create bean {} as early singleton: {}", info.beanName, info.beanClass.name)
         if (!creatingBeanNames.add(info.beanName)) {
             throw DependencyException("Circular dependency detected when create bean '${info.beanName}'")
@@ -406,7 +460,7 @@ class AnnotationConfigApplicationContext(
                 paramAutowiredAnno != null -> {
                     val name = paramAutowiredAnno.name
                     val required = paramAutowiredAnno.value
-                    val dependsOnInfo = if (name.isEmpty()) findBeanInfo(type) else findBeanInfo(name, type)
+                    val dependsOnInfo = if (name.isEmpty()) getUniqueBeanInfo(type) else getBeanInfo(name, type)
                     if (required && dependsOnInfo == null) {
                         throw BeanCreationException(
                             "Missing autowired bean with type '${type.name}' when create bean '${info.beanName}': ${info.beanClass.name}."
@@ -415,7 +469,6 @@ class AnnotationConfigApplicationContext(
                     if (dependsOnInfo != null) {
                         // 获取依赖Bean:
                         var autowiredBeanInstance = dependsOnInfo.instance
-                        @Suppress("KotlinConstantConditions")
                         if (autowiredBeanInstance == null && !info.isConfiguration && !info.isBeanPostProcessor) {
                             // 当前依赖Bean尚未初始化，递归调用初始化该依赖Bean:
                             autowiredBeanInstance = createEarlySingleton(dependsOnInfo)
@@ -463,52 +516,16 @@ class AnnotationConfigApplicationContext(
         return info.requiredInstance
     }
 
-    override fun getConfig(): PropertyResolver {
-        return config
-    }
-
-    override fun contains(name: String): Boolean {
-        return beanInfoMap.contains(name)
-    }
-
-    override fun <T> getBean(name: String): T {
-        return tryGetBean(name) ?: throw NoSuchBeanException("No bean with name: $name")
-    }
-
-    /**
-     * 通过Name和Type查找Bean，不存在抛出NoSuchBeanDefinitionException，
-     * 存在但与Type不匹配抛出BeanNotOfRequiredTypeException
-     */
-    override fun <T> getBean(name: String, clazz: Class<T>): T {
-        return tryGetBean(name, clazz) ?: throw NoSuchBeanException("No bean defined with type '$clazz'.")
-    }
-
-    override fun <T> getBean(clazz: Class<T>): T {
-        return tryGetBean(clazz) ?: throw NoSuchBeanException("No bean defined with type '$clazz'.")
+    override fun getBeanInfos(type: Class<*>): List<IBeanInfo> {
+        return if (type == Any::class.java) sortedBeanInfos else sortedBeanInfos.filter { type.isAssignableFrom(it.beanClass) }
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> getBeans(clazz: Class<T>): List<T> {
-        return findBeanInfos(clazz).map { it.requiredInstance as T }
-    }
+    override fun <T> tryGetBean(name: String, requiredType: Class<T>?) =
+        getBeanInfo(name, requiredType)?.requiredInstance as T?
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> tryGetBean(name: String): T? {
-        val info = findBeanInfo(name) ?: return null
-        return info.requiredInstance as T
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> tryGetBean(name: String, clazz: Class<T>): T? {
-        val info = findBeanInfo(name, clazz) ?: return null
-        return info.requiredInstance as T
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> tryGetBean(clazz: Class<T>): T? {
-        val info = findBeanInfo(clazz) ?: return null
-        return info.requiredInstance as T
-    }
+    override fun <T> tryGetUniqueBean(type: Class<T>) = getUniqueBeanInfo(type)?.requiredInstance as T?
 
     override fun close() {
         logger.info("{} closing...", this.javaClass.name)
@@ -520,7 +537,7 @@ class AnnotationConfigApplicationContext(
         ApplicationContextHolder.instance = null
     }
 
-    private fun getOriginalInstance(info: BeanInfo): Any {
+    private fun getOriginalInstance(info: IBeanInfo): Any {
         var ret = info.requiredInstance
         // 如果Proxy改变了原始Bean，又希望注入到原始Bean，则由BeanPostProcessor指定原始Bean:
         postProcessors.reversed().forEach {
@@ -560,38 +577,4 @@ class AnnotationConfigApplicationContext(
             }
         }
     }
-}
-
-interface ApplicationContext : AutoCloseable {
-    val managedClassNames: Set<String>
-
-    fun contains(name: String): Boolean
-
-    fun <T> getBean(name: String): T
-
-    fun <T> getBean(name: String, clazz: Class<T>): T
-
-    fun <T> getBean(clazz: Class<T>): T
-
-    fun <T> getBeans(clazz: Class<T>): List<T>
-
-    fun <T> tryGetBean(name: String): T?
-
-    fun <T> tryGetBean(name: String, clazz: Class<T>): T?
-
-    fun <T> tryGetBean(clazz: Class<T>): T?
-
-    fun findBeanInfos(type: Class<*>): List<BeanInfo>
-
-    fun findBeanInfo(type: Class<*>): BeanInfo?
-
-    fun findBeanInfo(name: String): BeanInfo?
-
-    fun findBeanInfo(name: String, requiredType: Class<*>): BeanInfo?
-
-    fun createEarlySingleton(info: BeanInfo): Any
-
-    fun getConfig(): PropertyResolver
-
-    override fun close()
 }

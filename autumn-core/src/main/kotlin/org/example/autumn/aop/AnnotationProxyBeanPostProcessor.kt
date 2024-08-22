@@ -47,7 +47,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         originalBeans[beanName] = bean
         val anno = bean.javaClass.getAnnotation(annotationClass) ?: return bean
         val context = ApplicationContextHolder.required
-        val beanInfo = context.findBeanInfo(beanName)!!
+        val beanInfo = context.beanInfoMap[beanName]!!
 
         beanInfo.aopBeanInfos += try {
             @Suppress("UNCHECKED_CAST")
@@ -55,7 +55,7 @@ abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProces
         } catch (e: ReflectiveOperationException) {
             throw AopConfigException("@${annotationClass.simpleName} must have value().", e)
         }.map {
-            context.findBeanInfo(it) ?: throw AopConfigException(
+            context.beanInfoMap[it] ?: throw AopConfigException(
                 "@${annotationClass.simpleName} proxy handler '$it' not found."
             )
         }

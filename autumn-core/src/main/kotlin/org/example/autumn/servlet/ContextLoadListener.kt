@@ -4,11 +4,11 @@ import jakarta.servlet.DispatcherType
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletContextEvent
 import jakarta.servlet.ServletContextListener
-import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.AutumnException
-import org.example.autumn.resolver.Config
-import org.example.autumn.resolver.PropertyResolver
+import org.example.autumn.utils.ConfigProperties
+import org.example.autumn.utils.IProperties
 import org.example.autumn.utils.IOUtils.readStringFromClassPath
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -22,7 +22,7 @@ abstract class ContextLoadListener : ServletContextListener {
         logger.info(readStringFromClassPath("/banner.txt"))
         val servletContext = sce.servletContext
         WebMvcConfiguration.servletContext = servletContext
-        val config = servletContext.getAttribute("autumn_config") as PropertyResolver? ?: Config.load()
+        val config = servletContext.getAttribute("autumn_config") as IProperties? ?: ConfigProperties.load()
         servletContext.requestCharacterEncoding = config.getRequiredString("server.request-encoding")
         servletContext.responseCharacterEncoding = config.getRequiredString("server.response-encoding")
 
@@ -36,7 +36,7 @@ abstract class ContextLoadListener : ServletContextListener {
         } catch (e: ClassNotFoundException) {
             throw AutumnException("Could not load autumn config class: $configClassName", null)
         }
-        val applicationContext = AnnotationConfigApplicationContext(configClass, config)
+        val applicationContext = AnnotationApplicationContext(configClass, config)
         logger.info("Application context created: {}", applicationContext)
 
         registerFilters(servletContext)

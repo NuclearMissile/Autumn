@@ -3,8 +3,8 @@ package org.example.autumn.server.connector
 import com.sun.net.httpserver.HttpServer
 import jakarta.servlet.ServletContainerInitializer
 import org.example.autumn.DEFAULT_ERROR_MSG
-import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.resolver.getRequired
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
@@ -14,7 +14,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.Executor
 
 class HttpConnector(
-    private val config: PropertyResolver, private val classLoader: ClassLoader,
+    private val config: IProperties, private val classLoader: ClassLoader,
     private val webRoot: String, private val executor: Executor, private val scannedClasses: List<Class<*>>,
 ) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)

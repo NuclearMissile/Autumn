@@ -25,7 +25,7 @@ class EventBusConfiguration {
 
 class EventSubscribeBeanPostProcessor : BeanPostProcessor {
     private val eventBus by lazy {
-        ApplicationContextHolder.required.getBean(EventBus::class.java)
+        ApplicationContextHolder.required.getUniqueBean(EventBus::class.java)
     }
 
     override fun afterInitialization(bean: Any, beanName: String): Any {

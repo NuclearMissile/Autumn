@@ -1,4 +1,4 @@
-package org.example.autumn.resolver
+package org.example.autumn.utils
 
 import org.example.autumn.utils.ClassUtils.toPrimitive
 import org.example.autumn.utils.YamlUtils.loadYamlAsPlainMap
@@ -7,43 +7,43 @@ import java.util.*
 
 data class PropertyExpr(val key: String, val defaultValue: String?)
 
-interface PropertyResolver {
+interface IProperties {
     fun contains(key: String): Boolean
-    fun set(key: String, value: String): PropertyResolver
-    fun addAll(map: Map<String, String>): PropertyResolver
+    fun set(key: String, value: String): IProperties
+    fun addAll(map: Map<String, String>): IProperties
     fun getString(key: String): String?
     fun getString(key: String, defaultValue: String): String
     fun <T> get(key: String, clazz: Class<T>): T?
     fun <T> get(key: String, default: T, clazz: Class<T>): T
     fun getRequiredString(key: String): String
     fun <T> getRequired(key: String, clazz: Class<T>): T
-    fun merge(other: PropertyResolver): PropertyResolver
+    fun merge(other: IProperties): IProperties
     fun toMap(): Map<String, String>
 }
 
-inline fun <reified T> PropertyResolver.get(key: String): T? {
+inline fun <reified T> IProperties.get(key: String): T? {
     return get(key, T::class.java)
 }
 
-inline fun <reified T> PropertyResolver.get(key: String, default: T): T {
+inline fun <reified T> IProperties.get(key: String, default: T): T {
     return get(key, default, T::class.java)
 }
 
-inline fun <reified T> PropertyResolver.getRequired(key: String): T {
+inline fun <reified T> IProperties.getRequired(key: String): T {
     return getRequired(key, T::class.java)
 }
 
-class Config(props: Properties) : PropertyResolver {
+class ConfigProperties(props: Properties) : IProperties {
     companion object {
         private const val CONFIG_YML = "/config.yml"
         private const val DEFAULT_CONFIG_YML = "/__default-config__.yml"
 
-        fun load(): PropertyResolver {
+        fun load(): IProperties {
             return loadYaml(DEFAULT_CONFIG_YML).merge(loadYaml(CONFIG_YML))
         }
 
-        fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): PropertyResolver {
-            return Config(loadYamlAsPlainMap(yamlPath, fromClassPath).toProperties())
+        fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): IProperties {
+            return ConfigProperties(loadYamlAsPlainMap(yamlPath, fromClassPath).toProperties())
         }
     }
 
@@ -55,7 +55,7 @@ class Config(props: Properties) : PropertyResolver {
         properties += props.toMap() as Map<String, String>
     }
 
-    override fun merge(other: PropertyResolver): PropertyResolver {
+    override fun merge(other: IProperties): IProperties {
         properties += other.toMap()
         return this
     }
@@ -66,12 +66,12 @@ class Config(props: Properties) : PropertyResolver {
 
     override fun contains(key: String) = properties.containsKey(key)
 
-    override fun set(key: String, value: String): PropertyResolver {
+    override fun set(key: String, value: String): IProperties {
         properties[key] = value
         return this
     }
 
-    override fun addAll(map: Map<String, String>): PropertyResolver {
+    override fun addAll(map: Map<String, String>): IProperties {
         properties += map
         return this
     }

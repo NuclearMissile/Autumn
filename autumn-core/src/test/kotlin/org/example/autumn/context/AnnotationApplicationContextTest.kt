@@ -1,30 +1,34 @@
 package org.example.autumn.context
 
-import org.example.autumn.resolver.Config
+import org.example.autumn.exception.BeanTypeException
+import org.example.autumn.exception.NoSuchBeanException
+import org.example.autumn.exception.NoUniqueBeanException
+import org.example.autumn.utils.ConfigProperties
 import org.example.imported.LocalDateConfiguration
 import org.example.imported.ZonedDateConfiguration
 import org.example.scan.*
 import org.example.scan.sub1.Sub1Bean
 import org.example.scan.sub1.sub2.Sub2Bean
 import org.example.scan.sub1.sub2.sub3.Sub3Bean
+import org.junit.jupiter.api.assertThrows
 import java.time.*
 import kotlin.test.*
 
-class AnnotationConfigApplicationContextTest {
+class AnnotationApplicationContextTest {
     @Test
     fun testCustomAnnotation() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            assertNotNull(ctx.getBean(CustomAnnotationBean::class.java))
-            assertNotNull(ctx.getBean("customAnnotation"))
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            assertNotNull(ctx.tryGetUniqueBean(CustomAnnotationBean::class.java))
+            assertNotNull(ctx.tryGetBean("customAnnotation"))
         }
     }
 
     @Test
     fun testInitMethod() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test @PostConstruct:
-            val bean1 = ctx.getBean(AnnotationInitBean::class.java)
-            val bean2 = ctx.getBean(SpecifyInitBean::class.java)
+            val bean1 = ctx.getUniqueBean(AnnotationInitBean::class.java)
+            val bean2 = ctx.getUniqueBean(SpecifyInitBean::class.java)
             assertEquals("Scan App / v1.0", bean1.appName)
             assertEquals("Scan App / v1.0", bean2.appName)
         }
@@ -32,12 +36,12 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testImport() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            assertNotNull(ctx.getBean(LocalDateConfiguration::class.java))
-            assertNotNull(ctx.getBean("startLocalDate"))
-            assertNotNull(ctx.getBean("startLocalDateTime"))
-            assertNotNull(ctx.getBean(ZonedDateConfiguration::class.java))
-            assertNotNull(ctx.getBean("startZonedDateTime"))
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            assertNotNull(ctx.tryGetUniqueBean(LocalDateConfiguration::class.java))
+            assertNotNull(ctx.tryGetBean("startLocalDate"))
+            assertNotNull(ctx.tryGetBean("startLocalDateTime"))
+            assertNotNull(ctx.tryGetUniqueBean(ZonedDateConfiguration::class.java))
+            assertNotNull(ctx.tryGetBean("startZonedDateTime"))
         }
     }
 
@@ -45,10 +49,10 @@ class AnnotationConfigApplicationContextTest {
     fun testDestroyMethod() {
         var bean1: AnnotationDestroyBean
         var bean2: SpecifyDestroyBean
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test @PreDestroy:
-            bean1 = ctx.getBean(AnnotationDestroyBean::class.java)
-            bean2 = ctx.getBean(SpecifyDestroyBean::class.java)
+            bean1 = ctx.getUniqueBean(AnnotationDestroyBean::class.java)
+            bean2 = ctx.getUniqueBean(SpecifyDestroyBean::class.java)
             assertEquals("Scan App", bean1.appTitle)
             assertEquals("Scan App", bean2.appTitle)
         }
@@ -58,8 +62,8 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testConverter() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            val bean = ctx.getBean(ValueConverterBean::class.java)
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            val bean = ctx.getUniqueBean(ValueConverterBean::class.java)
             assertNotNull(bean.injectedBoolean)
             assertTrue(bean.injectedBooleanPrimitive)
             assertTrue(bean.injectedBoolean!!)
@@ -102,27 +106,27 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testNested() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            ctx.getBean(OuterBean::class.java)
-            ctx.getBean(OuterBean.NestedBean::class.java)
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            ctx.getUniqueBean(OuterBean::class.java)
+            ctx.getUniqueBean(OuterBean.NestedBean::class.java)
         }
     }
 
     @Test
     fun testPrimary() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            val person = ctx.getBean(PersonBean::class.java)
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            val person = ctx.getUniqueBean(PersonBean::class.java)
             assertEquals<Class<*>>(TeacherBean::class.java, person.javaClass)
-            val dog = ctx.getBean(DogBean::class.java)
+            val dog = ctx.getUniqueBean(DogBean::class.java)
             assertEquals("Husky", dog.type)
         }
     }
 
     @Test
     fun testProxy() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
             // test proxy:
-            val proxy = ctx.getBean(OriginBean::class.java)
+            val proxy = ctx.getUniqueBean(OriginBean::class.java)
             assertSame<Class<*>>(SecondProxyBean::class.java, proxy.javaClass)
             assertEquals("Scan App", proxy.name)
             assertEquals("v1.0", proxy.version)
@@ -135,8 +139,8 @@ class AnnotationConfigApplicationContextTest {
             assertNull(versionField.get(proxy))
 
             // other beans are injected proxy instance:
-            val inject1 = ctx.getBean(InjectProxyOnPropertyBean::class.java)
-            val inject2 = ctx.getBean(InjectProxyOnConstructorBean::class.java)
+            val inject1 = ctx.getUniqueBean(InjectProxyOnPropertyBean::class.java)
+            val inject2 = ctx.getUniqueBean(InjectProxyOnConstructorBean::class.java)
             assertSame(proxy, inject1.injected)
             assertSame(proxy, inject2.injected)
         }
@@ -144,14 +148,24 @@ class AnnotationConfigApplicationContextTest {
 
     @Test
     fun testSub() {
-        AnnotationConfigApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
-            ctx.getBean(Sub1Bean::class.java)
-            ctx.getBean(Sub2Bean::class.java)
-            ctx.getBean(Sub3Bean::class.java)
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            ctx.getUniqueBean(Sub1Bean::class.java)
+            ctx.getUniqueBean(Sub2Bean::class.java)
+            ctx.getUniqueBean(Sub3Bean::class.java)
         }
     }
 
-    val config = Config(
+    @Test
+    fun testNotFound() {
+        AnnotationApplicationContext(ScanConfiguration::class.java, config).use { ctx ->
+            assertThrows<NoSuchBeanException> { ctx.getUniqueBean(Byte::class.java) }
+            assertThrows<NoUniqueBeanException> { ctx.getUniqueBean(Any::class.java) }
+            assertThrows<NoSuchBeanException> { ctx.getBean("dummy") }
+            assertThrows<BeanTypeException> { ctx.getBean("startLocalDate", Int::class.java) }
+        }
+    }
+
+    val config = ConfigProperties(
         mapOf(
             "app.title" to "Scan App",
             "app.version" to "v1.0",

@@ -36,30 +36,30 @@ class DispatcherServlet : HttpServlet() {
 
     private val logger = LoggerFactory.getLogger(javaClass)
     private val context = ApplicationContextHolder.required
-    private val config = context.getConfig()
-    private val viewResolver = context.getBean(ViewResolver::class.java)
-    private val resourcePath = config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
-    private val faviconPath = config.getRequiredString("autumn.web.favicon-path")
+    private val viewResolver = context.getUniqueBean(ViewResolver::class.java)
+    private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
+    private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
         // scan @Controller and @RestController:
-        for (info in context.findBeanInfos(Any::class.java)) {
+        for (info in context.getBeanInfos(Any::class.java)) {
             val beanClass = info.beanClass
-            val bean = info.requiredInstance
             val controllerAnno = beanClass.getAnnotation(Controller::class.java)
             val restControllerAnno = beanClass.getAnnotation(RestController::class.java)
-            if (controllerAnno != null && restControllerAnno != null) {
+
+            if (controllerAnno == null && restControllerAnno == null)
+                continue
+            if (controllerAnno != null && restControllerAnno != null)
                 throw ServletException("Found both @Controller and @RestController on class: ${beanClass.name}")
-            }
-            if (controllerAnno != null) {
+
+            val bean = info.requiredInstance
+            if (controllerAnno != null)
                 addController(info.beanName, controllerAnno.prefix, bean, false)
-            }
-            if (restControllerAnno != null) {
+            if (restControllerAnno != null)
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
-            }
         }
 
         getDispatchers.sortByDescending { it.urlPattern.pattern.length }

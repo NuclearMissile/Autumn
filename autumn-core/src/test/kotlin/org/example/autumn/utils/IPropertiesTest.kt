@@ -1,4 +1,4 @@
-package org.example.autumn.resolver
+package org.example.autumn.utils
 
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.DisabledOnOs
@@ -11,15 +11,15 @@ import java.util.*
 import kotlin.test.*
 
 
-class PropertyResolverTest {
+class IPropertiesTest {
     @Test
     fun testConfigLoad() {
-        val config = Config.loadYaml("/config.yml")
+        val config = ConfigProperties.loadYaml("/config.yml")
         assertEquals("Test", config.getRequiredString("server.web-app.name"))
         config.set("server.web-app.name", "dummy")
         assertEquals("dummy", config.getRequiredString("server.web-app.name"))
 
-        val test = Config.loadYaml("/test.yml")
+        val test = ConfigProperties.loadYaml("/test.yml")
         assertEquals("Apple,Orange,Pear", test.getRequiredString("other.list"))
         assertContentEquals(listOf("Apple", "Orange", "Pear"), test.getRequired("other.list"))
         assertEquals("A", test.getRequiredString("other.map.a"))
@@ -28,7 +28,7 @@ class PropertyResolverTest {
 
     @Test
     fun propertyValue() {
-        val cpr = Config(
+        val cpr = ConfigProperties(
             mapOf(
                 "app.title" to "Autumn Framework",
                 "app.version" to "v1.0",
@@ -80,7 +80,7 @@ class PropertyResolverTest {
         props.setProperty("app.title", "Autumn Framework")
         props.setProperty("app.version", "v1.0")
 
-        val cpr = Config(props)
+        val cpr = ConfigProperties(props)
         assertThrows<IllegalArgumentException> {
             cpr.getRequiredString("not.exist")
         }
@@ -95,7 +95,7 @@ class PropertyResolverTest {
         val props = Properties()
         props.setProperty("app.title", "Autumn Framework")
 
-        val cpr = Config(props)
+        val cpr = ConfigProperties(props)
         assertEquals("Autumn Framework", cpr.getString("\${app.title}"))
         assertThrows<IllegalArgumentException> {
             cpr.getString("\${app.version}")
@@ -114,7 +114,7 @@ class PropertyResolverTest {
     fun propertyHolderOnWin() {
         val os = System.getenv("OS")
         println("env OS=$os")
-        val cpr = Config(Properties())
+        val cpr = ConfigProperties(Properties())
         assertEquals("Windows_NT", cpr.getString("\${app.os:\${OS}}"))
     }
 }

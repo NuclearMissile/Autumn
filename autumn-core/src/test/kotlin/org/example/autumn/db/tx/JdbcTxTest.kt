@@ -1,7 +1,7 @@
 package org.example.autumn.db.tx
 
 import org.example.autumn.annotation.*
-import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.db.*
 import org.example.autumn.exception.DataAccessException
 import org.junit.jupiter.api.Test
@@ -78,13 +78,13 @@ class UserService(
 class JdbcTxTest : JdbcTestBase() {
     @Test
     fun testJdbcWithTx() {
-        AnnotationConfigApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
             jdbcTemplate.update(CREATE_ADDRESS_TABLE)
 
-            val userService: UserService = ctx.getBean(UserService::class.java)
-            val addressService: AddressService = ctx.getBean(AddressService::class.java)
+            val userService: UserService = ctx.getUniqueBean(UserService::class.java)
+            val addressService: AddressService = ctx.getUniqueBean(AddressService::class.java)
             // proxied:
             assertNotSame(UserService::class.java, userService.javaClass)
             assertNotSame(AddressService::class.java, addressService.javaClass)
@@ -126,8 +126,8 @@ class JdbcTxTest : JdbcTestBase() {
             assertEquals(2, addressService.getAddresses(bob.id).size)
         }
 
-        AnnotationConfigApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
-            val addressService: AddressService = ctx.getBean(AddressService::class.java)
+        AnnotationApplicationContext(JdbcTxTestConfiguration::class.java, config).use { ctx ->
+            val addressService: AddressService = ctx.getUniqueBean(AddressService::class.java)
             val addressesOfBob = addressService.getAddresses(1)
             assertEquals(2, addressesOfBob.size)
         }

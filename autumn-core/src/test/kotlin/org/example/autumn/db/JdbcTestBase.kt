@@ -1,6 +1,6 @@
 package org.example.autumn.db
 
-import org.example.autumn.resolver.Config
+import org.example.autumn.utils.ConfigProperties
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -41,7 +41,7 @@ open class JdbcTestBase {
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"
     }
 
-    val config = Config.load()
+    val config = ConfigProperties.load()
 
     @BeforeEach
     fun beforeEach() {

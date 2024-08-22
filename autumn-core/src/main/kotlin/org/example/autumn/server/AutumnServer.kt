@@ -6,9 +6,9 @@ import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
-import org.example.autumn.resolver.Config
-import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.resolver.getRequired
+import org.example.autumn.utils.ConfigProperties
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WarClassLoader
 import org.example.autumn.server.connector.HttpConnector
@@ -118,7 +118,7 @@ class AutumnServer {
                 }
                 // load config
                 if (customConfig == null)
-                    Config.load() else Config.load().merge(Config.loadYaml(customConfig, false))
+                    ConfigProperties.load() else ConfigProperties.load().merge(ConfigProperties.loadYaml(customConfig, false))
             }
 
             // scan class:
@@ -163,7 +163,7 @@ class AutumnServer {
 
         // server entry point
         fun start(
-            webRoot: String, config: PropertyResolver, classLoader: ClassLoader, annoClasses: List<Class<*>>,
+            webRoot: String, config: IProperties, classLoader: ClassLoader, annoClasses: List<Class<*>>,
             startTime: Long = System.currentTimeMillis(), tmpPath: Path? = null,
         ) {
             // start info:

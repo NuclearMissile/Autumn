@@ -2,8 +2,8 @@ package org.example.autumn.servlet
 
 import jakarta.servlet.ServletException
 import org.example.autumn.DEFAULT_ERROR_MSG
-import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.Config
+import org.example.autumn.context.AnnotationApplicationContext
+import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
@@ -361,8 +361,8 @@ class DispatcherServletTest {
     fun init() {
         ctx = createMockServletContext()
         WebMvcConfiguration.servletContext = ctx
-        val config = Config.load()
-        AnnotationConfigApplicationContext(ControllerConfiguration::class.java, config)
+        val config = ConfigProperties.load()
+        AnnotationApplicationContext(ControllerConfiguration::class.java, config)
         dispatcherServlet = DispatcherServlet()
         dispatcherServlet.init()
     }

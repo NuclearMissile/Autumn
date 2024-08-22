@@ -1,12 +1,12 @@
 package org.example.autumn.db.orm
 
 import jakarta.persistence.*
-import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.db.orm.entity.EventEntity
 import org.example.autumn.db.orm.entity.PasswordAuthEntity
 import org.example.autumn.db.orm.entity.UserEntity
-import org.example.autumn.resolver.Config
+import org.example.autumn.utils.ConfigProperties
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
@@ -140,12 +140,12 @@ class OrmTest {
                 "timestamp TIMESTAMP, time TIMESTAMP, date DATE);"
     }
 
-    private val config = Config.load()
+    private val config = ConfigProperties.load()
 
     @BeforeEach
     fun setUp() {
         Files.deleteIfExists(Path("test_jdbc.db"))
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getBean<JdbcTemplate>("jdbcTemplate")
             jdbcTemplate.update(CREATE_USERS)
             jdbcTemplate.update(CREATE_EVENTS)
@@ -156,7 +156,7 @@ class OrmTest {
 
     @Test
     fun testEntity() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val e1 = TestEntity(
                 -1, "e1", "e1", TestEnum.ENUM1, TestEnum.ENUM2, 1L, 1,
@@ -201,7 +201,7 @@ class OrmTest {
 
     @Test
     fun testExportDDL() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val ddl = naiveOrm.exportDDL()
             println(ddl.slice(0 until 500))
@@ -211,7 +211,7 @@ class OrmTest {
 
     @Test
     fun testInsert() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -224,7 +224,7 @@ class OrmTest {
 
     @Test
     fun testBatchInsert() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, it, it.toLong()) }
             naiveOrm.batchInsert(users)
@@ -245,7 +245,7 @@ class OrmTest {
 
     @Test
     fun testQueries() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val users = (0 until 1000).map { UserEntity(-1, 1, it.toLong()) }
             val paes = (1000 until 2000).map {
@@ -294,7 +294,7 @@ class OrmTest {
 
     @Test
     fun testUpdate() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -314,7 +314,7 @@ class OrmTest {
 
     @Test
     fun testDelete() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)
@@ -329,7 +329,7 @@ class OrmTest {
 
     @Test
     fun testDeleteById() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val naiveOrm = ctx.getBean<NaiveOrm>("naiveOrm")
             val timestamp = System.currentTimeMillis()
             val user = UserEntity(-1, 1, timestamp)

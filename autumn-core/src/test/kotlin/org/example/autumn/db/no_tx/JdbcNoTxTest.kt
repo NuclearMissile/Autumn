@@ -3,7 +3,7 @@ package org.example.autumn.db.no_tx
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.example.autumn.annotation.*
-import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.db.JdbcTestBase
 import org.example.autumn.db.User
@@ -46,8 +46,8 @@ class JdbcNoTxConfiguration {
 class JdbcNoTxTest : JdbcTestBase() {
     @Test
     fun testJdbcNoTx() {
-        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
             jdbcTemplate.update(CREATE_ADDRESS_TABLE)
             // insert user:
@@ -83,8 +83,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(1, list2.size)
         }
 
-        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             val bob = jdbcTemplate.queryRequired<User>(SELECT_USER, 1)
             assertEquals("Bob Jones", bob.name)
             assertEquals(18, bob.age)
@@ -98,8 +98,8 @@ class JdbcNoTxTest : JdbcTestBase() {
     @Ignore("batchInsert return generated keys not supported by sqlite")
     @Test
     fun testBatchInsert() {
-        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
 
             val ids = jdbcTemplate.batchInsert(INSERT_USER, 2, "Alice", 12, "Bob", null)
@@ -109,8 +109,8 @@ class JdbcNoTxTest : JdbcTestBase() {
 
     @Test
     fun testQueryList() {
-        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
 
             val userId1 = jdbcTemplate.insert(INSERT_USER, "Alice", 12).toInt()
@@ -131,8 +131,8 @@ class JdbcNoTxTest : JdbcTestBase() {
 
     @Test
     fun testQueryMap() {
-        AnnotationConfigApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
-            val jdbcTemplate = ctx.getBean(JdbcTemplate::class.java)
+        AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
+            val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
             jdbcTemplate.update(CREATE_USER_TABLE)
 
             val userId1 = jdbcTemplate.insert(INSERT_USER, "Alice", 12).toInt()

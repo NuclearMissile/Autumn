@@ -7,10 +7,10 @@ import org.example.autumn.annotation.Component
 import org.example.autumn.annotation.Transactional
 import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
-import org.example.autumn.context.AnnotationConfigApplicationContext
+import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.db.JdbcTemplate
 import org.example.autumn.exception.DataAccessException
-import org.example.autumn.resolver.Config
+import org.example.autumn.utils.ConfigProperties
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import org.slf4j.LoggerFactory
@@ -28,19 +28,19 @@ class OrmTxTest {
             "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL);"
     }
 
-    private val config = Config.load()
+    private val config = ConfigProperties.load()
 
     @BeforeEach
     fun setUp() {
         Files.deleteIfExists(Path("test_jdbc.db"))
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             ctx.getBean<JdbcTemplate>("jdbcTemplate").update(CREATE_USERS)
         }
     }
 
     @Test
     fun testOrmWithTx() {
-        AnnotationConfigApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
+        AnnotationApplicationContext(OrmTestConfiguration::class.java, config).use { ctx ->
             val userService = ctx.getBean<UserService>("userService")
             // proxied:
             assertNotSame(UserService::class.java, userService.javaClass)

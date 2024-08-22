@@ -6,8 +6,8 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import jakarta.servlet.descriptor.JspConfigDescriptor
 import jakarta.servlet.http.*
-import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.resolver.getRequired
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 import org.example.autumn.server.component.servlet.DefaultServlet
 import org.example.autumn.server.component.support.FilterMapping
 import org.example.autumn.server.component.support.ServletMapping
@@ -26,7 +26,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class ServletContextImpl(
-    private val classLoader: ClassLoader, private val config: PropertyResolver, webRoot: String,
+    private val classLoader: ClassLoader, private val config: IProperties, webRoot: String,
 ) : ServletContext, AutoCloseable {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val webRoot = Paths.get(webRoot).normalize().toAbsolutePath()

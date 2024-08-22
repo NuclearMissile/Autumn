@@ -1,11 +1,11 @@
 package org.example.autumn.server.component
 
 import jakarta.servlet.SessionCookieConfig
-import org.example.autumn.resolver.PropertyResolver
-import org.example.autumn.resolver.getRequired
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 
 class SessionCookieConfigImpl(
-    private val config: PropertyResolver,
+    private val config: IProperties,
 ) : SessionCookieConfig {
     private val attributes = mutableMapOf<String, String>()
     private var maxAge = config.getRequired<Int>("server.web-app.session-timeout") * 60

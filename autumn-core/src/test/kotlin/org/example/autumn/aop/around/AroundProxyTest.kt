@@ -1,17 +1,17 @@
 package org.example.autumn.aop.around
 
-import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.Config
+import org.example.autumn.context.AnnotationApplicationContext
+import org.example.autumn.utils.ConfigProperties
 import kotlin.test.*
 
 class AroundProxyTest {
     @Test
     fun testAroundProxy() {
-        AnnotationConfigApplicationContext(
+        AnnotationApplicationContext(
             AroundAopConfiguration::class.java,
-            Config(mapOf("customer.name" to "Bob").toProperties())
+            ConfigProperties(mapOf("customer.name" to "Bob").toProperties())
         ).use { ctx ->
-            val proxy = ctx.getBean(OriginBean::class.java)
+            val proxy = ctx.getUniqueBean(OriginBean::class.java)
             // OriginBean$ByteBuddy$8NoD1FcQ
             println(proxy.javaClass.name)
 
@@ -26,7 +26,7 @@ class AroundProxyTest {
             assertEquals("Morning, Bob.", proxy.morning())
 
             // test injected proxy:
-            val other = ctx.getBean(OtherBean::class.java)
+            val other = ctx.getUniqueBean(OtherBean::class.java)
             assertSame(proxy, other.proxied)
             assertEquals("Hello, Bob!", other.proxied.hello())
         }

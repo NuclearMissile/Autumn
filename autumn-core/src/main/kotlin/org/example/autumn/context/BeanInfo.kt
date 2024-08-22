@@ -5,25 +5,40 @@ import org.example.autumn.exception.BeanCreationException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
-class BeanInfo private constructor(
-    val beanName: String, val beanClass: Class<*>, val order: Int, val isPrimary: Boolean,
-) : Comparable<BeanInfo> {
-    var beanCtor: Constructor<*>? = null
-        private set
-    var factoryName: String? = null
-        private set
-    var factoryMethod: Method? = null
-        private set
-    var initMethodName: String? = null
-        private set
-    var initMethod: Method? = null
-        private set
-    var destroyMethodName: String? = null
-        private set
-    var destroyMethod: Method? = null
-        private set
+interface IBeanInfo : Comparable<IBeanInfo> {
+    val beanName: String
+    val beanClass: Class<*>
+    val order: Int
+    val isPrimary: Boolean
+    var beanCtor: Constructor<*>?
+    var factoryName: String?
+    var factoryMethod: Method?
+    var initMethodName: String?
+    var initMethod: Method?
+    var destroyMethodName: String?
+    var destroyMethod: Method?
+    var instance: Any?
+    val requiredInstance: Any
+    val aopBeanInfos: MutableList<IBeanInfo>
+    val isConfiguration: Boolean
+    val isBeanPostProcessor: Boolean
+}
 
-    var instance: Any? = null
+class BeanInfo private constructor(
+    override val beanName: String,
+    override val beanClass: Class<*>,
+    override val order: Int,
+    override val isPrimary: Boolean,
+) : IBeanInfo {
+    override var beanCtor: Constructor<*>? = null
+    override var factoryName: String? = null
+    override var factoryMethod: Method? = null
+    override var initMethodName: String? = null
+    override var initMethod: Method? = null
+    override var destroyMethodName: String? = null
+    override var destroyMethod: Method? = null
+
+    override var instance: Any? = null
         set(value) {
             requireNotNull(value) { "Bean instance is null." }
             require(beanClass.isAssignableFrom(value.javaClass)) {
@@ -31,14 +46,14 @@ class BeanInfo private constructor(
             }
             field = value
         }
-    val requiredInstance: Any
+    override val requiredInstance: Any
         get() = instance ?: throw BeanCreationException(
             "Instance of bean with name $beanName and type ${beanClass.name} is not instantiated during current stage.",
         )
 
-    val aopBeanInfos = mutableListOf<BeanInfo>()
-    val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
-    val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
+    override val aopBeanInfos = mutableListOf<IBeanInfo>()
+    override val isConfiguration: Boolean = beanClass.isAnnotationPresent(Configuration::class.java)
+    override val isBeanPostProcessor: Boolean = BeanPostProcessor::class.java.isAssignableFrom(beanClass)
 
     constructor(
         beanName: String, beanClass: Class<*>, order: Int, isPrimary: Boolean, beanCtor: Constructor<*>,
@@ -63,7 +78,7 @@ class BeanInfo private constructor(
         this.destroyMethodName = destroyMethodName
     }
 
-    override fun compareTo(other: BeanInfo): Int {
+    override fun compareTo(other: IBeanInfo): Int {
         val orderCmp = order.compareTo(other.order)
         return if (orderCmp == 0) beanName.compareTo(other.beanName) else orderCmp
     }

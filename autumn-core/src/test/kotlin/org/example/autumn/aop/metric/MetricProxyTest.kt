@@ -1,15 +1,15 @@
 package org.example.autumn.aop.metric
 
-import org.example.autumn.context.AnnotationConfigApplicationContext
-import org.example.autumn.resolver.Config
+import org.example.autumn.context.AnnotationApplicationContext
+import org.example.autumn.utils.ConfigProperties
 import java.util.*
 import kotlin.test.*
 
 class MetricProxyTest {
     @Test
     fun testMetricProxy() {
-        AnnotationConfigApplicationContext(MetricConfiguration::class.java, Config(Properties())).use { ctx ->
-            val worker = ctx.getBean(HashWorker::class.java)
+        AnnotationApplicationContext(MetricConfiguration::class.java, ConfigProperties(Properties())).use { ctx ->
+            val worker = ctx.getUniqueBean(HashWorker::class.java)
             // proxy class, not origin class:
             assertNotSame(HashWorker::class.java, worker.javaClass)
 
@@ -23,7 +23,7 @@ class MetricProxyTest {
             assertEquals(sha256, worker.sha256("test"))
 
             // get metric time:
-            val metrics = ctx.getBean(MetricInvocation::class.java)
+            val metrics = ctx.getUniqueBean(MetricInvocation::class.java)
             assertNotNull(metrics.lastProcessedTime["MD5"])
             assertNotNull(metrics.lastProcessedTime["SHA-256"])
             assertNotNull(metrics.lastProcessedTime["SHA-1"])
