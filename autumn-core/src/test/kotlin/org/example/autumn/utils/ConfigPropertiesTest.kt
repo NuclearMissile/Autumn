@@ -11,7 +11,7 @@ import java.util.*
 import kotlin.test.*
 
 
-class IPropertiesTest {
+class ConfigPropertiesTest {
     @Test
     fun testConfigLoad() {
         val config = ConfigProperties.loadYaml("/config.yml")
