@@ -18,7 +18,7 @@
         <kotlin.compiler.apiVersion>2.0</kotlin.compiler.apiVersion>
         <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
 
-        <kotlin.version>2.0.10</kotlin.version>
+        <kotlin.version>2.0.20</kotlin.version>
         <commons-cli.version>1.9.0</commons-cli.version>
         <jakarta.persistence-api.verion>3.2.0</jakarta.persistence-api.verion>
         <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
