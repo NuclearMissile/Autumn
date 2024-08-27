@@ -1,15 +1,20 @@
 package org.example.autumn.aop
 
+import org.example.autumn.utils.ClassUtils.extractTarget
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 class InvocationChain(handlers: List<Invocation>) {
     private val iter = handlers.iterator()
 
     fun invokeChain(caller: Any, method: Method, args: Array<Any?>?): Any? {
-        return if (iter.hasNext()) {
-            iter.next().invoke(caller, method, this, args)
-        } else {
-            method.invoke(caller, *(args ?: emptyArray()))
+        return try {
+            if (iter.hasNext())
+                iter.next().invoke(caller, method, this, args)
+            else
+                method.invoke(caller, *(args ?: emptyArray()))
+        } catch (e: InvocationTargetException) {
+            throw e.extractTarget()
         }
     }
 }

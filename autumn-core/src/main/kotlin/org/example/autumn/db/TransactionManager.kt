@@ -4,9 +4,7 @@ import org.example.autumn.annotation.Transactional
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
-import org.example.autumn.utils.ClassUtils.extractTarget
 import org.slf4j.LoggerFactory
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.sql.Connection
 import javax.sql.DataSource
@@ -30,11 +28,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
         // join current tx
         val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
         if (holder.get() != null || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
-            return try {
-                chain.invokeChain(caller, method, args)
-            } catch (e: InvocationTargetException) {
-                throw e.extractTarget()
-            }
+            return chain.invokeChain(caller, method, args)
 
         dataSource.connection.use { conn ->
             val autoCommit = conn.autoCommit
@@ -46,15 +40,15 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 val ret = chain.invokeChain(caller, method, args)
                 conn.commit()
                 return ret
-            } catch (e: InvocationTargetException) {
-                val target = e.extractTarget()
-                logger.warn("rollback transaction for the following exception:", target)
+            } catch (e: Exception) {
+                logger.warn("rollback transaction for the following exception:", e)
                 try {
                     conn.rollback()
-                } catch (e: Exception) {
-                    target.addSuppressed(e)
+                } catch (ignore: Exception) {
+                    logger.warn("exception thrown while rollback transaction, ignored:", ignore)
+                    e.addSuppressed(ignore)
                 }
-                throw target
+                throw e
             } finally {
                 holder.remove()
                 if (autoCommit) {
