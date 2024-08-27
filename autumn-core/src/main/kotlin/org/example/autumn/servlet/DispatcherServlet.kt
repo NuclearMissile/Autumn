@@ -44,6 +44,7 @@ class DispatcherServlet : HttpServlet() {
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
+
         // scan @Controller and @RestController:
         for (info in context.getBeanInfos(Any::class.java)) {
             val beanClass = info.beanClass
@@ -62,8 +63,8 @@ class DispatcherServlet : HttpServlet() {
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
         }
 
-        getDispatchers.sortByDescending { it.urlPattern.pattern.length }
-        postDispatchers.sortByDescending { it.urlPattern.pattern.length }
+        getDispatchers.sort()
+        postDispatchers.sort()
     }
 
     override fun destroy() {
@@ -223,97 +224,103 @@ class DispatcherServlet : HttpServlet() {
             addMethods(name, prefix, instance, clazz.superclass, isRest)
         }
     }
+}
 
-    private class Dispatcher(
-        private val controller: Any,
-        private val handlerMethod: Method,
-        val urlPattern: Regex,
-        val produce: String,
-        val isRest: Boolean,
-    ) {
-        val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
-        val isVoid = handlerMethod.returnType == Void.TYPE
+class Dispatcher(
+    private val controller: Any,
+    private val handlerMethod: Method,
+    private val urlPattern: Regex,
+    val produce: String,
+    val isRest: Boolean,
+) : Comparable<Dispatcher> {
+    val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
+    val isVoid = handlerMethod.returnType == Void.TYPE
 
-        private val logger = LoggerFactory.getLogger(javaClass)
-        private val methodParams = mutableListOf<Param>()
+    private val logger = LoggerFactory.getLogger(javaClass)
+    private val methodParams = mutableListOf<Param>()
+    private val name = controller.javaClass.name + "." + handlerMethod.name
 
-        init {
-            val params = handlerMethod.parameters
-            val paramsAnnos = handlerMethod.parameterAnnotations
-            for (i in params.indices) {
-                methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
-            }
-            logger.atDebug().log(
-                "mapping {} to handler {}.{}, parameters: {}",
-                urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
-            )
+    init {
+        val params = handlerMethod.parameters
+        val paramsAnnos = handlerMethod.parameterAnnotations
+        for (i in params.indices) {
+            methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
         }
+        logger.atDebug().log(
+            "mapping {} to handler {}.{}, parameters: {}",
+            urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
+        )
+    }
 
-        fun match(url: String): Boolean {
-            return urlPattern.matches(url)
-        }
+    fun match(url: String): Boolean {
+        return urlPattern.matches(url)
+    }
 
-        fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
-            val args = methodParams.map { param ->
-                when (param.paramAnno) {
-                    is PathVariable -> try {
-                        urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
-                            ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
-                    } catch (e: Exception) {
-                        throw RequestErrorException("Path variable '${param.name}' is required.")
+    fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
+        val args = methodParams.map { param ->
+            when (param.paramAnno) {
+                is PathVariable -> try {
+                    urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
+                        ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
+                } catch (e: Exception) {
+                    throw RequestErrorException("Path variable '${param.name}' is required.")
+                }
+
+                is RequestBody -> if (String::class.java.isAssignableFrom(param.paramType))
+                    req.reader.use { it.readText() } else req.reader.use { it.readJson(param.paramType) }
+
+                is RequestParam -> {
+                    val value = req.getParameter(param.name) ?: param.defaultValue!!
+                    if (value == DUMMY_VALUE) {
+                        if (param.required!!)
+                            throw RequestErrorException("Request parameter '${param.name!!}' is required.")
+                        else
+                            return@map null
                     }
+                    value.toPrimitive(param.paramType)
+                        ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
+                }
 
-                    is RequestBody -> if (String::class.java.isAssignableFrom(param.paramType))
-                        req.reader.use { it.readText() } else req.reader.use { it.readJson(param.paramType) }
-
-                    is RequestParam -> {
-                        val value = req.getParameter(param.name) ?: param.defaultValue!!
-                        if (value == DUMMY_VALUE) {
-                            if (param.required!!)
-                                throw RequestErrorException("Request parameter '${param.name!!}' is required.")
-                            else
-                                return@map null
-                        }
-                        value.toPrimitive(param.paramType)
-                            ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
+                is Header -> {
+                    val value = req.getHeader(param.name) ?: param.defaultValue!!
+                    if (value == DUMMY_VALUE) {
+                        if (param.required!!)
+                            throw RequestErrorException("Header '${param.name!!}' is required.")
+                        else
+                            return@map null
                     }
+                    value
+                }
 
-                    is Header -> {
-                        val value = req.getHeader(param.name) ?: param.defaultValue!!
-                        if (value == DUMMY_VALUE) {
-                            if (param.required!!)
-                                throw RequestErrorException("Header '${param.name!!}' is required.")
-                            else
-                                return@map null
-                        }
-                        value
-                    }
+                else -> when (param.paramType) {
+                    HttpServletRequest::class.java -> req
+                    HttpServletResponse::class.java -> resp
+                    HttpSession::class.java -> req.session
+                    ServletContext::class.java -> req.servletContext
+                    RequestEntity::class.java -> RequestEntity(
+                        req.method, req.requestURI, req.reader.use { it.readText() },
+                        req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
+                        req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
+                        req.cookies?.toList() ?: emptyList()
+                    )
 
-                    else -> when (param.paramType) {
-                        HttpServletRequest::class.java -> req
-                        HttpServletResponse::class.java -> resp
-                        HttpSession::class.java -> req.session
-                        ServletContext::class.java -> req.servletContext
-                        RequestEntity::class.java -> RequestEntity(
-                            req.method, req.requestURI, req.reader.use { it.readText() },
-                            req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
-                            req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
-                            req.cookies?.toList() ?: emptyList()
-                        )
-
-                        else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
-                    }
+                    else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                 }
             }
-            return try {
-                handlerMethod.invoke(controller, *args.toTypedArray())
-            } catch (e: InvocationTargetException) {
-                throw e.extractTarget()
-            }
+        }
+        return try {
+            handlerMethod.invoke(controller, *args.toTypedArray())
+        } catch (e: InvocationTargetException) {
+            throw e.extractTarget()
         }
     }
 
-    class Param(method: Method, param: Parameter, annos: List<Annotation>) {
+    override fun compareTo(other: Dispatcher): Int {
+        val ret = name.compareTo(other.name)
+        return if (ret == 0) methodParams.count().compareTo(other.methodParams.count()) else ret
+    }
+
+    private class Param(method: Method, param: Parameter, annos: List<Annotation>) {
         var name: String? = null
         val paramAnno: Annotation?
         var defaultValue: String? = null
