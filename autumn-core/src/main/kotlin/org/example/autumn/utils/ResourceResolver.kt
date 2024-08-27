@@ -1,4 +1,4 @@
-package org.example.autumn.resolver
+package org.example.autumn.utils
 
 import org.slf4j.LoggerFactory
 import java.net.URI

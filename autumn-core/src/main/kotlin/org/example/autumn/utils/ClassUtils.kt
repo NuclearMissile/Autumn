@@ -2,7 +2,6 @@ package org.example.autumn.utils
 
 import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
-import org.example.autumn.resolver.ResourceResolver
 import java.lang.reflect.InvocationTargetException
 import java.util.function.Supplier
 
