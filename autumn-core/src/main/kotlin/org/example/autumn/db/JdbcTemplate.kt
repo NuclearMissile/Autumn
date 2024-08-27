@@ -8,10 +8,10 @@ import javax.sql.DataSource
 
 class JdbcTemplate(private val dataSource: DataSource) {
     inline fun <reified T> query(sql: String, vararg args: Any?): T? {
-        return query(sql, T::class.java.getRowExtractor(), *args)
+        return query(T::class.java.getRowExtractor(), sql, *args)
     }
 
-    fun <T> query(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T? {
+    fun <T> query(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             ps.executeQuery().use { rs -> rse.extract(rs) }
         }
@@ -66,10 +66,10 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     inline fun <reified T> queryRequired(sql: String, vararg args: Any?): T {
-        return queryRequired(sql, T::class.java.getRowExtractor(), *args)
+        return queryRequired(T::class.java.getRowExtractor(), sql, *args)
     }
 
-    fun <T> queryRequired(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): T {
+    fun <T> queryRequired(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             var ret: T? = null
             ps.executeQuery().use { rs ->
@@ -89,10 +89,10 @@ class JdbcTemplate(private val dataSource: DataSource) {
     }
 
     inline fun <reified T> queryList(sql: String, vararg args: Any?): List<T> {
-        return queryList(sql, T::class.java.getRowExtractor(), *args)
+        return queryList(T::class.java.getRowExtractor(), sql, *args)
     }
 
-    fun <T> queryList(sql: String, rse: ResultSetExtractor<T>, vararg args: Any?): List<T> {
+    fun <T> queryList(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): List<T> {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             buildList {
                 ps.executeQuery().use { rs ->
