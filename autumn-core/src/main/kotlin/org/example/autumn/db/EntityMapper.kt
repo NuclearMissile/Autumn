@@ -1,8 +1,6 @@
-package org.example.autumn.db.orm
+package org.example.autumn.db
 
 import jakarta.persistence.*
-import org.example.autumn.db.COLUMN_EXTRACTORS
-import org.example.autumn.db.ResultSetExtractor
 import java.lang.reflect.Field
 import java.math.BigDecimal
 import java.sql.Date
@@ -105,8 +103,7 @@ class EntityProperty(val field: Field) {
     }
 }
 
-
-class Mapper<T>(private val entityClass: Class<T>) {
+class EntityMapper<T>(private val entityClass: Class<T>) : ResultSetExtractor<T> {
     private val properties = scanProperties(entityClass)
 
     // db col name -> EntityProperty
@@ -142,23 +139,25 @@ class Mapper<T>(private val entityClass: Class<T>) {
         }.toString()
     }
 
-    val rse = ResultSetExtractor { rs: ResultSet ->
-        rs.use {
-            val colNames = properties.indices.map { rs.metaData.getColumnLabel(it + 1) }
-            buildList(rs.metaData.columnCount) {
-                while (rs.next()) {
-                    val entity = entityClass.getConstructor().newInstance()
-                    for (i in properties.indices) {
-                        val colName = colNames[i]
-                        val prop = propertiesMap[colName]!!
-                        val extractor = COLUMN_EXTRACTORS[prop.field.type]
-                        prop[entity as Any] = if (extractor != null)
-                            extractor.extract(rs, colName) else rs.getObject(colName)
-                    }
-                    add(entity)
+    val listExtractor = ResultSetExtractor { rs ->
+        val colNames = properties.indices.map { rs.metaData.getColumnLabel(it + 1) }
+        buildList {
+            while (rs.next()) {
+                val entity = entityClass.getConstructor().newInstance()
+                for (i in properties.indices) {
+                    val colName = colNames[i]
+                    val prop = propertiesMap[colName]!!
+                    val extractor = COLUMN_EXTRACTORS[prop.field.type]
+                    prop[entity as Any] = if (extractor != null)
+                        extractor.extract(rs, colName) else rs.getObject(colName)
                 }
+                add(entity)
             }
         }
+    }
+
+    override fun extract(rs: ResultSet): T? {
+        return listExtractor.extract(rs)!!.firstOrNull()
     }
 
     fun idOf(entity: Any): Any {

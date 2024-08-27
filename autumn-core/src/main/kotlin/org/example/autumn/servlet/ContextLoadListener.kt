@@ -8,8 +8,8 @@ import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.AutumnException
 import org.example.autumn.utils.ConfigProperties
-import org.example.autumn.utils.IProperties
 import org.example.autumn.utils.IOUtils.readStringFromClassPath
+import org.example.autumn.utils.IProperties
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.Objects.requireNonNull
