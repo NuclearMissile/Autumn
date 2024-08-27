@@ -36,6 +36,7 @@ open class JdbcTestBase {
 
         const val SELECT_USER = "SELECT * FROM users WHERE id = ?"
         const val SELECT_ALL_USER = "SELECT * FROM users"
+        const val SELECT_USER_COUNT = "SELECT COUNT(*) FROM users"
         const val SELECT_USER_NAME = "SELECT name FROM users WHERE id = ?"
         const val SELECT_USER_AGE = "SELECT age FROM users WHERE id = ?"
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"

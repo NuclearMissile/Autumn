@@ -193,7 +193,7 @@ val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
 
     java.lang.String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
     String::class.java to ColumnExtractor { rs, label -> rs.getString(label) },
-    Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as? Number },
+    Number::class.java to ColumnExtractor { rs, label -> rs.getObject(label) as Number? },
     ByteArray::class.java to ColumnExtractor { rs, label -> rs.getBytes(label) },
     Date::class.java to ColumnExtractor { rs, label -> rs.getDate(label) },
     Time::class.java to ColumnExtractor { rs, label -> rs.getTime(label) },
@@ -202,7 +202,8 @@ val COLUMN_EXTRACTORS = mapOf<Class<*>, ColumnExtractor<*>>(
 
 class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultSetExtractor<T> {
     companion object {
-        private val rowExtractors = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
+        // cache single elem row extractors
+        private val ROW_EXTRACTOR_CACHE = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
             put(Boolean::class.java, ResultSetExtractor {
                 if (it.getObject(1) == null) null else it.getBoolean(1)
             })
@@ -248,7 +249,7 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
 
             put(java.lang.String::class.java, ResultSetExtractor { it.getString(1) })
             put(String::class.java, ResultSetExtractor { it.getString(1) })
-            put(Number::class.java, ResultSetExtractor { it.getObject(1) as? Number })
+            put(Number::class.java, ResultSetExtractor { it.getObject(1) as Number? })
             put(ByteArray::class.java, ResultSetExtractor { it.getBytes(1) })
             put(Date::class.java, ResultSetExtractor { it.getDate(1) })
             put(Time::class.java, ResultSetExtractor { it.getTime(1) })
@@ -281,7 +282,7 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                 }
 
                 else -> {
-                    rowExtractors.getOrPut(this) {
+                    ROW_EXTRACTOR_CACHE.getOrPut(this) {
                         if (this.isEnum) ResultSetExtractor { rs ->
                             val value = rs.getString(1) ?: return@ResultSetExtractor null
                             this.enumConstants.first { (it as Enum<*>).name == value }
@@ -289,7 +290,6 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
                     } as ResultSetExtractor<T>
                 }
             }
-
         }
     }
 
