@@ -65,26 +65,21 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    inline fun <reified T> queryRequired(sql: String, vararg args: Any?): T {
-        return queryRequired(T::class.java.getRowExtractor(), sql, *args)
+    inline fun <reified T> querySingle(sql: String, vararg args: Any?): T {
+        return querySingle(T::class.java.getRowExtractor(), sql, *args)
     }
 
-    fun <T> queryRequired(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T {
+    fun <T> querySingle(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
-            var ret: T? = null
+            var ret: T?
             ps.executeQuery().use { rs ->
-                while (rs.next()) {
-                    if (ret == null) {
-                        ret = rse.extract(rs)
-                    } else {
-                        throw DataAccessException("Multiple rows found.")
-                    }
-                }
+                if (!rs.next())
+                    throw DataAccessException("Empty result set.")
+                ret = rse.extract(rs)
+                if (rs.next())
+                    throw DataAccessException("Multiple rows found.")
             }
-            if (ret == null) {
-                throw DataAccessException("Empty result set.")
-            }
-            return@execute ret
+            ret
         }!!
     }
 

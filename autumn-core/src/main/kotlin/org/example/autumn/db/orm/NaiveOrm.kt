@@ -13,12 +13,12 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         ApplicationContextHolder.required.managedClassNames
             .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
             .filter { it.isAnnotationPresent(Entity::class.java) }
-            .associateWith { Mapper(it) }
+            .associateWith { EntityMapper(it) }
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> mapperOf(clazz: Class<T>): Mapper<T> {
-        return classMapping[clazz] as? Mapper<T>
+    fun <T> mapperOf(clazz: Class<T>): EntityMapper<T> {
+        return classMapping[clazz] as? EntityMapper<T>
             ?: throw IllegalArgumentException("Target class is not a registered entity: ${clazz.name}")
     }
 
@@ -31,7 +31,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         if (logger.isDebugEnabled) {
             logger.debug("selectById SQL: {}, args: {}", mapper.selectSQL, id)
         }
-        return jdbcTemplate.query(mapper.rse, mapper.selectSQL, id)?.firstOrNull()
+        return jdbcTemplate.query(mapper.listExtractor, mapper.selectSQL, id)!!.firstOrNull()
     }
 
     inline fun <reified T> selectFrom(distinct: Boolean = false): SelectFrom<T> {

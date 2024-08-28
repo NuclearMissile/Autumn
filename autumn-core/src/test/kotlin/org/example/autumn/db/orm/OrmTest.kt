@@ -168,9 +168,9 @@ class OrmTest {
             assertNotEquals(-1, e1.id)
             val e11 = naiveOrm.selectById<TestEntity>(e1.id)!!
             val enum =
-                naiveOrm.jdbcTemplate.queryRequired<TestEnum>("select enum from test_entities where id = ?", e1.id)
+                naiveOrm.jdbcTemplate.querySingle<TestEnum>("select enum from test_entities where id = ?", e1.id)
             val e111 =
-                naiveOrm.jdbcTemplate.queryRequired<TestEntity>("select * from test_entities where id = ?", e1.id)
+                naiveOrm.jdbcTemplate.querySingle<TestEntity>("select * from test_entities where id = ?", e1.id)
             assertEquals(e1, e11)
             assertEquals(Timestamp(1), e11.timestamp)
             assertEquals(Time(1), e11.time)

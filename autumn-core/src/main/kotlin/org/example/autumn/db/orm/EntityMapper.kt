@@ -6,7 +6,6 @@ import org.example.autumn.db.ResultSetExtractor
 import java.lang.reflect.Field
 import java.math.BigDecimal
 import java.sql.Date
-import java.sql.ResultSet
 import java.sql.Time
 import java.sql.Timestamp
 
@@ -106,7 +105,7 @@ class EntityProperty(val field: Field) {
 }
 
 
-class Mapper<T>(private val entityClass: Class<T>) {
+class EntityMapper<T>(private val entityClass: Class<T>) {
     private val properties = scanProperties(entityClass)
 
     // db col name -> EntityProperty
@@ -142,10 +141,10 @@ class Mapper<T>(private val entityClass: Class<T>) {
         }.toString()
     }
 
-    val rse = ResultSetExtractor { rs: ResultSet ->
+    val listExtractor = ResultSetExtractor { rs ->
         rs.use {
             val colNames = properties.indices.map { rs.metaData.getColumnLabel(it + 1) }
-            buildList(rs.metaData.columnCount) {
+            buildList {
                 while (rs.next()) {
                     val entity = entityClass.getConstructor().newInstance()
                     for (i in properties.indices) {

@@ -59,7 +59,7 @@ class UserService(
     }
 
     fun getUser(userId: Int): User {
-        return jdbcTemplate.queryRequired(JdbcTestBase.SELECT_USER, userId)
+        return jdbcTemplate.querySingle(JdbcTestBase.SELECT_USER, userId)
     }
 
     @Transactional

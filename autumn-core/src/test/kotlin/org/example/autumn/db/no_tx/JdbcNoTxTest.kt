@@ -56,8 +56,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(1, userId1)
             assertEquals(2, userId2)
             // query user:
-            val bob = jdbcTemplate.queryRequired<User>(SELECT_USER, userId1)
-            val alice = jdbcTemplate.queryRequired<User>(SELECT_USER, userId2)
+            val bob = jdbcTemplate.querySingle<User>(SELECT_USER, userId1)
+            val alice = jdbcTemplate.querySingle<User>(SELECT_USER, userId2)
             assertEquals(1, bob.id)
             assertEquals("Bob", bob.name)
             assertEquals(12, bob.age)
@@ -70,8 +70,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(alice, list1[1])
 
             // query name:
-            assertEquals("Bob", jdbcTemplate.queryRequired(SELECT_USER_NAME, userId1))
-            assertEquals(12, jdbcTemplate.queryRequired(SELECT_USER_AGE, userId1))
+            assertEquals("Bob", jdbcTemplate.querySingle(SELECT_USER_NAME, userId1))
+            assertEquals(12, jdbcTemplate.querySingle(SELECT_USER_AGE, userId1))
             // update user:
             val n1 = jdbcTemplate.update(UPDATE_USER, "Bob Jones", 18, bob.id)
             assertEquals(1, n1)
@@ -85,12 +85,12 @@ class JdbcNoTxTest : JdbcTestBase() {
 
         AnnotationApplicationContext(JdbcNoTxConfiguration::class.java, config).use { ctx ->
             val jdbcTemplate = ctx.getUniqueBean(JdbcTemplate::class.java)
-            val bob = jdbcTemplate.queryRequired<User>(SELECT_USER, 1)
+            val bob = jdbcTemplate.querySingle<User>(SELECT_USER, 1)
             assertEquals("Bob Jones", bob.name)
             assertEquals(18, bob.age)
             assertThrows<DataAccessException> {
                 // alice was deleted:
-                jdbcTemplate.queryRequired(SELECT_USER, 2)
+                jdbcTemplate.querySingle(SELECT_USER, 2)
             }
         }
     }
