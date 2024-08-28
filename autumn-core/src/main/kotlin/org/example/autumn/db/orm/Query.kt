@@ -2,7 +2,6 @@ package org.example.autumn.db.orm
 
 import jakarta.persistence.NoResultException
 import jakarta.persistence.NonUniqueResultException
-import org.example.autumn.db.EntityMapper
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +9,7 @@ import org.slf4j.LoggerFactory
  *
  * @param <T> Entity type.
  */
-class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: EntityMapper<T>) {
+class Criteria<T>(private val naiveOrm: NaiveOrm, private val mapper: Mapper<T>) {
     private val logger = LoggerFactory.getLogger(javaClass)
     val joinParams = mutableListOf<Any>()
     val whereParams = mutableListOf<Any>()
@@ -24,7 +23,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
     private fun sql(): String {
         return StringBuilder(128).also {
             it.append(selectClause)
-            it.append(" FROM ${entityMapper.tableName} ")
+            it.append(" FROM ${mapper.tableName} ")
             if (joinClauses.isNotEmpty()) {
                 it.append(joinClauses.joinToString(prefix = " JOIN ", separator = " JOIN ", postfix = " "))
             }
@@ -48,7 +47,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
         }
         val querySql = sql()
         val start = System.currentTimeMillis()
-        return naiveOrm.jdbcTemplate.query(entityMapper.listExtractor, querySql, *queryParams.toTypedArray())!!.also {
+        return naiveOrm.jdbcTemplate.query(mapper.rse, querySql, *queryParams.toTypedArray())!!.also {
             logger.trace(
                 "querySql: {}, queryParams: {}, time: {}ms", querySql, queryParams, System.currentTimeMillis() - start
             )

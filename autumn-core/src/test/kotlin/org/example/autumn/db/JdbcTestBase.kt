@@ -1,41 +1,20 @@
 package org.example.autumn.db
 
-import jakarta.persistence.*
 import org.example.autumn.utils.ConfigProperties
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-@Entity
-@Table(name = "addresses")
 data class Address(
-    @Id
-    @Column
     var id: Int = -1,
-    @Column
     var userId: Int = 0,
-    @Column
     var address: String? = null,
-    @Column
     var zipcode: Int = 0,
 )
 
-@Entity
-@Table(name = "users")
 data class User(
-    @Id
-    @Column
-    var id: Int = -1,
-    @Column
-    var name: String? = null,
-    @Column
-    var age: Int? = null,
-    @Column
-    var booleanTest: Boolean = false,
-    @Column
-    var shortTest: Short = 0,
-    @Column
-    var isTest: Boolean = true,
+    var id: Int = -1, var name: String? = null, var age: Int? = null,
+    var booleanTest: Boolean = false, var shortTest: Short = 0, var isTest: Boolean = true,
 )
 
 open class JdbcTestBase {

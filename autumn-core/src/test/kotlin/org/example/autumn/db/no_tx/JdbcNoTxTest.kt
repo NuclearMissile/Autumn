@@ -90,9 +90,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertEquals(18, bob.age)
             assertThrows<DataAccessException> {
                 // alice was deleted:
-                jdbcTemplate.queryRequired<User>(SELECT_USER, 2)
+                jdbcTemplate.queryRequired(SELECT_USER, 2)
             }
-            assertNull(jdbcTemplate.query<User>(SELECT_USER, 2))
         }
     }
 
