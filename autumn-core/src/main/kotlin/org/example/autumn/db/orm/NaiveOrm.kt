@@ -31,9 +31,7 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         if (logger.isDebugEnabled) {
             logger.debug("selectById SQL: {}, args: {}", mapper.selectSQL, id)
         }
-        return jdbcTemplate.execute(jdbcTemplate.preparedStatementCreator(mapper.selectSQL, id)) { ps ->
-            ps.executeQuery().use { rs -> mapper.listExtractor.extract(rs) }
-        }!!.firstOrNull()
+        return jdbcTemplate.queryForOrm(mapper.listExtractor, mapper.selectSQL, id)!!.firstOrNull()
     }
 
     inline fun <reified T> selectFrom(distinct: Boolean = false): SelectFrom<T> {

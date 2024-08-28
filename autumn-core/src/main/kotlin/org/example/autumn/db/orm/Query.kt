@@ -47,14 +47,14 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
         }
         val querySql = sql()
         val start = System.currentTimeMillis()
-        val jdbcTemplate = naiveOrm.jdbcTemplate
-        return jdbcTemplate.execute(
-            jdbcTemplate.preparedStatementCreator(querySql, *queryParams.toTypedArray())
-        ) { ps -> ps.executeQuery().use { rs -> entityMapper.listExtractor.extract(rs) } }!!.also {
-            logger.trace(
-                "querySql: {}, queryParams: {}, time: {}ms", querySql, queryParams, System.currentTimeMillis() - start
-            )
-        }
+        return naiveOrm.jdbcTemplate
+            .queryForOrm(entityMapper.listExtractor, querySql, *queryParams.toTypedArray())!!
+            .also {
+                logger.trace(
+                    "querySql: {}, queryParams: {}, time: {}ms",
+                    querySql, queryParams, System.currentTimeMillis() - start
+                )
+            }
     }
 
     /**
