@@ -58,6 +58,8 @@ class JdbcNoTxTest : JdbcTestBase() {
             // query user:
             val bob = jdbcTemplate.querySingle<User>(SELECT_USER, userId1)
             val alice = jdbcTemplate.querySingle<User>(SELECT_USER, userId2)
+            val nonExists = jdbcTemplate.query<User>(SELECT_USER, -1)
+            assertNull(nonExists)
             assertEquals(1, bob.id)
             assertEquals("Bob", bob.name)
             assertEquals(12, bob.age)

@@ -13,7 +13,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
 
     fun <T> query(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
-            ps.executeQuery().use { rs -> rse.extract(rs) }
+            ps.executeQuery().use { rs -> if (!rs.next()) null else rse.extract(rs) }
         }
     }
 
@@ -99,7 +99,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }!!
     }
 
-    private fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
+    fun <T> execute(psc: PreparedStatementCreator, callback: PreparedStatementCallback<T>): T? {
         val txConn = DataSourceTransactionManager.connection
         return try {
             if (txConn != null)
@@ -116,7 +116,7 @@ class JdbcTemplate(private val dataSource: DataSource) {
         }
     }
 
-    private fun preparedStatementCreator(sql: String, vararg args: Any?): PreparedStatementCreator {
+    fun preparedStatementCreator(sql: String, vararg args: Any?): PreparedStatementCreator {
         return PreparedStatementCreator { conn ->
             conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).apply {
                 for (i in args.indices)
