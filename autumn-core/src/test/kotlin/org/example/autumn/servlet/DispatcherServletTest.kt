@@ -3,8 +3,8 @@ package org.example.autumn.servlet
 import jakarta.servlet.ServletException
 import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.context.AnnotationApplicationContext
-import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
+import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -364,7 +364,6 @@ class DispatcherServletTest {
         val config = ConfigProperties.load()
         AnnotationApplicationContext(ControllerConfiguration::class.java, config)
         dispatcherServlet = DispatcherServlet()
-        dispatcherServlet.init()
     }
 
     private fun createMockServletContext(): MockServletContext {

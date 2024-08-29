@@ -1,5 +1,6 @@
 package org.example.autumn.servlet
 
+import jakarta.servlet.ServletConfig
 import jakarta.servlet.ServletContext
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
@@ -42,8 +43,9 @@ class DispatcherServlet : HttpServlet() {
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
 
-    override fun init() {
+    override fun init(config: ServletConfig) {
         logger.info("init {}.", javaClass.name)
+        super.init(config)
 
         // scan @Controller and @RestController:
         for (info in context.getBeanInfos(Any::class.java)) {
@@ -65,10 +67,6 @@ class DispatcherServlet : HttpServlet() {
 
         getDispatchers.sort()
         postDispatchers.sort()
-    }
-
-    override fun destroy() {
-        context.close()
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
