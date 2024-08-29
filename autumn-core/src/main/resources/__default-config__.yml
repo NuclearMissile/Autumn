@@ -32,7 +32,7 @@ server:
   # default one and only one web app:
   web-app:
     name: Autumn Webapp
-    enable-default-root-servlet: true
+    enable-default-servlet: true
     virtual-server-name: localhost
     # session cookie name:
     session-cookie-name: JSESSIONID

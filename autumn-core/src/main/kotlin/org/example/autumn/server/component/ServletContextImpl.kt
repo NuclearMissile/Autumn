@@ -46,9 +46,7 @@ class ServletContextImpl(
 
     private var initialized = false
 
-    internal val sessionManager = SessionManager(
-        this, config.getRequired("server.web-app.session-timeout")
-    )
+    internal val sessionManager = SessionManager(this, config.getRequired("server.web-app.session-timeout"))
 
     companion object {
         private fun Class<out Servlet>.getServletName(): String {
@@ -121,23 +119,13 @@ class ServletContextImpl(
         // notify event
         invokeServletContextInitialized(ServletContextEvent(this))
 
-        // init servlets while find ROOT servlet:
-        var rootServlet: Servlet? = null
+        // add servlet mapping and init servlets
         servletRegistrations.forEach { (name, servletReg) ->
             try {
                 servletReg.servlet.init(servletReg.getServletConfig())
                 for (urlPattern in servletReg.mappings) {
                     servletMappings.add(ServletMapping(servletReg.servlet, urlPattern))
-                    if (urlPattern == "/*") {
-                        if (rootServlet == null) {
-                            rootServlet = servletReg.servlet
-                            logger.info("set ROOT servlet: {}", servletReg.className)
-                        } else {
-                            logger.warn(
-                                "found duplicate ROOT servlet: {} and {}", rootServlet, servletReg.className
-                            )
-                        }
-                    }
+                    logger.info("add servlet mapping: {} for {}", servletReg.className, urlPattern)
                 }
                 servletReg.initialized = true
             } catch (e: ServletException) {
@@ -145,11 +133,12 @@ class ServletContextImpl(
             }
         }
 
-        if (rootServlet == null && config.getRequired("server.web-app.enable-default-root-servlet")) {
-            logger.info("no ROOT servlet found, auto register {}...", DefaultServlet::class.java.name)
-            rootServlet = DefaultServlet()
+        // add DefaultServlet if no servlet added
+        if (servletMappings.isEmpty() && config.getRequired("server.web-app.enable-default-servlet")) {
+            logger.info("no servlet found, register default servlet {} for /*", DefaultServlet::class.java.name)
+            val defaultServlet = DefaultServlet()
             try {
-                rootServlet!!.init(object : ServletConfig {
+                defaultServlet.init(object : ServletConfig {
                     override fun getServletName(): String {
                         return "DefaultServlet"
                     }
@@ -166,7 +155,7 @@ class ServletContextImpl(
                         return Collections.emptyEnumeration()
                     }
                 })
-                servletMappings.add(ServletMapping(rootServlet!!, "/*"))
+                servletMappings.add(ServletMapping(defaultServlet, "/*"))
             } catch (e: ServletException) {
                 logger.error("init default servlet failed.", e)
             }
@@ -196,7 +185,7 @@ class ServletContextImpl(
                 resp.sendError(404, "<h1>404 Not Found</h1><p>No servlet found for URL: ${path.escapeHtml()}</p>")
                 return
             }
-            if (it.size > 1) {
+            if (it.size > 1 && it.any { mapping -> it[0] !== mapping }) {
                 resp.sendError(
                     500,
                     "<h1>500 Internal Error</h1><p>Multiple servlets found for URL: ${path.escapeHtml()}</p>"
