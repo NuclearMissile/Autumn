@@ -1,6 +1,5 @@
 package org.example.autumn.server.component.servlet
 
-import jakarta.servlet.ServletConfig
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -39,8 +38,7 @@ class DefaultServlet : HttpServlet() {
         }
     }
 
-    override fun init(config: ServletConfig) {
-        super.init(config)
+    override fun init() {
         indexTemplate = IOUtils.readStringFromClassPath("/default-servlet/index.html")
     }
 

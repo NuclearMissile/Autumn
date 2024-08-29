@@ -364,6 +364,7 @@ class DispatcherServletTest {
         val config = ConfigProperties.load()
         AnnotationApplicationContext(ControllerConfiguration::class.java, config)
         dispatcherServlet = DispatcherServlet()
+        dispatcherServlet.init()
     }
 
     private fun createMockServletContext(): MockServletContext {
