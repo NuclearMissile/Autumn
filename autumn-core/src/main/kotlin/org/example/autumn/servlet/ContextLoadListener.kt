@@ -47,7 +47,7 @@ abstract class ContextLoadListener : ServletContextListener {
         val dispatcherServlet = DispatcherServlet()
         logger.info("register servlet {} for ROOT", dispatcherServlet.javaClass.name)
         servletContext.addServlet("dispatcherServlet", dispatcherServlet)?.apply {
-            addMapping("/")
+            addMapping("/*")
             setLoadOnStartup(0)
         }
     }

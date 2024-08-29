@@ -6,13 +6,13 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import jakarta.servlet.descriptor.JspConfigDescriptor
 import jakarta.servlet.http.*
-import org.example.autumn.utils.IProperties
-import org.example.autumn.utils.getRequired
 import org.example.autumn.server.component.servlet.DefaultServlet
 import org.example.autumn.server.component.support.FilterMapping
 import org.example.autumn.server.component.support.ServletMapping
 import org.example.autumn.utils.ClassUtils.createInstance
 import org.example.autumn.utils.HttpUtils.escapeHtml
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 import org.slf4j.LoggerFactory
 import java.io.BufferedInputStream
 import java.io.FileInputStream
@@ -45,7 +45,6 @@ class ServletContextImpl(
     private val httpSessionListeners = mutableListOf<HttpSessionListener>()
 
     private var initialized = false
-    private var rootServlet: Servlet? = null
 
     internal val sessionManager = SessionManager(
         this, config.getRequired("server.web-app.session-timeout")
@@ -129,7 +128,7 @@ class ServletContextImpl(
                 servletReg.servlet.init(servletReg.getServletConfig())
                 for (urlPattern in servletReg.mappings) {
                     servletMappings.add(ServletMapping(servletReg.servlet, urlPattern))
-                    if (urlPattern == "/") {
+                    if (urlPattern == "/*") {
                         if (rootServlet == null) {
                             rootServlet = servletReg.servlet
                             logger.info("set ROOT servlet: {}", servletReg.className)
@@ -145,7 +144,8 @@ class ServletContextImpl(
                 logger.error("init servlet failed: $name: ${servletReg.servlet.javaClass.name}", e)
             }
         }
-        if (rootServlet == null && config.getRequired("server.web-app.default-servlet")) {
+
+        if (rootServlet == null && config.getRequired("server.web-app.enable-default-root-servlet")) {
             logger.info("no ROOT servlet found, auto register {}...", DefaultServlet::class.java.name)
             rootServlet = DefaultServlet()
             try {
@@ -166,12 +166,11 @@ class ServletContextImpl(
                         return Collections.emptyEnumeration()
                     }
                 })
-                servletMappings.add(ServletMapping(rootServlet!!, "/"))
+                servletMappings.add(ServletMapping(rootServlet!!, "/*"))
             } catch (e: ServletException) {
                 logger.error("init default servlet failed.", e)
             }
         }
-        this.rootServlet = rootServlet
 
         // init filters:
         filterRegistrations.forEach { (name, filterReg) ->
@@ -191,14 +190,20 @@ class ServletContextImpl(
 
     fun process(req: HttpServletRequest, resp: HttpServletResponse) {
         val path = req.requestURI
-
         // search servlet:
-        val servlet = if ("/" != path)
-            servletMappings.firstOrNull { it.matches(path) }?.servlet ?: rootServlet else rootServlet
-        // 404 Not Found:
-        if (servlet == null) {
-            resp.sendError(400, "<h1>404 Not Found</h1><p>No mapping for URL: ${path.escapeHtml()}</p>")
-            return
+        val servlet = servletMappings.filter { it.matches(path) }.let {
+            if (it.isEmpty()) {
+                resp.sendError(404, "<h1>404 Not Found</h1><p>No servlet found for URL: ${path.escapeHtml()}</p>")
+                return
+            }
+            if (it.size > 1) {
+                resp.sendError(
+                    500,
+                    "<h1>500 Internal Error</h1><p>Multiple servlets found for URL: ${path.escapeHtml()}</p>"
+                )
+                return
+            }
+            it[0].servlet
         }
 
         // search filter:
