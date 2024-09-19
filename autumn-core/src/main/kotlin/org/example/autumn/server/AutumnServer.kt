@@ -6,14 +6,14 @@ import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
 import org.apache.commons.cli.*
-import org.example.autumn.utils.ConfigProperties
-import org.example.autumn.utils.IProperties
-import org.example.autumn.utils.getRequired
 import org.example.autumn.server.classloader.Resource
 import org.example.autumn.server.classloader.WarClassLoader
 import org.example.autumn.server.connector.HttpConnector
 import org.example.autumn.utils.ClassUtils.withClassLoader
+import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.utils.IOUtils.readInputStreamFromClassPath
+import org.example.autumn.utils.IProperties
+import org.example.autumn.utils.getRequired
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.lang.management.ManagementFactory
@@ -113,12 +113,14 @@ class AutumnServer {
                         configurator.context = loggerContext
                         configurator.doConfigure(it)
                     }
-                } catch (e: FileNotFoundException) {
+                } catch (_: FileNotFoundException) {
                     logger.info("logback.xml not found, using default logging config")
                 }
                 // load config
                 if (customConfig == null)
-                    ConfigProperties.load() else ConfigProperties.load().merge(ConfigProperties.loadYaml(customConfig, false))
+                    ConfigProperties.load()
+                else
+                    ConfigProperties.load().merge(ConfigProperties.loadYaml(customConfig, false))
             }
 
             // scan class:
@@ -158,13 +160,17 @@ class AutumnServer {
             classLoader.walkClassesPath(handler)
             classLoader.walkLibPaths(handler)
 
-            start(webRoot, config, classLoader, classSet.toList(), startTime, tmpPath)
+            start(classSet.toList(), webRoot, tmpPath, config, classLoader, startTime)
         }
 
         // server entry point
         fun start(
-            webRoot: String, config: IProperties, classLoader: ClassLoader, annoClasses: List<Class<*>>,
-            startTime: Long = System.currentTimeMillis(), tmpPath: Path? = null,
+            annoClasses: List<Class<*>>,
+            webRoot: String = "src/main/webapp",
+            tmpPath: Path? = null,
+            config: IProperties = ConfigProperties.load(),
+            classLoader: ClassLoader = javaClass.classLoader,
+            startTime: Long = System.currentTimeMillis(),
         ) {
             // start info:
             val jvmVersion = Runtime.version().feature()
@@ -210,7 +216,7 @@ class AutumnServer {
                     while (true) {
                         try {
                             Thread.sleep(1000)
-                        } catch (e: InterruptedException) {
+                        } catch (_: InterruptedException) {
                             break
                         }
                     }

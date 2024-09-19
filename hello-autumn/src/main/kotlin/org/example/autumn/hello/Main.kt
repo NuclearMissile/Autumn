@@ -18,7 +18,6 @@ import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
-import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.*
 import org.example.autumn.utils.JsonUtils.toJson
@@ -28,9 +27,7 @@ import java.lang.reflect.Method
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        AutumnServer.start(
-            "src/main/webapp", ConfigProperties.load(), javaClass.classLoader, listOf(HelloContextLoadListener::class.java)
-        )
+        AutumnServer.start(listOf(HelloContextLoadListener::class.java))
     }
 }
 
