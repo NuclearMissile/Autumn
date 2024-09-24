@@ -2,6 +2,7 @@ package org.example.autumn.utils
 
 import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
+import org.example.autumn.utils.ClassUtils.findClosestMatchingType
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.junit.jupiter.api.assertThrows
@@ -56,6 +57,14 @@ class TestClass3
 @Component4
 class TestClass4
 
+open class TestException1 : Exception()
+
+open class TestException2 : TestException1()
+
+open class TestException3 : TestException2()
+
+class TestException4 : Exception()
+
 class ClassUtilsTest {
     @Test
     fun testFindNestedAnnotation() {
@@ -79,5 +88,56 @@ class ClassUtilsTest {
         assertThrows<BeanDefinitionException> { TestClass22::class.java.getBeanName() }
         assertThrows<BeanDefinitionException> { TestClass3::class.java.getBeanName() }
         assertThrows<BeanDefinitionException> { TestClass4::class.java.getBeanName() }
+    }
+
+    @Test
+    fun testDirectMatch() {
+        val candidates = listOf(Runnable::class.java, Comparable::class.java, Cloneable::class.java)
+        val result = findClosestMatchingType(Runnable::class.java, candidates)
+        assertEquals(Runnable::class.java, result)
+    }
+
+    @Test
+    fun testSuperclassMatch() {
+        val candidates = listOf(AbstractList::class.java, Collection::class.java)
+        val result = findClosestMatchingType(ArrayList::class.java, candidates)
+        assertEquals(Collection::class.java, result)
+    }
+
+    @Test
+    fun testInterfaceMatch() {
+        val candidates = listOf(Runnable::class.java, List::class.java)
+        val result = findClosestMatchingType(ArrayList::class.java, candidates)
+        assertEquals(List::class.java, result)
+    }
+
+    @Test
+    fun testNoMatch() {
+        val candidates = listOf(Runnable::class.java, Thread::class.java)
+        val result = findClosestMatchingType(String::class.java, candidates)
+        assertNull(result)
+    }
+
+    @Test
+    fun testMultipleMatches() {
+        val candidates = listOf(Collection::class.java, List::class.java, AbstractList::class.java)
+        val result = findClosestMatchingType(ArrayList::class.java, candidates)
+        assertEquals(List::class.java, result)
+    }
+
+    @Test
+    fun testPrimitiveType() {
+        val candidates = listOf(Any::class.java, Number::class.java, Int::class.java)
+        val result = findClosestMatchingType(Int::class.java, candidates)
+        assertEquals(Int::class.java, result)
+    }
+
+    @Test
+    fun testException() {
+        val candidates = listOf(Exception::class.java, TestException1::class.java)
+        assertEquals(Exception::class.java, findClosestMatchingType(Exception::class.java, candidates))
+        assertEquals(Exception::class.java, findClosestMatchingType(TestException4::class.java, candidates))
+        assertEquals(TestException1::class.java, findClosestMatchingType(TestException1::class.java, candidates))
+        assertEquals(TestException1::class.java, findClosestMatchingType(TestException3::class.java, candidates))
     }
 }

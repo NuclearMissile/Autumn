@@ -3,6 +3,7 @@ package org.example.autumn.utils
 import org.example.autumn.annotation.Component
 import org.example.autumn.exception.BeanDefinitionException
 import java.lang.reflect.InvocationTargetException
+import java.util.LinkedList
 import java.util.function.Supplier
 
 object ClassUtils {
@@ -110,6 +111,32 @@ object ClassUtils {
             targetException
         else
             (targetException as InvocationTargetException).extractTarget()
+    }
+
+    fun findClosestMatchingType(target: Class<*>, candidates: List<Class<*>>): Class<*>? {
+        if (candidates.contains(target))
+            return target
+
+        val queue = LinkedList<Class<*>>()
+        queue.offer(target)
+
+        while (queue.isNotEmpty()) {
+            val curr = queue.poll()
+            val superClass = curr.superclass
+
+            if (superClass != null && candidates.contains(superClass))
+                return superClass
+            if (superClass != null)
+                queue.offer(superClass)
+
+            for (iface in curr.interfaces) {
+                if (candidates.contains(iface))
+                    return iface
+                queue.offer(iface)
+            }
+        }
+
+        return null
     }
 
     @Suppress("UNCHECKED_CAST")
