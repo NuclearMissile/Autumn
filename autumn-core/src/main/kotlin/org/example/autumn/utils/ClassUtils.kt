@@ -113,7 +113,7 @@ object ClassUtils {
             (targetException as InvocationTargetException).extractTarget()
     }
 
-    fun findClosestMatchingType(target: Class<*>, candidates: List<Class<*>>): Class<*>? {
+    fun findClosestMatchingType(target: Class<*>, candidates: Collection<Class<*>>): Class<*>? {
         if (candidates.contains(target))
             return target
 

@@ -38,6 +38,27 @@ class HelloContextLoadListener : ContextLoadListener()
 //class HelloConfig
 
 @Component
+class ResponseErrorExceptionMapper : ExceptionMapper<ResponseErrorException> {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun map(url: String, e: ResponseErrorException): ResponseEntity {
+        logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $e.)", e)
+        return ResponseEntity(e.responseBody, "text/plain", e.statusCode)
+
+        //        logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $url)", e)
+//        if (resp.isCommitted) return
+//        resp.reset()
+//        resp.status = e.statusCode
+//        resp.contentType = "text/plain"
+//        when {
+//            isRest -> resp.writer.apply { write(e.responseBody ?: "") }.flush()
+//            e.responseBody != null -> resp.writer.apply { write(e.responseBody) }.flush()
+//            else -> viewResolver.renderError(e.statusCode, null, req, resp)
+//        }
+    }
+}
+
+@Component
 class BeforeLogInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 

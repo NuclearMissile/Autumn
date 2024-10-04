@@ -6,22 +6,20 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
+import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.DUMMY_VALUE
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.RequestErrorException
-import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
+import org.example.autumn.utils.ClassUtils.findClosestMatchingType
 import org.example.autumn.utils.ClassUtils.toPrimitive
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier
-import java.lang.reflect.Parameter
+import java.lang.reflect.*
 
 class DispatcherServlet : HttpServlet() {
     companion object {
@@ -37,6 +35,15 @@ class DispatcherServlet : HttpServlet() {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val context = ApplicationContextHolder.required
     private val viewResolver = context.getUniqueBean(ViewResolver::class.java)
+    private val exceptionMappers = run {
+        val infoToTarget = context.getBeanInfos(ExceptionMapper::class.java).associateWith {
+            (it.requiredInstance.javaClass.genericSuperclass as ParameterizedType).actualTypeArguments.single() as Class<*>
+        }
+        infoToTarget.values.toSet().associateWith { target ->
+            infoToTarget.filter { it.value == target }.map { it.key }
+                .minOf { it }.requiredInstance as ExceptionMapper<*>
+        }
+    } as Map<Class<in Exception>, ExceptionMapper<in Exception>>
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val getDispatchers = mutableListOf<Dispatcher>()
@@ -84,7 +91,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveException(url, NotFoundException("Resource not found"), req, resp, false)
+                serveException(url, NotFoundException("Not found"), resp)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -100,12 +107,12 @@ class DispatcherServlet : HttpServlet() {
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
-                dispatcher == null -> serveException(url, NotFoundException("Path not found"), req, resp, false)
+                dispatcher == null -> throw NotFoundException("Not found")
                 dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
                 else -> serveMvc(url, dispatcher, req, resp)
             }
-        } catch (e: ResponseErrorException) {
-            serveException(url, e, req, resp, dispatcher!!.isRest)
+        } catch (e: Exception) {
+            serveException(url, e, resp)
         }
     }
 
@@ -174,19 +181,16 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun serveException(
-        url: String, e: ResponseErrorException, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean,
-    ) {
-        logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $url)", e)
-        if (resp.isCommitted) return
-        resp.reset()
-        resp.status = e.statusCode
-        resp.contentType = "text/plain"
-        when {
-            isRest -> resp.writer.apply { write(e.responseBody ?: "") }.flush()
-            e.responseBody != null -> resp.writer.apply { write(e.responseBody) }.flush()
-            else -> viewResolver.renderError(e.statusCode, null, req, resp)
+    private fun serveException(url: String, e: Exception, resp: HttpServletResponse) {
+        val mapper = run {
+            val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
+            if (target != null) exceptionMappers[target]!! else ExceptionMapper { url, e ->
+                logger.warn("process request failed: ${e.message}, status: 500, (url: $url)", e)
+                logger.info("No suitable exception mapper found, using default one.")
+                ResponseEntity(DEFAULT_ERROR_MSG[500], "text/plain", 500)
+            }
         }
+        resp.set(mapper.map(url, e))
     }
 
     private fun addController(name: String, prefix: String, instance: Any, isRest: Boolean) {
@@ -304,6 +308,7 @@ class Dispatcher(
                 }
             }
         }
+
         return try {
             handlerMethod.invoke(controller, *args.toTypedArray())
         } catch (e: InvocationTargetException) {
