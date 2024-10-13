@@ -16,7 +16,6 @@ import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.RequestErrorException
-import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.*
@@ -34,27 +33,18 @@ object Main {
 @WebListener
 class HelloContextLoadListener : ContextLoadListener()
 
+class HelloException(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
+
 //@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
 //class HelloConfig
 
 @Component
-class ResponseErrorExceptionMapper : ExceptionMapper<ResponseErrorException> {
+class HelloExceptionMapper : ExceptionMapper<HelloException>() {
     private val logger = LoggerFactory.getLogger(javaClass)
-
-    override fun map(url: String, e: ResponseErrorException): ResponseEntity {
-        logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $e.)", e)
-        return ResponseEntity(e.responseBody, "text/plain", e.statusCode)
-
-        //        logger.warn("process request failed: ${e.message}, status: ${e.statusCode} (url: $url)", e)
-//        if (resp.isCommitted) return
-//        resp.reset()
-//        resp.status = e.statusCode
-//        resp.contentType = "text/plain"
-//        when {
-//            isRest -> resp.writer.apply { write(e.responseBody ?: "") }.flush()
-//            e.responseBody != null -> resp.writer.apply { write(e.responseBody) }.flush()
-//            else -> viewResolver.renderError(e.statusCode, null, req, resp)
-//        }
+    override fun map(e: HelloException, req: HttpServletRequest, resp: HttpServletResponse) {
+        val url = req.requestURI.removePrefix(req.contextPath)
+        logger.warn("process request failed for $url, message: ${e.message}, status: ${e.statusCode}", e)
+        resp.set(ResponseEntity(e.responseBody, "text/plain", e.statusCode))
     }
 }
 
@@ -222,17 +212,17 @@ class HelloController {
 
     @Get("/error")
     fun error(): ModelAndView {
-        return ModelAndView("/hello.html", mapOf(), 400)
+        return ModelAndView(null, mapOf(), 400)
     }
 
     @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp)
+        throw HelloException(errorCode, "test", errorResp)
     }
 
     @Get("/error/{errorCode}")
     fun error(@PathVariable errorCode: Int) {
-        throw ResponseErrorException(errorCode, "test")
+        throw HelloException(errorCode, "test")
     }
 
     @Get("/echo")
@@ -268,7 +258,7 @@ class RestApiController {
 
     @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(
+        throw HelloException(
             errorCode, "test", mapOf("errorCode" to errorCode, "errorResp" to errorResp).toJson()
         )
     }
