@@ -35,6 +35,8 @@ class HelloContextLoadListener : ContextLoadListener()
 
 class HelloException(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
 
+class HelloException2(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
+
 //@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
 //class HelloConfig
 
@@ -222,12 +224,18 @@ class HelloController {
 
     @Get("/error/{errorCode}")
     fun error(@PathVariable errorCode: Int) {
-        throw HelloException(errorCode, "test")
+        throw HelloException2(errorCode, "test")
     }
 
     @Get("/echo")
     fun echo(req: RequestEntity): ResponseEntity {
         return ResponseEntity(req, "application/json", 200)
+    }
+
+    @ResponseBody
+    @ExceptionHandler([HelloException2::class])
+    fun exceptionHandlerTest(e: Exception): String {
+        return e.javaClass.name
     }
 }
 

@@ -146,6 +146,14 @@ annotation class Post(
     val value: String, val produce: String = "",
 )
 
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ExceptionHandler(
+    val value: Array<KClass<out Exception>>,
+    val produce: String = "",
+)
+
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented

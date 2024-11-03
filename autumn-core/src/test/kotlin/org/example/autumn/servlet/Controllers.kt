@@ -31,6 +31,13 @@ class SigninObj(
 class RestApiController {
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    @ExceptionHandler([ResponseErrorException::class], "text/plain")
+    fun exceptionHandler(e: Exception, resp: HttpServletResponse): ResponseEntity {
+        if (e is ResponseErrorException)
+            return ResponseEntity(e.responseBody ?: "", "", e.statusCode)
+        throw e
+    }
+
     @Get("/api/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw ResponseErrorException(errorCode, "test", errorResp)

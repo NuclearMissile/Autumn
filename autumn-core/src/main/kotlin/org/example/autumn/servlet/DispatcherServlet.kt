@@ -51,13 +51,14 @@ class DispatcherServlet : HttpServlet() {
             val url = req.requestURI.removePrefix(req.contextPath)
             logger.info("no match exception mapper found, using default one.")
             logger.warn("process request failed for $url, status: 500", e)
-            resp.set(ResponseEntity(DEFAULT_ERROR_MSG[500], "text/plain", 500))
+            resp.set(ResponseEntity(DEFAULT_ERROR_MSG[500], "text/html", 500))
         }
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
+    private val exceptionHandlers = mutableMapOf<String, Dispatcher>()
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
@@ -127,11 +128,20 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        if (dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
-        val ret = dispatcher.process(url, req, resp)
+        var _dispatcher = dispatcher
+        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+        val ret = try {
+            _dispatcher.process(url, req, resp)
+        } catch (e: Exception) {
+            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}_${e.javaClass.simpleName}"
+            val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
+            _dispatcher = exceptionHandler
+            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+            _dispatcher.process(url, req, resp, e)
+        }
         if (resp.isCommitted) return
         when {
-            dispatcher.isResponseBody -> {
+            _dispatcher.isResponseBody -> {
                 when (ret) {
                     is String -> resp.writer.apply { write(ret) }.flush()
                     is ByteArray -> resp.outputStream.apply { write(ret) }.flush()
@@ -141,21 +151,30 @@ class DispatcherServlet : HttpServlet() {
 
             ret is ResponseEntity -> resp.set(ret)
 
-            !dispatcher.isVoid -> {
+            !_dispatcher.isVoid -> {
                 resp.writer.writeJson(ret).flush()
             }
         }
     }
 
     private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        if (dispatcher.produce.isNotEmpty()) resp.contentType = dispatcher.produce
-        val ret = dispatcher.process(url, req, resp)
+        var _dispatcher = dispatcher
+        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+        val ret = try {
+            _dispatcher.process(url, req, resp)
+        } catch (e: Exception) {
+            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}_${e.javaClass.simpleName}"
+            val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
+            _dispatcher = exceptionHandler
+            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+            _dispatcher.process(url, req, resp, e)
+        }
         if (resp.isCommitted) return
         when (ret) {
             is ResponseEntity -> resp.set(ret)
 
             is String -> {
-                if (dispatcher.isResponseBody) {
+                if (_dispatcher.isResponseBody) {
                     resp.writer.apply { write(ret) }.flush()
                 } else if (ret.startsWith("redirect:")) {
                     resp.sendRedirect(req.contextPath + ret.substring(9))
@@ -165,7 +184,7 @@ class DispatcherServlet : HttpServlet() {
             }
 
             is ByteArray -> {
-                if (dispatcher.isResponseBody) {
+                if (_dispatcher.isResponseBody) {
                     resp.outputStream.also { it.write(ret) }.flush()
                 } else {
                     throw ServerErrorException("Unable to process ByteArray result when handle url: $url")
@@ -187,7 +206,7 @@ class DispatcherServlet : HttpServlet() {
                 }
             }
 
-            (ret != null && !dispatcher.isVoid) -> {
+            (ret != null && !_dispatcher.isVoid) -> {
                 throw ServerErrorException("Unable to process ${ret.javaClass.name} result when handle url: $url")
             }
         }
@@ -218,17 +237,34 @@ class DispatcherServlet : HttpServlet() {
         }
 
         clazz.declaredMethods.sortedBy { it.name }.forEach { m ->
-            val getAnno = m.getAnnotation(Get::class.java)
-            val postAnno = m.getAnnotation(Post::class.java)
-            if (getAnno != null) {
-                val urlPattern = "/" + (prefix + getAnno.value).trim('/')
+            val annos = listOf(
+                Get::class.java,
+                Post::class.java,
+                ExceptionHandler::class.java
+            ).mapNotNull { m.getAnnotation(it) }
+            if (annos.isEmpty()) return@forEach
+            if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $name: $m")
+
+            val anno = annos.first()
+            if (anno is Get) {
+                val urlPattern = "/" + (prefix + anno.value).trim('/')
                 configMethod(m)
-                getDispatchers += Dispatcher(instance, m, compilePath(urlPattern), getAnno.produce, isRest)
+                getDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
             }
-            if (postAnno != null) {
-                val urlPattern = "/" + (prefix + postAnno.value).trim('/')
+            if (anno is Post) {
+                val urlPattern = "/" + (prefix + anno.value).trim('/')
                 configMethod(m)
-                postDispatchers += Dispatcher(instance, m, compilePath(urlPattern), postAnno.produce, isRest)
+                postDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
+            }
+            if (anno is ExceptionHandler) {
+                configMethod(m)
+                val exceptionHandlerKeys = anno.value.map { "${instance.javaClass.name}_${it.simpleName}" }
+                exceptionHandlerKeys.forEach {
+                    if (exceptionHandlers.containsKey(it))
+                        throw IllegalArgumentException("Ambiguous exception handler for $name: $m")
+                    val urlPattern = "/" + prefix.trim('/')
+                    exceptionHandlers[it] = Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
+                }
             }
         }
 
@@ -239,7 +275,7 @@ class DispatcherServlet : HttpServlet() {
 }
 
 class Dispatcher(
-    private val controller: Any,
+    val controller: Any,
     private val handlerMethod: Method,
     private val urlPattern: Regex,
     val produce: String,
@@ -268,7 +304,7 @@ class Dispatcher(
         return urlPattern.matches(url)
     }
 
-    fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse): Any? {
+    fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse, exception: Exception? = null): Any? {
         val args = methodParams.map { param ->
             when (param.paramAnno) {
                 is PathVariable -> try {
@@ -309,6 +345,7 @@ class Dispatcher(
                     HttpServletResponse::class.java -> resp
                     HttpSession::class.java -> req.session
                     ServletContext::class.java -> req.servletContext
+                    Exception::class.java -> exception!!
                     RequestEntity::class.java -> RequestEntity(
                         req.method, req.requestURI, req.reader.use { it.readText() },
                         req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
@@ -379,10 +416,11 @@ class Dispatcher(
                         paramType != HttpServletResponse::class.java &&
                         paramType != HttpSession::class.java &&
                         paramType != ServletContext::class.java &&
-                        paramType != RequestEntity::class.java
+                        paramType != RequestEntity::class.java &&
+                        paramType != Exception::class.java
                     ) {
                         throw ServerErrorException(
-                            "(Missing annotation?) Unsupported argument type: $paramType at method: $method"
+                            "Unsupported argument type: $paramType at method: $method"
                         )
                     }
                 }
