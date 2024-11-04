@@ -46,7 +46,7 @@ class HelloExceptionMapper : ExceptionMapper<HelloException>() {
     override fun map(e: HelloException, req: HttpServletRequest, resp: HttpServletResponse) {
         val url = req.requestURI.removePrefix(req.contextPath)
         logger.warn("process request failed for $url, message: ${e.message}, status: ${e.statusCode}", e)
-        resp.set(ResponseEntity(e.responseBody, "text/plain", e.statusCode))
+        resp.set(ResponseEntity(e.responseBody, e.statusCode, "text/plain"))
     }
 }
 
@@ -207,6 +207,8 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
 @Controller("/hello")
 class HelloController {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @Get("/")
     fun hello(): ModelAndView {
         return ModelAndView("/hello.html")
@@ -229,13 +231,14 @@ class HelloController {
 
     @Get("/echo")
     fun echo(req: RequestEntity): ResponseEntity {
-        return ResponseEntity(req, "application/json", 200)
+        return ResponseEntity(req, 200, "application/json")
     }
 
     @ResponseBody
-    @ExceptionHandler([HelloException2::class])
-    fun exceptionHandlerTest(e: Exception): String {
-        return e.javaClass.name
+    @ExceptionHandler(HelloException2::class, "text/html")
+    fun exceptionHandlerTest(e: HelloException2): ResponseEntity {
+        logger.info("exception is handled by exceptionHandler", e)
+        return ResponseEntity(e.javaClass.name, e.statusCode)
     }
 }
 
@@ -260,7 +263,7 @@ class RestApiController {
     @Get("/error/{status}")
     fun error(@PathVariable status: Int): ResponseEntity {
         return ResponseEntity(
-            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), "text/html", status
+            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), status, "text/html"
         )
     }
 

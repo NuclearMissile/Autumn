@@ -31,10 +31,10 @@ class SigninObj(
 class RestApiController {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @ExceptionHandler([ResponseErrorException::class], "text/plain")
+    @ExceptionHandler(ResponseErrorException::class, "text/plain")
     fun exceptionHandler(e: Exception, resp: HttpServletResponse): ResponseEntity {
         if (e is ResponseErrorException)
-            return ResponseEntity(e.responseBody ?: "", "", e.statusCode)
+            return ResponseEntity(e.responseBody ?: "", e.statusCode, "")
         throw e
     }
 
@@ -207,13 +207,13 @@ class MvcController {
     @Get("/error/{status}")
     fun error(@PathVariable status: Int): ResponseEntity {
         return ResponseEntity(
-            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), "text/html", status
+            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), status, "text/html"
         )
     }
 
     @Post("/echo")
     fun echo(req: RequestEntity): ResponseEntity {
-        return ResponseEntity(req, "application/json", 200)
+        return ResponseEntity(req, 200, "application/json")
     }
 }
 

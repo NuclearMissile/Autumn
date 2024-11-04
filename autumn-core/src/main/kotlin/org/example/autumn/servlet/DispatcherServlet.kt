@@ -51,7 +51,7 @@ class DispatcherServlet : HttpServlet() {
             val url = req.requestURI.removePrefix(req.contextPath)
             logger.info("no match exception mapper found, using default one.")
             logger.warn("process request failed for $url, status: 500", e)
-            resp.set(ResponseEntity(DEFAULT_ERROR_MSG[500], "text/html", 500))
+            resp.set(ResponseEntity(DEFAULT_ERROR_MSG[500], 500, "text/html"))
         }
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
@@ -258,13 +258,12 @@ class DispatcherServlet : HttpServlet() {
             }
             if (anno is ExceptionHandler) {
                 configMethod(m)
-                val exceptionHandlerKeys = anno.value.map { "${instance.javaClass.name}_${it.simpleName}" }
-                exceptionHandlerKeys.forEach {
-                    if (exceptionHandlers.containsKey(it))
-                        throw IllegalArgumentException("Ambiguous exception handler for $name: $m")
-                    val urlPattern = "/" + prefix.trim('/')
-                    exceptionHandlers[it] = Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
-                }
+                val exceptionHandlerKey = "${instance.javaClass.name}_${anno.value.simpleName}"
+                if (exceptionHandlers.containsKey(exceptionHandlerKey))
+                    throw IllegalArgumentException("Ambiguous exception handler for $name: $m")
+                val urlPattern = "/" + prefix.trim('/')
+                exceptionHandlers[exceptionHandlerKey] =
+                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
             }
         }
 
@@ -340,21 +339,19 @@ class Dispatcher(
                     value
                 }
 
-                else -> when (param.paramType) {
-                    HttpServletRequest::class.java -> req
-                    HttpServletResponse::class.java -> resp
-                    HttpSession::class.java -> req.session
-                    ServletContext::class.java -> req.servletContext
-                    Exception::class.java -> exception!!
-                    RequestEntity::class.java -> RequestEntity(
-                        req.method, req.requestURI, req.reader.use { it.readText() },
-                        req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
-                        req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
-                        req.cookies?.toList() ?: emptyList()
-                    )
-
-                    else -> throw ServerErrorException("Could not determine argument type: ${param.paramType}")
-                }
+                else -> if (param.paramType == HttpServletRequest::class.java) req
+                else if (param.paramType == HttpServletResponse::class.java) resp
+                else if (param.paramType == HttpSession::class.java) req.session
+                else if (param.paramType == ServletContext::class.java) req.servletContext
+                else if (Exception::class.java.isAssignableFrom(param.paramType))
+                    exception ?: ServerErrorException("Could not determine argument type: ${param.paramType}")
+                else if (param.paramType == RequestEntity::class.java) RequestEntity(
+                    req.method, req.requestURI, req.reader.use { it.readText() },
+                    req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
+                    req.parameterNames.asSequence().associateWith { req.getParameterValues(it).toList() },
+                    req.cookies?.toList() ?: emptyList()
+                )
+                else throw ServerErrorException("Could not determine argument type: ${param.paramType}")
             }
         }
 
@@ -417,11 +414,9 @@ class Dispatcher(
                         paramType != HttpSession::class.java &&
                         paramType != ServletContext::class.java &&
                         paramType != RequestEntity::class.java &&
-                        paramType != Exception::class.java
+                        !Exception::class.java.isAssignableFrom(paramType)
                     ) {
-                        throw ServerErrorException(
-                            "Unsupported argument type: $paramType at method: $method"
-                        )
+                        throw ServerErrorException("Unsupported argument type: $paramType at method: $method")
                     }
                 }
             }

@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.utils.JsonUtils.toJson
 
 data class ResponseEntity(
-    val body: Any?, val contentType: String = "", val status: Int = 200,
+    val body: Any?, val status: Int = 200, val contentType: String = "",
     val headers: List<Pair<String, String>>? = null, val cookies: List<Cookie>? = null,
 )
 
