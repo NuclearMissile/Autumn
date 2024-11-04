@@ -6,7 +6,7 @@
 
     <groupId>org.example.autumn</groupId>
     <artifactId>autumn-build</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>pom</packaging>
 
     <modules>
