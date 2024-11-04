@@ -133,7 +133,7 @@ class DispatcherServlet : HttpServlet() {
         val ret = try {
             _dispatcher.process(url, req, resp)
         } catch (e: Exception) {
-            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}_${e.javaClass.simpleName}"
+            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}:${e.javaClass.simpleName}"
             val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
             _dispatcher = exceptionHandler
             if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
@@ -163,7 +163,7 @@ class DispatcherServlet : HttpServlet() {
         val ret = try {
             _dispatcher.process(url, req, resp)
         } catch (e: Exception) {
-            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}_${e.javaClass.simpleName}"
+            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}:${e.javaClass.simpleName}"
             val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
             _dispatcher = exceptionHandler
             if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
@@ -258,9 +258,9 @@ class DispatcherServlet : HttpServlet() {
             }
             if (anno is ExceptionHandler) {
                 configMethod(m)
-                val exceptionHandlerKey = "${instance.javaClass.name}_${anno.value.simpleName}"
+                val exceptionHandlerKey = "${instance.javaClass.name}:${anno.value.simpleName}"
                 if (exceptionHandlers.containsKey(exceptionHandlerKey))
-                    throw IllegalArgumentException("Ambiguous exception handler for $name: $m")
+                    throw IllegalArgumentException("Ambiguous exception handler for $exceptionHandlerKey")
                 val urlPattern = "/" + prefix.trim('/')
                 exceptionHandlers[exceptionHandlerKey] =
                     Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
