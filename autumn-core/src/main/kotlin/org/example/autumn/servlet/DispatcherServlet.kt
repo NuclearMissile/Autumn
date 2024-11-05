@@ -246,22 +246,20 @@ class DispatcherServlet : HttpServlet() {
             if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $name: $m")
 
             val anno = annos.first()
+            configMethod(m)
             if (anno is Get) {
                 val urlPattern = "/" + (prefix + anno.value).trim('/')
-                configMethod(m)
                 getDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
             }
             if (anno is Post) {
                 val urlPattern = "/" + (prefix + anno.value).trim('/')
-                configMethod(m)
                 postDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
             }
             if (anno is ExceptionHandler) {
-                configMethod(m)
+                val urlPattern = "/" + prefix.trim('/')
                 val exceptionHandlerKey = "${instance.javaClass.name}:${anno.value.simpleName}"
                 if (exceptionHandlers.containsKey(exceptionHandlerKey))
                     throw IllegalArgumentException("Ambiguous exception handler for $exceptionHandlerKey")
-                val urlPattern = "/" + prefix.trim('/')
                 exceptionHandlers[exceptionHandlerKey] =
                     Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
             }

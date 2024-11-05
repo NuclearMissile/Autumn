@@ -356,7 +356,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
@@ -507,11 +507,12 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
         }
         if (info.aopBeanInfos.isNotEmpty()) {
             logger.atDebug().log("Bean {} was replaced for adding aop handlers", info.beanName)
-            info.instance = createProxy(info.instance, info.aopBeanInfos.sorted().map {
+            val aopHandlers = info.aopBeanInfos.sorted().map {
                 (it.instance ?: createEarlySingleton(it)) as? Invocation ?: throw AopConfigException(
                     "@${it.javaClass.simpleName} proxy handler '${it.beanName}' is not type of ${Invocation::class.java.name}."
                 )
-            })
+            }
+            info.instance = createProxy(info.instance, aopHandlers)
         }
         return info.requiredInstance
     }
