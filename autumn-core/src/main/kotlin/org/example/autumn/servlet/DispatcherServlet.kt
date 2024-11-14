@@ -51,7 +51,8 @@ class DispatcherServlet : HttpServlet() {
             val url = req.requestURI.removePrefix(req.contextPath)
             logger.info("no match exception mapper found, using default one.")
             logger.warn("process request failed for $url, status: 500", e)
-            resp.set(ResponseEntity(DEFAULT_ERROR_MSG[500], 500, "text/html"))
+            val respBody = if (e is ResponseErrorException) e.responseBody else DEFAULT_ERROR_MSG[500]
+            resp.set(ResponseEntity(respBody, 500, "text/html"))
         }
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
@@ -271,14 +272,15 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
-        if (!isRest && e is ResponseErrorException && e.responseBody == null) {
-            viewResolver.renderError(e.statusCode, emptyMap(), req, resp)
-        } else {
+        if (isRest) {
             val mapper = run {
                 val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
                 if (target != null) exceptionMappers[target]!! else defaultExceptionMapper
             }
             mapper.map(e, req, resp)
+        } else {
+            val statusCode = if (e is ResponseErrorException) e.statusCode else 500
+            viewResolver.renderError(statusCode, emptyMap(), req, resp)
         }
     }
 }
