@@ -10,7 +10,7 @@ const val DEFAULT_TX_MANAGER_ORDER = Int.MAX_VALUE - 1000
 
 val DEFAULT_LOCALE: Locale = Locale.getDefault()
 
-val DEFAULT_ERROR_MSG = mapOf(
+val DEFAULT_ERROR_RESP_BODY = mapOf(
     400 to "<h1>400: Bad Request</h1>",
     401 to "<h1>401: Unauthorized</h1>",
     403 to "<h1>403: Forbidden</h1>",

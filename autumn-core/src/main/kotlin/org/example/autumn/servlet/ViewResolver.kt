@@ -9,7 +9,7 @@ import freemarker.template.TemplateExceptionHandler
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.exception.ServerErrorException
 import org.slf4j.LoggerFactory
 import java.io.*
@@ -85,7 +85,7 @@ class FreeMarkerViewResolver(
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
         } catch (_: Exception) {
             resp.sendError(
-                statusCode, DEFAULT_ERROR_MSG.getOrDefault(statusCode, "<h1>Error: Status $statusCode</h1>")
+                statusCode, DEFAULT_ERROR_RESP_BODY.getOrDefault(statusCode, "<h1>Error: Status $statusCode</h1>")
             )
             return
         }
@@ -95,7 +95,7 @@ class FreeMarkerViewResolver(
                 template.process(model, this)
             } catch (e: TemplateException) {
                 logger.warn("Exception thrown while rendering template: $statusCode.html")
-                resp.sendError(500, DEFAULT_ERROR_MSG[500])
+                resp.sendError(500, DEFAULT_ERROR_RESP_BODY[500])
             }
         }.flush()
     }

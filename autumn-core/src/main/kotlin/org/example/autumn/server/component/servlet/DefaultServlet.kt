@@ -3,7 +3,7 @@ package org.example.autumn.server.component.servlet
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.utils.DateUtils.formatDateTimeGMT
 import org.example.autumn.utils.HttpUtils.escapeHtml
 import org.example.autumn.utils.IOUtils
@@ -47,7 +47,7 @@ class DefaultServlet : HttpServlet() {
         if (!uri.startsWith("/") || uri.indexOf("/../") > 0 || uri.startsWith("/WEB-INF") || uri.startsWith("/META-INF")) {
             // insecure uri:
             logger.debug("prevent access insecure uri: {}", uri)
-            resp.sendError(403, DEFAULT_ERROR_MSG[403])
+            resp.sendError(403, DEFAULT_ERROR_RESP_BODY[403])
             return
         }
         val path = Paths.get(req.servletContext.getRealPath(uri))
@@ -86,7 +86,7 @@ class DefaultServlet : HttpServlet() {
             }
 
             else -> {
-                resp.sendError(404, DEFAULT_ERROR_MSG[404])
+                resp.sendError(404, DEFAULT_ERROR_RESP_BODY[404])
             }
         }
     }

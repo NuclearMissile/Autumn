@@ -1,7 +1,7 @@
 package org.example.autumn.servlet
 
 import jakarta.servlet.ServletException
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
 import org.example.autumn.utils.ConfigProperties
@@ -175,7 +175,7 @@ class DispatcherServletTest {
         dispatcherServlet.service(req3, resp3)
         assertEquals(500, resp3.status)
         assertEquals("text/html", resp3.contentType)
-        assertEquals(resp3.contentAsString, DEFAULT_ERROR_MSG[500])
+        assertEquals(resp3.contentAsString, DEFAULT_ERROR_RESP_BODY[500])
 
         val req4 = createMockRequest("GET", "/api/error_not_found")
         val resp4 = createMockResponse()
@@ -321,7 +321,7 @@ class DispatcherServletTest {
             val resp = createMockResponse()
             dispatcherServlet.service(req, resp)
             assertEquals(status, resp.status)
-            assertEquals(resp.contentAsString, DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"))
+            assertEquals(resp.contentAsString, DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>"))
         }
     }
 

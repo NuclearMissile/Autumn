@@ -8,7 +8,7 @@ import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
@@ -263,7 +263,7 @@ class RestApiController {
     @Get("/error/{status}")
     fun error(@PathVariable status: Int): ResponseEntity {
         return ResponseEntity(
-            DEFAULT_ERROR_MSG.getOrDefault(status, "<h1>Error: Status $status</h1>"), status, "text/html"
+            DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>"), status, "text/html"
         )
     }
 

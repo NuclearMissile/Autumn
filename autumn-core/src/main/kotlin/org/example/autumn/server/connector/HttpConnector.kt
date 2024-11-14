@@ -2,7 +2,7 @@ package org.example.autumn.server.connector
 
 import com.sun.net.httpserver.HttpServer
 import jakarta.servlet.ServletContainerInitializer
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.server.component.HttpServletRequestImpl
 import org.example.autumn.server.component.HttpServletResponseImpl
 import org.example.autumn.server.component.ServletContextImpl
@@ -48,7 +48,7 @@ class HttpConnector(
                     // fallback error handling
                     logger.error("unhandled exception caught:", e)
                     if (!resp.isCommitted)
-                        resp.sendError(500, DEFAULT_ERROR_MSG[500]!!)
+                        resp.sendError(500, DEFAULT_ERROR_RESP_BODY[500]!!)
                 } finally {
                     resp.cleanup()
                 }

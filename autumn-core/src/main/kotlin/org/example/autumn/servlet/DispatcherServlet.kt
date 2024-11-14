@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
-import org.example.autumn.DEFAULT_ERROR_MSG
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.DUMMY_VALUE
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
@@ -49,10 +49,11 @@ class DispatcherServlet : HttpServlet() {
     private val defaultExceptionMapper = object : ExceptionMapper<Exception>() {
         override fun map(e: Exception, req: HttpServletRequest, resp: HttpServletResponse) {
             val url = req.requestURI.removePrefix(req.contextPath)
+            val respBody = if (e is ResponseErrorException) e.responseBody else DEFAULT_ERROR_RESP_BODY[500]
+            val statusCode = if (e is ResponseErrorException) e.statusCode else 500
             logger.info("no match exception mapper found, using default one.")
-            logger.warn("process request failed for $url, status: 500", e)
-            val respBody = if (e is ResponseErrorException) e.responseBody else DEFAULT_ERROR_MSG[500]
-            resp.set(ResponseEntity(respBody, 500, "text/html"))
+            logger.warn("process request failed for $url, status: $statusCode", e)
+            resp.set(ResponseEntity(respBody, statusCode, "text/html"))
         }
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
