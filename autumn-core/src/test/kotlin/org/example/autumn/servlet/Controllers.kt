@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.DEFAULT_ERROR_MSG
 import org.example.autumn.annotation.*
+import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.utils.JsonUtils.toJson
 import org.example.autumn.utils.JsonUtils.writeJson
@@ -27,45 +28,46 @@ class SigninObj(
     var password: String? = null,
 )
 
-@RestController
+@RestController("/api")
 class RestApiController {
-    private val logger = LoggerFactory.getLogger(javaClass)
-
     @ExceptionHandler(ResponseErrorException::class, "text/plain")
-    fun exceptionHandler(e: Exception, resp: HttpServletResponse): ResponseEntity {
-        if (e is ResponseErrorException)
-            return ResponseEntity(e.responseBody ?: "", e.statusCode, "")
-        throw e
+    fun reeExceptionHandler(e: ResponseErrorException, resp: HttpServletResponse): ResponseEntity {
+        return ResponseEntity(e.responseBody ?: "", e.statusCode, "")
     }
 
-    @Get("/api/error/{errorCode}/{errorResp}")
+    @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw ResponseErrorException(errorCode, "test", errorResp)
     }
 
-    @Get("/api/error/{errorCode}")
+    @Get("/error/{errorCode}")
     fun error(@PathVariable errorCode: Int) {
         throw ResponseErrorException(errorCode, "test")
     }
 
-    @Get("/api/error")
+    @Get("/error_not_found")
+    fun notFound() {
+        throw NotFoundException("test", "test_404_error")
+    }
+
+    @Get("/error")
     fun error() {
         throw Exception("test")
     }
 
-    @Get("/api/hello/{name}", produce = "application/json")
+    @Get("/hello/{name}", produce = "application/json")
     @ResponseBody
     fun hello(@PathVariable("name") name: String): String {
         return mapOf("name" to name).toJson()
     }
 
-    @Get("/api/hello/produce_text/{name}", "text/plain")
+    @Get("/hello/produce_text/{name}", "text/plain")
     @ResponseBody
     fun helloProduce(@PathVariable("name") name: String): String {
         return name
     }
 
-    @Get("/api/greeting", produce = "application/json")
+    @Get("/greeting", produce = "application/json")
     fun greeting(
         @RequestParam(value = "action", defaultValue = "Hello") action: String,
         @RequestParam("name") name: String,
@@ -73,7 +75,7 @@ class RestApiController {
         return mapOf("action" to mapOf("name" to name))
     }
 
-    @Get("/api/download/{file}", produce = "application/json")
+    @Get("/download/{file}", produce = "application/json")
     fun download(
         @PathVariable("file") file: String, @RequestParam("time") downloadTime: Float, @RequestParam("md5") md5: String,
         @RequestParam("length") length: Int, @RequestParam("hasChecksum") checksum: Boolean,
@@ -81,7 +83,7 @@ class RestApiController {
         return FileObj(file, length, downloadTime, md5, "A".repeat(length).toByteArray(StandardCharsets.UTF_8))
     }
 
-    @Get("/api/download-part")
+    @Get("/download-part")
     fun downloadPart(
         @RequestParam("file") file: String,
         @RequestParam("time") downloadTime: Float,
@@ -95,7 +97,7 @@ class RestApiController {
         resp.writer.writeJson(f).flush()
     }
 
-    @Post("/api/register")
+    @Post("/register")
     fun register(@RequestBody signin: SigninObj, resp: HttpServletResponse) {
         resp.contentType = "application/json"
         val pw = resp.writer
@@ -103,7 +105,7 @@ class RestApiController {
         pw.flush()
     }
 
-    @Post("/api/echo-string-body")
+    @Post("/echo-string-body")
     fun echoStringBody(@RequestBody body: String, resp: HttpServletResponse) {
         resp.contentType = "text/plain"
         val pw = resp.writer
