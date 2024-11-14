@@ -273,6 +273,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
+        logger.warn("Unhandled exception thrown in DispatcherServlet.", e)
         if (isRest) {
             val mapper = run {
                 val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
@@ -358,7 +359,9 @@ class Dispatcher(
                 else if (param.paramType == HttpSession::class.java) req.session
                 else if (param.paramType == ServletContext::class.java) req.servletContext
                 else if (Exception::class.java.isAssignableFrom(param.paramType))
-                    exception ?: ServerErrorException("Could not determine argument type: ${param.paramType}")
+                    exception ?: throw ServerErrorException(
+                        "Exception parameter is only supported in exception handler."
+                    )
                 else if (param.paramType == RequestEntity::class.java) RequestEntity(
                     req.method, req.requestURI, req.reader.use { it.readText() },
                     req.headerNames.asSequence().associateWith { req.getHeaders(it).toList() },
@@ -396,7 +399,7 @@ class Dispatcher(
             // should only have 1 annotation:
             if (anno.count() > 1) {
                 throw ServletException(
-                    "(Duplicated annotation?) @PathVariable, @RequestParam, @RequestBody, @Headers and @Header cannot be combined: $method"
+                    "(Duplicated annotation?) @PathVariable, @RequestParam, @RequestBody and @Header cannot be combined: $method"
                 )
             }
 
@@ -416,7 +419,9 @@ class Dispatcher(
 
                 is Header -> {
                     if (!String::class.java.isAssignableFrom(paramType))
-                        throw ServerErrorException("Unsupported argument type: $paramType, at method: $method, @Header parameter must be String? type.")
+                        throw ServerErrorException(
+                            "Unsupported argument type: $paramType, at method: $method, @Header parameter must be String? type."
+                        )
                     name = paramAnno.value.ifEmpty { param.name }
                     required = paramAnno.required
                     defaultValue = paramAnno.defaultValue
