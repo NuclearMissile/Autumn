@@ -44,9 +44,9 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 logger.warn("rollback transaction for the following exception:", e)
                 try {
                     conn.rollback()
-                } catch (ignore: Exception) {
-                    logger.warn("exception thrown while rollback transaction, ignored:", ignore)
-                    e.addSuppressed(ignore)
+                } catch (e: Exception) {
+                    logger.warn("exception thrown while rollback transaction, ignored:", e)
+                    e.addSuppressed(e)
                 }
                 throw e
             } finally {

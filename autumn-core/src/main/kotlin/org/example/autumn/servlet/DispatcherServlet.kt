@@ -58,7 +58,9 @@ class DispatcherServlet : HttpServlet() {
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val getDispatchers = mutableListOf<Dispatcher>()
     private val postDispatchers = mutableListOf<Dispatcher>()
-    private val exceptionHandlers = mutableMapOf<String, Dispatcher>()
+
+    // controller name: (exception class: dispatcher)
+    private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, Dispatcher>>()
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
@@ -97,6 +99,60 @@ class DispatcherServlet : HttpServlet() {
         serve(req, resp, postDispatchers)
     }
 
+    private fun addController(controllerBeanName: String, prefix: String, instance: Any, isRest: Boolean) {
+        logger.info(
+            "add {} controller '{}': {}", if (isRest) "REST" else "MVC", controllerBeanName, instance.javaClass.name
+        )
+        exceptionHandlerMap[controllerBeanName] = mutableMapOf()
+        addMethods(controllerBeanName, prefix, instance, instance.javaClass, isRest)
+    }
+
+    private fun addMethods(
+        controllerBeanName: String, prefix: String, instance: Any, clazz: Class<*>, isRest: Boolean,
+    ) {
+        fun configMethod(m: Method) {
+            if (Modifier.isStatic(m.modifiers))
+                throw ServletException("Cannot map url to a static method: $m.")
+            m.isAccessible = true
+        }
+
+        clazz.declaredMethods.sortedBy { it.name }.forEach { m ->
+            val annos = listOf(
+                Get::class.java,
+                Post::class.java,
+                ExceptionHandler::class.java
+            ).mapNotNull { m.getAnnotation(it) }
+            if (annos.isEmpty()) return@forEach
+            if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $controllerBeanName: $m")
+
+            val anno = annos.first()
+            configMethod(m)
+            if (anno is Get) {
+                val urlPattern = "/" + (prefix + anno.value).trim('/')
+                getDispatchers +=
+                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+            }
+            if (anno is Post) {
+                val urlPattern = "/" + (prefix + anno.value).trim('/')
+                postDispatchers +=
+                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+            }
+            if (anno is ExceptionHandler) {
+                val urlPattern = "/" + prefix.trim('/')
+                val exceptionClass = anno.value.java as Class<Exception>
+                val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
+                if (exceptionHandlers.containsKey(exceptionClass))
+                    throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
+                exceptionHandlers[exceptionClass] =
+                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+            }
+        }
+
+        if (clazz.superclass != null) {
+            addMethods(controllerBeanName, prefix, instance, clazz.superclass, isRest)
+        }
+    }
+
     private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
         val url = req.requestURI.removePrefix(req.contextPath)
         val ctx = req.servletContext
@@ -123,22 +179,12 @@ class DispatcherServlet : HttpServlet() {
                 else -> serveMvc(url, dispatcher, req, resp)
             }
         } catch (e: Exception) {
-            serveException(e, req, resp, dispatcher?.isRest ?: false)
+            serveException(e, req, resp, dispatcher?.isRest == true)
         }
     }
 
     private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        var _dispatcher = dispatcher
-        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
-        val ret = try {
-            _dispatcher.process(url, req, resp)
-        } catch (e: Exception) {
-            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}:${e.javaClass.simpleName}"
-            val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
-            _dispatcher = exceptionHandler
-            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
-            _dispatcher.process(url, req, resp, e)
-        }
+        val (ret, _dispatcher) = runDispatcher(url, dispatcher, req, resp)
         if (resp.isCommitted) return
         when {
             _dispatcher.isResponseBody -> {
@@ -158,17 +204,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        var _dispatcher = dispatcher
-        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
-        val ret = try {
-            _dispatcher.process(url, req, resp)
-        } catch (e: Exception) {
-            val exceptionHandlerKey = "${_dispatcher.controller.javaClass.name}:${e.javaClass.simpleName}"
-            val exceptionHandler = exceptionHandlers[exceptionHandlerKey] ?: throw e
-            _dispatcher = exceptionHandler
-            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
-            _dispatcher.process(url, req, resp, e)
-        }
+        val (ret, _dispatcher) = runDispatcher(url, dispatcher, req, resp)
         if (resp.isCommitted) return
         when (ret) {
             is ResponseEntity -> resp.set(ret)
@@ -212,6 +248,28 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
+    private fun runDispatcher(
+        url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse,
+    ): Pair<Any?, Dispatcher> {
+        fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): Dispatcher? {
+            val exceptionHandlers = exceptionHandlerMap[controllerName]!!
+            val matchedExceptionClass = findClosestMatchingType(exceptionClass, exceptionHandlers.keys) ?: return null
+            return exceptionHandlers[matchedExceptionClass]
+        }
+
+        var _dispatcher = dispatcher
+        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+        val ret = try {
+            _dispatcher.process(url, req, resp)
+        } catch (e: Exception) {
+            val exceptionHandler = findExceptionHandler(dispatcher.controllerBeanName, e.javaClass) ?: throw e
+            _dispatcher = exceptionHandler
+            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+            _dispatcher.process(url, req, resp, e)
+        }
+        return (ret to _dispatcher)
+    }
+
     private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
         if (!isRest && e is ResponseErrorException && e.responseBody == null) {
             viewResolver.renderError(e.statusCode, emptyMap(), req, resp)
@@ -223,67 +281,22 @@ class DispatcherServlet : HttpServlet() {
             mapper.map(e, req, resp)
         }
     }
-
-    private fun addController(name: String, prefix: String, instance: Any, isRest: Boolean) {
-        logger.info("add {} controller '{}': {}", if (isRest) "REST" else "MVC", name, instance.javaClass.name)
-        addMethods(name, prefix, instance, instance.javaClass, isRest)
-    }
-
-    private fun addMethods(name: String, prefix: String, instance: Any, clazz: Class<*>, isRest: Boolean) {
-        fun configMethod(m: Method) {
-            if (Modifier.isStatic(m.modifiers))
-                throw ServletException("Cannot map url to a static method: $m.")
-            m.isAccessible = true
-        }
-
-        clazz.declaredMethods.sortedBy { it.name }.forEach { m ->
-            val annos = listOf(
-                Get::class.java,
-                Post::class.java,
-                ExceptionHandler::class.java
-            ).mapNotNull { m.getAnnotation(it) }
-            if (annos.isEmpty()) return@forEach
-            if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $name: $m")
-
-            val anno = annos.first()
-            configMethod(m)
-            if (anno is Get) {
-                val urlPattern = "/" + (prefix + anno.value).trim('/')
-                getDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
-            }
-            if (anno is Post) {
-                val urlPattern = "/" + (prefix + anno.value).trim('/')
-                postDispatchers += Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
-            }
-            if (anno is ExceptionHandler) {
-                val urlPattern = "/" + prefix.trim('/')
-                val exceptionHandlerKey = "${instance.javaClass.name}:${anno.value.simpleName}"
-                if (exceptionHandlers.containsKey(exceptionHandlerKey))
-                    throw IllegalArgumentException("Ambiguous exception handler for $exceptionHandlerKey")
-                exceptionHandlers[exceptionHandlerKey] =
-                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest)
-            }
-        }
-
-        if (clazz.superclass != null) {
-            addMethods(name, prefix, instance, clazz.superclass, isRest)
-        }
-    }
 }
 
 class Dispatcher(
-    val controller: Any,
+    private val controller: Any,
     private val handlerMethod: Method,
     private val urlPattern: Regex,
     val produce: String,
     val isRest: Boolean,
+    val controllerBeanName: String,
 ) : Comparable<Dispatcher> {
     val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
     val isVoid = handlerMethod.returnType == Void.TYPE
 
     private val logger = LoggerFactory.getLogger(javaClass)
     private val methodParams = mutableListOf<Param>()
-    private val name = controller.javaClass.name + "." + handlerMethod.name
+    private val name = controllerBeanName + "." + handlerMethod.name
 
     init {
         val params = handlerMethod.parameters
@@ -307,7 +320,7 @@ class Dispatcher(
                 is PathVariable -> try {
                     urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
                         ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     throw RequestErrorException("Path variable '${param.name}' is required.")
                 }
 

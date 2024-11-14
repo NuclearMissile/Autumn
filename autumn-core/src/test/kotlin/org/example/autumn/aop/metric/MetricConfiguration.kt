@@ -1,8 +1,6 @@
 package org.example.autumn.aop.metric
 
 import org.example.autumn.annotation.Component
-import org.example.autumn.annotation.ComponentScan
-import org.example.autumn.annotation.Configuration
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor
 import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain

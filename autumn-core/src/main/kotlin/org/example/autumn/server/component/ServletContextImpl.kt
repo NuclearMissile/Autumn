@@ -103,7 +103,7 @@ class ServletContextImpl(
                 val clazz = it as Class<out Servlet>
                 val registration = addServlet(clazz.getServletName(), clazz)
                 registration.addMapping(*clazz.getServletUrlPatterns())
-                registration.setInitParameters(clazz.getServletInitParams())
+                registration.initParameters = clazz.getServletInitParams()
             }
             if (it.isAnnotationPresent(WebFilter::class.java)) {
                 logger.atDebug().log("register @WebFilter: {}", it.name)
@@ -112,7 +112,7 @@ class ServletContextImpl(
                 registration.addMappingForUrlPatterns(
                     clazz.getFilterDispatcherTypes(), true, *clazz.getFilterUrlPatterns()
                 )
-                registration.setInitParameters(clazz.getFilterInitParams())
+                registration.initParameters = clazz.getFilterInitParams()
             }
         }
 
@@ -325,7 +325,7 @@ class ServletContextImpl(
         if (loc.startsWith(webRoot) && Files.isDirectory(loc)) {
             try {
                 return Files.list(loc).map { it.fileName.toString() }.toList().toMutableSet()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 logger.warn("list files failed for path: {}", path)
             }
         }

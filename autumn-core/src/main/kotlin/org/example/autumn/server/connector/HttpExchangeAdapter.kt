@@ -1,4 +1,4 @@
-package org.example.autumn.server.connector;
+package org.example.autumn.server.connector
 
 import com.sun.net.httpserver.Headers
 import com.sun.net.httpserver.HttpExchange

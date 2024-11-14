@@ -62,7 +62,7 @@ class FreeMarkerViewResolver(
 
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw ServerErrorException("Template '$viewName' not found.")
         }
 
@@ -83,7 +83,7 @@ class FreeMarkerViewResolver(
 
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             resp.sendError(
                 statusCode, DEFAULT_ERROR_MSG.getOrDefault(statusCode, "<h1>Error: Status $statusCode</h1>")
             )
