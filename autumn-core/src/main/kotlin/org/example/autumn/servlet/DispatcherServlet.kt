@@ -24,8 +24,10 @@ import java.lang.reflect.*
 
 class DispatcherServlet : HttpServlet() {
     companion object {
+        private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
+
         fun compilePath(path: String): Regex {
-            val regPath = path.replace("\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex(), "(?<$1>[^/]*)")
+            val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
