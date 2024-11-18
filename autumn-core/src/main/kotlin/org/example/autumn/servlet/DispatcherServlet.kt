@@ -23,18 +23,6 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.*
 
 class DispatcherServlet : HttpServlet() {
-    companion object {
-        private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
-
-        fun compilePath(path: String): Regex {
-            val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
-            if (regPath.find { it == '{' || it == '}' } != null) {
-                throw ServletException("Invalid path: $path")
-            }
-            return Regex("^$regPath\$")
-        }
-    }
-
     private val logger = LoggerFactory.getLogger(javaClass)
     private val context = ApplicationContextHolder.required
     private val viewResolver = context.getUniqueBean(ViewResolver::class.java)
@@ -134,12 +122,12 @@ class DispatcherServlet : HttpServlet() {
             if (anno is Get) {
                 val urlPattern = "/" + (prefix + anno.value).trim('/')
                 getDispatchers +=
-                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
             }
             if (anno is Post) {
                 val urlPattern = "/" + (prefix + anno.value).trim('/')
                 postDispatchers +=
-                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
             }
             if (anno is ExceptionHandler) {
                 val urlPattern = "/" + prefix.trim('/')
@@ -148,7 +136,7 @@ class DispatcherServlet : HttpServlet() {
                 if (exceptionHandlers.containsKey(exceptionClass))
                     throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
                 exceptionHandlers[exceptionClass] =
-                    Dispatcher(instance, m, compilePath(urlPattern), anno.produce, isRest, controllerBeanName)
+                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
             }
         }
 
@@ -290,19 +278,32 @@ class DispatcherServlet : HttpServlet() {
 }
 
 class Dispatcher(
+    urlPattern: String,
     private val controller: Any,
     private val handlerMethod: Method,
-    private val urlPattern: Regex,
+    val controllerBeanName: String,
     val produce: String,
     val isRest: Boolean,
-    val controllerBeanName: String,
 ) : Comparable<Dispatcher> {
+    companion object {
+        private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
+
+        fun compilePath(path: String): Regex {
+            val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
+            if (regPath.find { it == '{' || it == '}' } != null) {
+                throw ServletException("Invalid path: $path")
+            }
+            return Regex("^$regPath\$")
+        }
+    }
+
     val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
     val isVoid = handlerMethod.returnType == Void.TYPE
 
     private val logger = LoggerFactory.getLogger(javaClass)
     private val methodParams = mutableListOf<Param>()
     private val name = controllerBeanName + "." + handlerMethod.name
+    private val urlPatternRegex = compilePath(urlPattern)
 
     init {
         val params = handlerMethod.parameters
@@ -312,19 +313,19 @@ class Dispatcher(
         }
         logger.atDebug().log(
             "mapping {} to handler {}.{}, parameters: {}",
-            urlPattern.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
+            urlPatternRegex.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
         )
     }
 
     fun match(url: String): Boolean {
-        return urlPattern.matches(url)
+        return urlPatternRegex.matches(url)
     }
 
     fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse, exception: Exception? = null): Any? {
         val args = methodParams.map { param ->
             when (param.paramAnno) {
                 is PathVariable -> try {
-                    urlPattern.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
+                    urlPatternRegex.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
                         ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                 } catch (_: Exception) {
                     throw RequestErrorException("Path variable '${param.name}' is required.")

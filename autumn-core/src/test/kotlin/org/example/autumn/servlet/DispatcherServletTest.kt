@@ -3,7 +3,7 @@ package org.example.autumn.servlet
 import jakarta.servlet.ServletException
 import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.context.AnnotationApplicationContext
-import org.example.autumn.servlet.DispatcherServlet.Companion.compilePath
+import org.example.autumn.servlet.Dispatcher.Companion.compilePath
 import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
