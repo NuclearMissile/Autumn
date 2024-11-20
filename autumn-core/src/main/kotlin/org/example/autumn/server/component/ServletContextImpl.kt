@@ -180,7 +180,7 @@ class ServletContextImpl(
     fun process(req: HttpServletRequest, resp: HttpServletResponse) {
         val path = req.requestURI
         // search servlet:
-        val servlet = servletMappings.filter { it.matches(path) }.let {
+        val servlet = servletMappings.filter { it.match(path) }.let {
             if (it.isEmpty()) {
                 resp.sendError(404, "<h1>404 Not Found</h1><p>No servlet found for URL: ${path.escapeHtml()}</p>")
                 return
@@ -196,7 +196,7 @@ class ServletContextImpl(
         }
 
         // search filter:
-        val filters = filterMappings.filter { it.matches(path) }.map { it.filter }
+        val filters = filterMappings.filter { it.match(path) }.map { it.filter }
         logger.atDebug().log(
             "process {} by filters {}, servlet {}", path, filters.toTypedArray().contentToString(), servlet
         )

@@ -18,7 +18,7 @@ open class UrlMapping(private val url: String) {
         Regex(sb.toString())
     }
 
-    fun matches(uri: String): Boolean {
+    fun match(uri: String): Boolean {
         return pattern.matches(uri)
     }
 }
