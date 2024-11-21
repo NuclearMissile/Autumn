@@ -119,17 +119,17 @@ class DispatcherServlet : HttpServlet() {
             val anno = annos.first()
             configMethod(m)
             if (anno is Get) {
-                val urlPattern = (prefix + anno.value).trimEnd('/')
+                val urlPattern = '/' + (prefix + anno.value).trim('/')
                 getDispatchers +=
                     Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
             }
             if (anno is Post) {
-                val urlPattern = (prefix + anno.value).trimEnd('/')
+                val urlPattern = '/' + (prefix + anno.value).trim('/')
                 postDispatchers +=
                     Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
             }
             if (anno is ExceptionHandler) {
-                val urlPattern = prefix.trimEnd('/')
+                val urlPattern = '/' + prefix.trim('/')
                 val exceptionClass = anno.value.java as Class<Exception>
                 val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
                 if (exceptionHandlers.containsKey(exceptionClass))
