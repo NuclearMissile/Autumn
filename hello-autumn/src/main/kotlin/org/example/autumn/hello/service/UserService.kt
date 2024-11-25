@@ -1,31 +1,15 @@
-package org.example.autumn.hello
+package org.example.autumn.hello.service
 
-import org.example.autumn.annotation.*
+import org.example.autumn.annotation.Around
+import org.example.autumn.annotation.Autowired
+import org.example.autumn.annotation.Component
+import org.example.autumn.annotation.PostConstruct
+import org.example.autumn.annotation.Transactional
 import org.example.autumn.db.orm.NaiveOrm
+import org.example.autumn.hello.model.User
 import org.example.autumn.utils.HashUtils
 import org.example.autumn.utils.SecureRandomUtils
 import org.slf4j.LoggerFactory
-
-//@Entity
-//@Table(name = "users")
-//data class User(
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @Column(nullable = false, updatable = false)
-//    val id: Long,
-//    @Column(nullable = false, unique = true)
-//    val email: String,
-//    @Column(nullable = false)
-//    val name: String,
-//    @Column(name = "pwd_salt", nullable = false)
-//    val pwdSalt: String,
-//    @Column(name = "pwd_hash", nullable = false)
-//    val pwdHash: String,
-//) {
-//    override fun toString(): String {
-//        return "User(id=$id, email='$email', name='$name')"
-//    }
-//}
 
 @Around("beforeLogInvocation", "afterLogInvocation")
 @Component

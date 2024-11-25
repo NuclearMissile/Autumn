@@ -17,6 +17,8 @@ import org.example.autumn.eventbus.EventBus
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ServerErrorException
+import org.example.autumn.hello.model.User
+import org.example.autumn.hello.service.UserService
 import org.example.autumn.server.AutumnServer
 import org.example.autumn.servlet.*
 import org.example.autumn.utils.JsonUtils.toJson
@@ -37,8 +39,7 @@ class HelloException(val statusCode: Int, message: String, val responseBody: Str
 
 class HelloException2(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
 
-//@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundAopConfiguration::class, EventBusConfig::class)
-//class HelloConfig
+class HelloConfig
 
 @Component
 class HelloExceptionMapper : ExceptionMapper<HelloException>() {
