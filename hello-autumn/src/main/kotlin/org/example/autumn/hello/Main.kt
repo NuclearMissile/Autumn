@@ -31,15 +31,13 @@ import java.lang.reflect.Method
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        AutumnServer.start(listOf(HelloContextLoadListener::class.java))
+        AutumnServer.start(listOf(HelloConfig::class.java))
     }
 }
 
-@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundConfiguration::class, EventBusConfiguration::class)
-class HelloConfig
-
 @WebListener
-class HelloContextLoadListener : ContextLoadListener()
+@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundConfiguration::class, EventBusConfiguration::class)
+class HelloConfig : ContextLoadListener()
 
 class HelloException(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
 
