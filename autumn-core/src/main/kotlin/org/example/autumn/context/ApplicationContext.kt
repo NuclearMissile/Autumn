@@ -3,12 +3,8 @@ package org.example.autumn.context
 import org.example.autumn.DEFAULT_ORDER
 import org.example.autumn.annotation.*
 import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
-import org.example.autumn.aop.AroundConfiguration
 import org.example.autumn.aop.Invocation
-import org.example.autumn.db.DbConfiguration
-import org.example.autumn.eventbus.EventBusConfiguration
 import org.example.autumn.exception.*
-import org.example.autumn.servlet.WebMvcConfiguration
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
@@ -86,11 +82,6 @@ object ApplicationContextHolder {
         get() = requireNotNull(instance) { "ApplicationContext is not set." }
 }
 
-val BUILTIN_CONFIGURATIONS = listOf(
-    WebMvcConfiguration::class.java, DbConfiguration::class.java,
-    AroundConfiguration::class.java, EventBusConfiguration::class.java
-)
-
 class AnnotationApplicationContext(configClass: Class<*>, override val config: IProperties) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val sortedBeanInfos: List<IBeanInfo>
@@ -158,8 +149,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
         val scanPackages = configClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
             ?: listOf(configClass.packageName)
         logger.info("component scan in packages: {}", scanPackages.joinToString())
-        val classNameSet = BUILTIN_CONFIGURATIONS.map { it.name }.toMutableSet()
-        classNameSet.addAll(scanClassNames(scanPackages))
+        val classNameSet = scanClassNames(scanPackages).toMutableSet()
         configClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
         logger.atDebug().log("class found by component scan: {}", classNameSet)
         return classNameSet.toList()
@@ -358,7 +348,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }

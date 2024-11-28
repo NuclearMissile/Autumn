@@ -10,10 +10,13 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.annotation.*
+import org.example.autumn.aop.AroundConfiguration
 import org.example.autumn.aop.Invocation
 import org.example.autumn.aop.InvocationChain
+import org.example.autumn.db.DbConfiguration
 import org.example.autumn.eventbus.Event
 import org.example.autumn.eventbus.EventBus
+import org.example.autumn.eventbus.EventBusConfiguration
 import org.example.autumn.eventbus.EventMode
 import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ServerErrorException
@@ -32,14 +35,15 @@ object Main {
     }
 }
 
+@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundConfiguration::class, EventBusConfiguration::class)
+class HelloConfig
+
 @WebListener
 class HelloContextLoadListener : ContextLoadListener()
 
 class HelloException(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
 
 class HelloException2(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
-
-class HelloConfig
 
 @Component
 class HelloExceptionMapper : ExceptionMapper<HelloException>() {
