@@ -23,6 +23,6 @@ open class UrlMapping(private val url: String) {
     }
 }
 
-class FilterMapping(val filter: Filter, val filterName: String, url: String) : UrlMapping(url)
+class FilterMapping(val filter: Filter, url: String) : UrlMapping(url)
 
 class ServletMapping(val servlet: Servlet, url: String) : UrlMapping(url)

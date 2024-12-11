@@ -11,23 +11,21 @@ class FilterRegistrationImpl(
 
     var initialized = false
 
-    fun getFilterConfig(): FilterConfig {
-        return object : FilterConfig {
-            override fun getFilterName(): String {
-                return this@FilterRegistrationImpl.filterName
-            }
+    fun getFilterConfig(): FilterConfig = object : FilterConfig {
+        override fun getFilterName(): String {
+            return this@FilterRegistrationImpl.filterName
+        }
 
-            override fun getServletContext(): ServletContext {
-                return this@FilterRegistrationImpl.servletContext
-            }
+        override fun getServletContext(): ServletContext {
+            return this@FilterRegistrationImpl.servletContext
+        }
 
-            override fun getInitParameter(name: String): String? {
-                return this@FilterRegistrationImpl.initParameters[name]
-            }
+        override fun getInitParameter(name: String): String? {
+            return this@FilterRegistrationImpl.initParameters[name]
+        }
 
-            override fun getInitParameterNames(): Enumeration<String> {
-                return Collections.enumeration(this@FilterRegistrationImpl.initParameters.keys)
-            }
+        override fun getInitParameterNames(): Enumeration<String> {
+            return Collections.enumeration(this@FilterRegistrationImpl.initParameters.keys)
         }
     }
 

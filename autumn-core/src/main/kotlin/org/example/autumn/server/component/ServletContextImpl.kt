@@ -166,7 +166,7 @@ class ServletContextImpl(
             try {
                 filterReg.filter.init(filterReg.getFilterConfig())
                 for (urlPattern in filterReg.urlPatternMappings) {
-                    filterMappings.add(FilterMapping(filterReg.filter, name, urlPattern))
+                    filterMappings.add(FilterMapping(filterReg.filter, urlPattern))
                 }
                 filterReg.initialized = true
             } catch (e: ServletException) {

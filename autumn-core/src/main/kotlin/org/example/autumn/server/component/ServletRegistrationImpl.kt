@@ -11,23 +11,21 @@ class ServletRegistrationImpl(
 
     var initialized: Boolean = false
 
-    fun getServletConfig(): ServletConfig {
-        return object : ServletConfig {
-            override fun getServletName(): String {
-                return this@ServletRegistrationImpl.servletName
-            }
+    fun getServletConfig(): ServletConfig = object : ServletConfig {
+        override fun getServletName(): String {
+            return this@ServletRegistrationImpl.servletName
+        }
 
-            override fun getServletContext(): ServletContext {
-                return this@ServletRegistrationImpl.servletContext
-            }
+        override fun getServletContext(): ServletContext {
+            return this@ServletRegistrationImpl.servletContext
+        }
 
-            override fun getInitParameter(name: String): String? {
-                return this@ServletRegistrationImpl.initParameters[name]
-            }
+        override fun getInitParameter(name: String): String? {
+            return this@ServletRegistrationImpl.initParameters[name]
+        }
 
-            override fun getInitParameterNames(): Enumeration<String> {
-                return Collections.enumeration(this@ServletRegistrationImpl.initParameters.keys)
-            }
+        override fun getInitParameterNames(): Enumeration<String> {
+            return Collections.enumeration(this@ServletRegistrationImpl.initParameters.keys)
         }
     }
 
