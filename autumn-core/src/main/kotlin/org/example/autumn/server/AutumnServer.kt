@@ -192,7 +192,11 @@ class AutumnServer {
                 @Suppress("Since15")
                 Executors.newVirtualThreadPerTaskExecutor()
             } else ThreadPoolExecutor(
-                5, config.getRequired("server.thread-pool-size"), 10L, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
+                config.getRequired("server.core-pool-size"),
+                config.getRequired("server.max-pool-size"),
+                config.getRequired("server.keep-alive-time"),
+                TimeUnit.MILLISECONDS,
+                LinkedBlockingQueue()
             )
 
             val connector = HttpConnector(config, classLoader, webRoot, executor, annoClasses)
