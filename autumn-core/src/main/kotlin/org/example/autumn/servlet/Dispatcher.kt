@@ -44,7 +44,7 @@ class Dispatcher(
     companion object {
         private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
 
-        private fun compilePath(path: String): Regex {
+        fun compilePath(path: String): Regex {
             val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")

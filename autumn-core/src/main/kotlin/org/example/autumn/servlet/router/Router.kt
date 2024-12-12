@@ -3,15 +3,15 @@ package org.example.autumn.servlet.router
 import org.example.autumn.servlet.IDispatcher
 
 interface IRouter {
-    fun addRoute(method: String, path: String, dispatcher: IDispatcher)
+    fun setRoute(method: String, path: String, dispatcher: IDispatcher)
     fun getRoute(method: String, path: String): Pair<IDispatcher, Map<String, String>>?
 }
 
 class Router : IRouter {
     companion object {
-        fun parsePath(path: String): List<String> {
+        fun parsePattern(pattern: String): List<String> {
             return buildList {
-                for (part in path.split('/').filter { it.isNotEmpty() }) {
+                for (part in pattern.split('/').filter { it.isNotEmpty() }) {
                     add(part)
                     if (part.startsWith('*')) return@buildList
                 }
@@ -22,8 +22,8 @@ class Router : IRouter {
     private val roots = mutableMapOf<String, TrieNode>()
     private val dispatchers = mutableMapOf<String, IDispatcher>()
 
-    override fun addRoute(method: String, path: String, disp: IDispatcher) {
-        val parts = parsePath(path)
+    override fun setRoute(method: String, path: String, disp: IDispatcher) {
+        val parts = parsePattern(path)
         if (!roots.containsKey(method)) roots[method] = TrieNode()
 
         roots[method]!!.insert(path, parts, 0)
@@ -31,27 +31,23 @@ class Router : IRouter {
     }
 
     override fun getRoute(method: String, path: String): Pair<IDispatcher, Map<String, String>>? {
-        val searchParts = parsePath(path)
+        val searchParts = parsePattern(path)
         val params = mutableMapOf<String, String>()
 
         val root = roots[method] ?: return null
-        val node = root.search(searchParts, 0)
+        val node = root.search(searchParts, 0) ?: return null
 
-        if (node != null) {
-            val parts = parsePath(node.pattern)
-            for (index in parts.indices) {
-                val part = parts[index]
-                if (part.startsWith(':')) {
-                    params[part.substring(1)] = searchParts[index]
-                }
-                if (part.startsWith('*') && part.length > 1) {
-                    params[part.substring(1)] = searchParts.slice(1 until searchParts.size).joinToString("/")
-                    break
-                }
+        val parts = parsePattern(node.pattern)
+        for (index in parts.indices) {
+            val part = parts[index]
+            if (part.startsWith(':')) {
+                params[part.substring(1)] = searchParts[index]
             }
-            return Pair(dispatchers["${method}_${node.pattern}"]!!, params)
+            if (part.startsWith('*') && part.length > 1) {
+                params[part.substring(1)] = searchParts.slice(1 until searchParts.size).joinToString("/")
+                break
+            }
         }
-
-        return null
+        return Pair(dispatchers["${method}:${node.pattern}"]!!, params)
     }
 }
