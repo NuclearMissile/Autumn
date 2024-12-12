@@ -70,8 +70,8 @@ class DefaultServlet : HttpServlet() {
                     sb.append(formatTr(file, size, name))
                 }
                 val trs = sb.append("</tr>").toString()
-                val html = indexTemplate.replace("\${URI}", uri.escapeHtml()) //
-                    .replace("\${SERVER_INFO}", servletContext.serverInfo) //
+                val html = indexTemplate.replace("\${URI}", uri.escapeHtml())
+                    .replace("\${SERVER_INFO}", servletContext.serverInfo)
                     .replace("\${TRS}", trs)
                 resp.writer.apply { write(html) }.flush()
             }

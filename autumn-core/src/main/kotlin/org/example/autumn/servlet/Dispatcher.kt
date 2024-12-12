@@ -17,6 +17,22 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
+interface IDispatcher {
+    val controllerBeanName: String
+    val produce: String
+    val isRest: Boolean
+    val isResponseBody: Boolean
+    val isVoid: Boolean
+
+    fun process(
+        url: String,
+        params: Map<String, String>,
+        req: HttpServletRequest,
+        resp: HttpServletResponse,
+        exception: Exception? = null,
+    ): Any?
+}
+
 class Dispatcher(
     urlPattern: String,
     private val controller: Any,
@@ -28,7 +44,7 @@ class Dispatcher(
     companion object {
         private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
 
-        fun compilePath(path: String): Regex {
+        private fun compilePath(path: String): Regex {
             val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
