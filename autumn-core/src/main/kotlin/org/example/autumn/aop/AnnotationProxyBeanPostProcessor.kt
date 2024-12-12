@@ -1,36 +1,11 @@
 package org.example.autumn.aop
 
-import net.bytebuddy.ByteBuddy
-import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy
-import net.bytebuddy.implementation.InvocationHandlerAdapter
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender
-import net.bytebuddy.matcher.ElementMatchers
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.context.BeanPostProcessor
 import org.example.autumn.exception.AopConfigException
-import org.slf4j.LoggerFactory
 import java.lang.reflect.ParameterizedType
 
 abstract class AnnotationProxyBeanPostProcessor<A : Annotation> : BeanPostProcessor {
-    companion object {
-        private val logger = LoggerFactory.getLogger(Companion::class.java)
-        private val byteBuddy = ByteBuddy()
-
-        fun <T> createProxy(bean: T, aopHandlers: List<Invocation>): T {
-            if (aopHandlers.isEmpty()) return bean
-            val targetClass = bean!!.javaClass
-            logger.atDebug().log("create proxy for bean {}", targetClass.name)
-            val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
-                .method(ElementMatchers.isPublic())
-                .intercept(InvocationHandlerAdapter.of { _, method, args ->
-                    InvocationChain(aopHandlers).invokeChain(bean, method, args)
-                })
-                .attribute(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER)
-                .make().load(targetClass.classLoader).loaded
-            return proxyClass.getConstructor().newInstance() as T
-        }
-    }
-
     private val originalBeans = mutableMapOf<String, Any>()
     private val annotationClass = run {
         val type = javaClass.genericSuperclass

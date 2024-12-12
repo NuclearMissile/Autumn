@@ -2,9 +2,9 @@ package org.example.autumn.context
 
 import org.example.autumn.DEFAULT_ORDER
 import org.example.autumn.annotation.*
-import org.example.autumn.aop.AnnotationProxyBeanPostProcessor.Companion.createProxy
 import org.example.autumn.aop.Invocation
 import org.example.autumn.exception.*
+import org.example.autumn.utils.ClassUtils.createProxy
 import org.example.autumn.utils.ClassUtils.findNestedAnnotation
 import org.example.autumn.utils.ClassUtils.getBeanName
 import org.example.autumn.utils.ClassUtils.scanClassNames
@@ -506,6 +506,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
             }
             info.instance = createProxy(info.instance, aopHandlers)
         }
+
         return info.requiredInstance
     }
 
@@ -559,7 +560,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
         } else if (methodName != null) {
             val namedMethod = try {
                 beanInstance.javaClass.getDeclaredMethod(methodName)
-            } catch (e: ReflectiveOperationException) {
+            } catch (_: ReflectiveOperationException) {
                 throw BeanDefinitionException("Method '$methodName' not found in class: ${beanInstance.javaClass.name}")
             }
             namedMethod.isAccessible = true
