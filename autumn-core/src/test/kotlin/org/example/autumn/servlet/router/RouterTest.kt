@@ -3,6 +3,7 @@ package org.example.autumn.servlet.router
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.servlet.IDispatcher
+import org.example.autumn.servlet.router.Router.Companion.normalizePath
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -30,6 +31,58 @@ class RouterTest {
         }
     }
 
+    private val CLEAN_TESTS = listOf(
+        // OK
+        Pair("/", "/"),
+        Pair("/abc", "/abc"),
+        Pair("/a/b/c", "/a/b/c"),
+        Pair("/abc/", "/abc"),
+        Pair("/a/b/c/", "/a/b/c"),
+
+        // Missing root
+        Pair("", "/"),
+        Pair("a/", "/a"),
+        Pair("abc", "/abc"),
+        Pair("abc/def", "/abc/def"),
+        Pair("a/b/c", "/a/b/c"),
+
+        // Double slash
+        Pair("//", "/"),
+        Pair("/abc//", "/abc"),
+        Pair("/abc/def//", "/abc/def"),
+        Pair("/a/b/c//", "/a/b/c"),
+        Pair("//a//b//c", "/a/b/c"),
+        Pair("//abc", "/abc"),
+        Pair("///abc", "/abc"),
+        Pair("//abc//", "/abc"),
+
+        // Remove . elements
+        Pair(".", "/"),
+        Pair("./", "/"),
+        Pair("/abc/./def", "/abc/def"),
+        Pair("/./abc/def", "/abc/def"),
+        Pair("/abc/.", "/abc"),
+
+        // Remove .. elements
+        Pair("..", "/"),
+        Pair("../", "/"),
+        Pair("../../", "/"),
+        Pair("../..", "/"),
+        Pair("../../abc", "/abc"),
+        Pair("/abc/def/ghi/../jkl", "/abc/def/jkl"),
+        Pair("/abc/def/../ghi/../jkl", "/abc/jkl"),
+        Pair("/abc/def/..", "/abc"),
+        Pair("/abc/def/../..", "/"),
+        Pair("/abc/def/../../..", "/"),
+        Pair("/abc/def/../../..", "/"),
+        Pair("/abc/def/../../../ghi/jkl/../../../mno", "/mno"),
+
+        // Combinations
+        Pair("abc/./../def", "/def"),
+        Pair("abc//./../def", "/def"),
+        Pair("abc/../../././../def", "/def"),
+    )
+
     fun createTestRouter(): Router {
         return Router().apply {
             setRoute("GET", "/", DUMMY_DISP)
@@ -44,7 +97,14 @@ class RouterTest {
     @Test
     fun getRoute() {
         val router = createTestRouter()
-        val (disp, params) = router.getRoute("GET", "/hello/aaa")!!
+        val (_, params) = router.getRoute("GET", "/hello/aaa")!!
         assertEquals("aaa", params["name"])
+    }
+
+    @Test
+    fun testCleanPath() {
+        CLEAN_TESTS.forEach {
+            assertEquals(it.second, normalizePath(it.first))
+        }
     }
 }

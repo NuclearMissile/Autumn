@@ -1,6 +1,7 @@
 package org.example.autumn.servlet.router
 
 import org.example.autumn.servlet.IDispatcher
+import java.util.*
 
 interface IRouter {
     fun setRoute(method: String, path: String, dispatcher: IDispatcher)
@@ -9,13 +10,18 @@ interface IRouter {
 
 class Router : IRouter {
     companion object {
-        fun parsePattern(pattern: String): List<String> {
-            return buildList {
-                for (part in pattern.split('/').filter { it.isNotEmpty() }) {
-                    add(part)
-                    if (part.startsWith('*')) return@buildList
+        fun normalizePath(p: String): String {
+            val stack = ArrayDeque<String>()
+            for (part in p.split("/")) {
+                if (part == "." || part.isEmpty()) {
+                    continue
+                } else if (part == "..") {
+                    if (stack.isNotEmpty()) stack.pop()
+                } else {
+                    stack.push(part)
                 }
             }
+            return "/" + stack.reversed().joinToString("/")
         }
     }
 
@@ -23,31 +29,10 @@ class Router : IRouter {
     private val dispatchers = mutableMapOf<String, IDispatcher>()
 
     override fun setRoute(method: String, path: String, disp: IDispatcher) {
-        val parts = parsePattern(path)
-        if (!roots.containsKey(method)) roots[method] = TrieNode()
-
-        roots[method]!!.insert(path, parts, 0)
-        dispatchers["${method}:${path}"] = disp
+        TODO()
     }
 
     override fun getRoute(method: String, path: String): Pair<IDispatcher, Map<String, String>>? {
-        val searchParts = parsePattern(path)
-        val params = mutableMapOf<String, String>()
-
-        val root = roots[method] ?: return null
-        val node = root.search(searchParts, 0) ?: return null
-
-        val parts = parsePattern(node.pattern)
-        for (index in parts.indices) {
-            val part = parts[index]
-            if (part.startsWith(':')) {
-                params[part.substring(1)] = searchParts[index]
-            }
-            if (part.startsWith('*') && part.length > 1) {
-                params[part.substring(1)] = searchParts.slice(1 until searchParts.size).joinToString("/")
-                break
-            }
-        }
-        return Pair(dispatchers["${method}:${node.pattern}"]!!, params)
+        TODO()
     }
 }
