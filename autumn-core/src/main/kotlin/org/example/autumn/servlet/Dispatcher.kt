@@ -33,7 +33,7 @@ class Dispatcher(
             if (regPath.find { it == '{' || it == '}' } != null) {
                 throw ServletException("Invalid path: $path")
             }
-            return Regex("^$regPath/?\$")
+            return Regex("^$regPath\$")
         }
     }
 
