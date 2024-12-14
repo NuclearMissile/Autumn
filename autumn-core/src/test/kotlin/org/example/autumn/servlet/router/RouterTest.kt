@@ -36,25 +36,25 @@ class RouterTest {
         Pair("/", "/"),
         Pair("/abc", "/abc"),
         Pair("/a/b/c", "/a/b/c"),
-        Pair("/abc/", "/abc"),
-        Pair("/a/b/c/", "/a/b/c"),
+        Pair("/abc/", "/abc/"),
+        Pair("/a/b/c/", "/a/b/c/"),
 
         // Missing root
         Pair("", "/"),
-        Pair("a/", "/a"),
+        Pair("a/", "/a/"),
         Pair("abc", "/abc"),
         Pair("abc/def", "/abc/def"),
         Pair("a/b/c", "/a/b/c"),
 
         // Double slash
         Pair("//", "/"),
-        Pair("/abc//", "/abc"),
-        Pair("/abc/def//", "/abc/def"),
-        Pair("/a/b/c//", "/a/b/c"),
+        Pair("/abc//", "/abc/"),
+        Pair("/abc/def//", "/abc/def/"),
+        Pair("/a/b/c//", "/a/b/c/"),
         Pair("//a//b//c", "/a/b/c"),
         Pair("//abc", "/abc"),
         Pair("///abc", "/abc"),
-        Pair("//abc//", "/abc"),
+        Pair("//abc//", "/abc/"),
 
         // Remove . elements
         Pair(".", "/"),
@@ -95,7 +95,7 @@ class RouterTest {
     }
 
     @Test
-    fun getRoute() {
+    fun testGetRoute() {
         val router = createTestRouter()
         val (_, params) = router.getRoute("GET", "/hello/aaa")!!
         assertEquals("aaa", params["name"])

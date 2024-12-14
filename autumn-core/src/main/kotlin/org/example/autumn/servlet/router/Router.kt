@@ -21,7 +21,8 @@ class Router : IRouter {
                     stack.push(part)
                 }
             }
-            return "/" + stack.reversed().joinToString("/")
+            val trailingSlash = if (p.length > 1 && p.last() == '/' && stack.isNotEmpty()) "/" else ""
+            return stack.reversed().joinToString("/", prefix = "/", postfix = trailingSlash)
         }
     }
 
