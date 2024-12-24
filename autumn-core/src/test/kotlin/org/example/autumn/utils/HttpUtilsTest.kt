@@ -12,6 +12,18 @@ import kotlin.test.assertNull
 
 class HttpUtilsTest {
     @Test
+    fun testNormalizePath() {
+        assertEquals("/", HttpUtils.normalizePath("/"))
+        assertEquals("/abc/", HttpUtils.normalizePath("/abc/"))
+        assertEquals("/abc/def", HttpUtils.normalizePath("/abc/def"))
+        assertEquals("/abc/def/", HttpUtils.normalizePath("/abc/def//"))
+        assertEquals("/", HttpUtils.normalizePath("//"))
+        assertEquals("/abc", HttpUtils.normalizePath("/abc/def/.."))
+        assertEquals("/abc/", HttpUtils.normalizePath("/abc/def/../"))
+        assertEquals("/", HttpUtils.normalizePath("/abc/def/../../"))
+    }
+
+    @Test
     fun testEscapeHtml() {
         val html = "<h1>Hello & \"World!\"</h1>"
         val escaped = html.escapeHtml()
@@ -46,7 +58,8 @@ class HttpUtilsTest {
     fun testParseCookies() {
         val cookies = "   yummy_cookie=choco; tasty_cookie=strawberry; a;   "
         assertEquals(
-            "yummy_cookie:choco, tasty_cookie:strawberry, a:", parseCookies(cookies)!!.joinToString { "${it.name}:${it.value}" }
+            "yummy_cookie:choco, tasty_cookie:strawberry, a:",
+            parseCookies(cookies)!!.joinToString { "${it.name}:${it.value}" }
         )
         assertNull(parseCookies(""))
         assertNull(parseCookies(";"))

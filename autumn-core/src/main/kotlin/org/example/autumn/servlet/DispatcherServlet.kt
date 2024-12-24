@@ -11,6 +11,7 @@ import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.findClosestMatchingType
+import org.example.autumn.utils.HttpUtils.normalizePath
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
@@ -145,7 +146,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI.removePrefix(req.contextPath)
+        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
@@ -161,7 +162,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse, dispatchers: List<Dispatcher>) {
-        val url = req.requestURI.removePrefix(req.contextPath)
+        val url = normalizePath(req.requestURI.removePrefix(req.contextPath)) 
         val dispatcher = dispatchers.firstOrNull { it.match(url) }
         try {
             when {
