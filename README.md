@@ -24,7 +24,7 @@ hello-autumn (user login demo), use Autumn just like Spring
 ### Let's have a try
 
 ```shell
-# build
+# build (please use JDK 21+)
 ls                     # current path: xxx/autumn
 cd ./autumn-build/     # cd to xxx/autumn/autumn-build/
 mvn clean              # clean previous build
