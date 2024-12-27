@@ -36,14 +36,14 @@ class FreeMarkerViewResolver(
     private lateinit var freeMarkerErrorConfig: Configuration
 
     override fun init() {
-        fun createConfig(templatePath: String) = Configuration(Configuration.VERSION_2_3_33).apply {
+        fun createConfig(templatePath: String) = Configuration(Configuration.VERSION_2_3_34).apply {
             outputFormat = HTMLOutputFormat.INSTANCE
             defaultEncoding = templateEncoding
             templateLoader = ServletTemplateLoader(servletContext, templatePath)
             templateExceptionHandler = TemplateExceptionHandler.HTML_DEBUG_HANDLER
             autoEscapingPolicy = Configuration.ENABLE_IF_SUPPORTED_AUTO_ESCAPING_POLICY
             localizedLookup = false
-            objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_33).apply { isExposeFields = true }
+            objectWrapper = DefaultObjectWrapper(Configuration.VERSION_2_3_34).apply { isExposeFields = true }
         }
 
         logger.info(
