@@ -101,7 +101,7 @@ class RestApiController {
     fun register(@RequestBody signin: SigninObj, resp: HttpServletResponse) {
         resp.contentType = "application/json"
         val pw = resp.writer
-        pw.write("[\"${signin!!.name}\",true,12345]")
+        pw.write("[\"${signin.name}\",true,12345]")
         pw.flush()
     }
 

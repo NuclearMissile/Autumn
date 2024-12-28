@@ -12,38 +12,21 @@ import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.extractTarget
 import org.example.autumn.utils.ClassUtils.toPrimitive
 import org.example.autumn.utils.JsonUtils.readJson
-import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
-class Dispatcher(
-    urlPattern: String,
+class HttpRequestHandler(
     private val controller: Any,
     private val handlerMethod: Method,
     val controllerBeanName: String,
     val produce: String,
     val isRest: Boolean,
-) : Comparable<Dispatcher> {
-    companion object {
-        private val PATH_VARIABLE_REGEX = "\\{([a-zA-Z][a-zA-Z0-9]*)}".toRegex()
-
-        fun compilePath(path: String): Regex {
-            val regPath = path.replace(PATH_VARIABLE_REGEX, "(?<$1>[^/]*)")
-            if (regPath.find { it == '{' || it == '}' } != null) {
-                throw ServletException("Invalid path: $path")
-            }
-            return Regex("^$regPath\$")
-        }
-    }
-
+) {
     val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
     val isVoid = handlerMethod.returnType == Void.TYPE
 
-    private val logger = LoggerFactory.getLogger(javaClass)
     private val methodParams = mutableListOf<Param>()
-    private val name = controllerBeanName + "." + handlerMethod.name
-    private val urlPatternRegex = compilePath(urlPattern)
 
     init {
         val params = handlerMethod.parameters
@@ -51,21 +34,18 @@ class Dispatcher(
         for (i in params.indices) {
             methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
         }
-        logger.atDebug().log(
-            "mapping {} to handler {}.{}, parameters: {}",
-            urlPatternRegex.pattern, controller.javaClass.simpleName, handlerMethod.name, methodParams
-        )
     }
 
-    fun match(url: String): Boolean {
-        return urlPatternRegex.matches(url)
-    }
-
-    fun process(url: String, req: HttpServletRequest, resp: HttpServletResponse, exception: Exception? = null): Any? {
+    fun process(
+        req: HttpServletRequest,
+        resp: HttpServletResponse,
+        params: Map<String, String>,
+        exception: Exception? = null,
+    ): Any? {
         val args = methodParams.map { param ->
             when (param.paramAnno) {
                 is PathVariable -> try {
-                    urlPatternRegex.matchEntire(url)!!.groups[param.name!!]!!.value.toPrimitive(param.paramType)
+                    params[param.name!!]!!.toPrimitive(param.paramType)
                         ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                 } catch (_: Exception) {
                     throw RequestErrorException("Path variable '${param.name}' is required.")
@@ -120,11 +100,6 @@ class Dispatcher(
         } catch (e: InvocationTargetException) {
             throw e.extractTarget()
         }
-    }
-
-    override fun compareTo(other: Dispatcher): Int {
-        val ret = name.compareTo(other.name)
-        return if (ret == 0) methodParams.count().compareTo(other.methodParams.count()) else ret
     }
 
     private class Param(method: Method, param: Parameter, annos: List<Annotation>) {

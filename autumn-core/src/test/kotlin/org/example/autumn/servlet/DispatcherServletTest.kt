@@ -1,50 +1,24 @@
 package org.example.autumn.servlet
 
-import jakarta.servlet.ServletException
 import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.context.AnnotationApplicationContext
-import org.example.autumn.servlet.Dispatcher.Companion.compilePath
 import org.example.autumn.utils.ConfigProperties
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.assertThrows
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.mock.web.MockHttpSession
 import org.springframework.mock.web.MockServletContext
 import java.nio.file.Path
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DispatcherServletTest {
     private lateinit var dispatcherServlet: DispatcherServlet
     private lateinit var ctx: MockServletContext
-
-    @Test
-    fun testValidPath() {
-        val p0 = compilePath("/user/{userId}/{orderId}")
-        val m0 = p0.matchEntire("/user/0/11")
-        assertNotNull(m0)
-        assertEquals("0", m0.groups["userId"]!!.value)
-        assertEquals("11", m0.groups[2]!!.value)
-
-        assertNull(p0.matchEntire("/user/123/a/456"))
-
-        val p1 = compilePath("/test/{a123dsdas}")
-        val m1 = p1.matchEntire("/test/aaabbbccc")
-        assertNotNull(m1)
-        assertEquals("aaabbbccc", m1.groups["a123dsdas"]!!.value)
-    }
-
-    @Test
-    fun testInvalidPath() {
-        assertThrows<ServletException> { compilePath("/empty/{}") }
-        assertThrows<ServletException> { compilePath("/start-with-digit/{123}") }
-        assertThrows<ServletException> { compilePath("/invalid-name/{abc-def}") }
-        assertThrows<ServletException> { compilePath("/missing-left/a}") }
-        assertThrows<ServletException> { compilePath("/missing-right/a}") }
-    }
 
     @Test
     fun getHello() {
@@ -321,7 +295,10 @@ class DispatcherServletTest {
             val resp = createMockResponse()
             dispatcherServlet.service(req, resp)
             assertEquals(status, resp.status)
-            assertEquals(resp.contentAsString, DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>"))
+            assertEquals(
+                resp.contentAsString,
+                DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>")
+            )
         }
     }
 

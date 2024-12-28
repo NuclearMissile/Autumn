@@ -48,11 +48,10 @@ class DispatcherServlet : HttpServlet() {
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
-    private val getDispatchers = mutableListOf<Dispatcher>()
-    private val postDispatchers = mutableListOf<Dispatcher>()
+    private val router = Router<HttpRequestHandler>()
 
-    // controller name: (exception class: dispatcher)
-    private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, Dispatcher>>()
+    // controller name: (exception class: handler)
+    private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, HttpRequestHandler>>()
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
@@ -74,9 +73,6 @@ class DispatcherServlet : HttpServlet() {
             if (restControllerAnno != null)
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
         }
-
-        getDispatchers.sort()
-        postDispatchers.sort()
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -84,11 +80,11 @@ class DispatcherServlet : HttpServlet() {
         if (url == faviconPath || url.startsWith(resourcePath))
             resource(req, resp)
         else
-            serve(req, resp, getDispatchers)
+            serve(req, resp)
     }
 
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
-        serve(req, resp, postDispatchers)
+        serve(req, resp)
     }
 
     private fun addController(controllerBeanName: String, prefix: String, instance: Any, isRest: Boolean) {
@@ -121,22 +117,23 @@ class DispatcherServlet : HttpServlet() {
             configMethod(m)
             if (anno is Get) {
                 val urlPattern = prefix + anno.value
-                getDispatchers +=
-                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
+                router.add("GET", urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest))
             }
             if (anno is Post) {
                 val urlPattern = prefix + anno.value
-                postDispatchers +=
-                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
+                router.add(
+                    "POST",
+                    urlPattern,
+                    HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                )
             }
             if (anno is ExceptionHandler) {
-                val urlPattern = prefix
                 val exceptionClass = anno.value.java as Class<Exception>
                 val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
                 if (exceptionHandlers.containsKey(exceptionClass))
                     throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
                 exceptionHandlers[exceptionClass] =
-                    Dispatcher(urlPattern, instance, m, controllerBeanName, anno.produce, isRest)
+                    HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
             }
         }
 
@@ -161,25 +158,33 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun serve(req: HttpServletRequest, resp: HttpServletResponse, dispatchers: List<Dispatcher>) {
-        val url = normalizePath(req.requestURI.removePrefix(req.contextPath)) 
-        val dispatcher = dispatchers.firstOrNull { it.match(url) }
+    private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
+        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
+        val result = router.match(req.method, url)
+        if (result == null) throw NotFoundException("Not found")
+
+        val handler = result.route.handler
         try {
-            when {
-                dispatcher == null -> throw NotFoundException("Not found")
-                dispatcher.isRest -> serveRest(url, dispatcher, req, resp)
-                else -> serveMvc(url, dispatcher, req, resp)
-            }
+            if (handler.isRest)
+                serveRest(url, result.params, handler, req, resp)
+            else
+                serveMvc(url, result.params, handler, req, resp)
         } catch (e: Exception) {
-            serveException(e, req, resp, dispatcher?.isRest == true)
+            serveException(e, req, resp, handler.isRest == true)
         }
     }
 
-    private fun serveRest(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        val (ret, _dispatcher) = runDispatcher(url, dispatcher, req, resp)
+    private fun serveRest(
+        url: String,
+        params: Map<String, String>,
+        handler: HttpRequestHandler,
+        req: HttpServletRequest,
+        resp: HttpServletResponse
+    ) {
+        val (ret, _handler) = runDispatcher(handler, params, req, resp)
         if (resp.isCommitted) return
         when {
-            _dispatcher.isResponseBody -> {
+            _handler.isResponseBody -> {
                 when (ret) {
                     is String -> resp.writer.apply { write(ret) }.flush()
                     is ByteArray -> resp.outputStream.apply { write(ret) }.flush()
@@ -189,20 +194,26 @@ class DispatcherServlet : HttpServlet() {
 
             ret is ResponseEntity -> resp.set(ret)
 
-            !_dispatcher.isVoid -> {
+            !_handler.isVoid -> {
                 resp.writer.writeJson(ret).flush()
             }
         }
     }
 
-    private fun serveMvc(url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse) {
-        val (ret, _dispatcher) = runDispatcher(url, dispatcher, req, resp)
+    private fun serveMvc(
+        url: String,
+        params: Map<String, String>,
+        handler: HttpRequestHandler,
+        req: HttpServletRequest,
+        resp: HttpServletResponse
+    ) {
+        val (ret, _handler) = runDispatcher(handler, params, req, resp)
         if (resp.isCommitted) return
         when (ret) {
             is ResponseEntity -> resp.set(ret)
 
             is String -> {
-                if (_dispatcher.isResponseBody) {
+                if (_handler.isResponseBody) {
                     resp.writer.apply { write(ret) }.flush()
                 } else if (ret.startsWith("redirect:")) {
                     resp.sendRedirect(req.contextPath + ret.substring(9))
@@ -212,7 +223,7 @@ class DispatcherServlet : HttpServlet() {
             }
 
             is ByteArray -> {
-                if (_dispatcher.isResponseBody) {
+                if (_handler.isResponseBody) {
                     resp.outputStream.also { it.write(ret) }.flush()
                 } else {
                     throw ServerErrorException("Unable to process ByteArray result when handle url: $url")
@@ -234,32 +245,32 @@ class DispatcherServlet : HttpServlet() {
                 }
             }
 
-            (ret != null && !_dispatcher.isVoid) -> {
+            (ret != null && !_handler.isVoid) -> {
                 throw ServerErrorException("Unable to process ${ret.javaClass.name} result when handle url: $url")
             }
         }
     }
 
     private fun runDispatcher(
-        url: String, dispatcher: Dispatcher, req: HttpServletRequest, resp: HttpServletResponse,
-    ): Pair<Any?, Dispatcher> {
-        fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): Dispatcher? {
+        handler: HttpRequestHandler, params: Map<String, String>, req: HttpServletRequest, resp: HttpServletResponse,
+    ): Pair<Any?, HttpRequestHandler> {
+        fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): HttpRequestHandler? {
             val exceptionHandlers = exceptionHandlerMap[controllerName]!!
             val matchedExceptionClass = findClosestMatchingType(exceptionClass, exceptionHandlers.keys) ?: return null
             return exceptionHandlers[matchedExceptionClass]
         }
 
-        var _dispatcher = dispatcher
-        if (_dispatcher.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
+        var _handler = handler
+        if (_handler.produce.isNotEmpty()) resp.contentType = _handler.produce
         val ret = try {
-            _dispatcher.process(url, req, resp)
+            _handler.process(req, resp, params)
         } catch (e: Exception) {
-            val exceptionHandler = findExceptionHandler(dispatcher.controllerBeanName, e.javaClass) ?: throw e
-            _dispatcher = exceptionHandler
-            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _dispatcher.produce
-            _dispatcher.process(url, req, resp, e)
+            val exceptionHandler = findExceptionHandler(handler.controllerBeanName, e.javaClass) ?: throw e
+            _handler = exceptionHandler
+            if (exceptionHandler.produce.isNotEmpty()) resp.contentType = _handler.produce
+            _handler.process(req, resp, emptyMap(), e)
         }
-        return (ret to _dispatcher)
+        return (ret to _handler)
     }
 
     private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
