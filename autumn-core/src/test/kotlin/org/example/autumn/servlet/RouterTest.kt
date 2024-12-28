@@ -76,6 +76,20 @@ class RouterTest {
             assertTrue { e.message!!.contains("conflicts with existing route") }
         }
 
+        try {
+            router.add("GET", "/campaigns/{id}/{id}/{name}/{name}", dummyHandler)
+            fail()
+        } catch (e: AutumnException) {
+            assertTrue { e.message!!.contains("ambiguous path variables found") }
+        }
+
+        try {
+            router.add("GET", "/campaigns/{id:[0-9]+}/{id:[a-zA-Z]+}", dummyHandler)
+            fail()
+        } catch (e: AutumnException) {
+            assertTrue { e.message!!.contains("ambiguous path variables found") }
+        }
+
         router.add("GET", "/campaigns/{id:[0-9]+}", dummyHandler)
         try {
             router.add("GET", "/campaigns/{name:[0-9]+}", dummyHandler)

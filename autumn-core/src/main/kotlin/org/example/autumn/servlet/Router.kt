@@ -3,16 +3,16 @@ package org.example.autumn.servlet
 import org.example.autumn.exception.AutumnException
 import org.example.autumn.servlet.Router.Companion.isPathVar
 
-internal data class Route<T>(val method: String, val path: String, val handler: T)
+data class Route<T>(val method: String, val path: String, val handler: T)
 
-internal data class PathVar(val name: String, val pattern: String?, private val regex: Regex?) {
+data class PathVar(val name: String, val pattern: String?, private val regex: Regex?) {
     companion object {
         fun create(part: String): PathVar {
-            var internalPart = part
+            var temp = part
             if (isPathVar(part)) {
-                internalPart = part.substring(1, part.length - 1)
+                temp = part.substring(1, part.length - 1)
             }
-            val parts = internalPart.split(':')
+            val parts = temp.split(':')
             if (parts.size > 1) {
                 return PathVar(parts[0], parts[1], parts[1].toRegex())
             }
@@ -25,7 +25,7 @@ internal data class PathVar(val name: String, val pattern: String?, private val 
 
 data class MatchResult<T>(val method: String, val path: String, val handler: T, val params: Map<String, String>)
 
-internal class TrieNode<T>(
+class TrieNode<T>(
     var value: String = "",
     var route: Route<T>? = null,
     var pathVar: PathVar? = null,
@@ -55,13 +55,15 @@ internal class TrieNode<T>(
     val regexPathVarChildren = sortedSetOf<TrieNode<T>>(COMPARATOR)
     var pathVarChild: TrieNode<T>? = null
 
-    internal fun addChild(key: String, child: TrieNode<T>) {
+    fun addChild(key: String, child: TrieNode<T>) {
         children[key] = child
         child.value = key
         if (child.pathVar != null) {
             if (child.pathVar!!.pattern != null) {
                 regexPathVarChildren.add(child)
             } else {
+                if (pathVarChild != null)
+                    throw AutumnException("should not be here")
                 pathVarChild = child
             }
         }
@@ -155,12 +157,19 @@ class Router<T> {
 
         val route = Route(method, path, handler)
         var current = roots[method] ?: throw AutumnException("unsupported method: $method")
+        val parts = path.split(PATH_SEPARATOR).filter { it.isNotEmpty() }
+        val pathVars = parts.filter { isPathVar(it) }.map { PathVar.create(it) }
+        val ambiguousPathVars = pathVars.groupBy { it.name }.filter { it.value.size > 1 }.keys
 
-        for (part in path.split(PATH_SEPARATOR).filter { it.isNotEmpty() }) {
+        if (ambiguousPathVars.isNotEmpty()) {
+            throw AutumnException("ambiguous path variables found: $ambiguousPathVars with path: $path")
+        }
+
+        for (part in parts) {
             var key = part
-            if (isPathVar(part)) {
-                val pathVar = PathVar.create(part)
-                key = if (pathVar.pattern == null) "{var}" else "{var:${pathVar.pattern}}"
+            if (isPathVar(key)) {
+                val pathVar = PathVar.create(key)
+                key = if (pathVar.pattern == null) "{pathVar}" else "{pathVar:${pathVar.pattern}}"
                 if (!current.hasChild(key)) {
                     current.addChild(key, TrieNode(pathVar = pathVar))
                 }
