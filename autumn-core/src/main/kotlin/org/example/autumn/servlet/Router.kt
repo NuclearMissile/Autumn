@@ -3,9 +3,9 @@ package org.example.autumn.servlet
 import org.example.autumn.exception.AutumnException
 import org.example.autumn.servlet.Router.Companion.isPathVar
 
-data class Route<T>(val method: String, val path: String, val handler: T)
+internal data class Route<T>(val method: String, val path: String, val handler: T)
 
-data class PathVar(val name: String, val pattern: String?, private val regex: Regex?) {
+internal data class PathVar(val name: String, val pattern: String?, private val regex: Regex?) {
     companion object {
         fun create(part: String): PathVar {
             var internalPart = part
@@ -23,7 +23,9 @@ data class PathVar(val name: String, val pattern: String?, private val regex: Re
     fun match(part: String): Boolean = regex != null && regex.matches(part)
 }
 
-class TrieNode<T>(
+data class MatchResult<T>(val method: String, val path: String, val handler: T, val params: Map<String, String>)
+
+internal class TrieNode<T>(
     var value: String = "",
     var route: Route<T>? = null,
     var pathVar: PathVar? = null,
@@ -74,22 +76,35 @@ class TrieNode<T>(
     private fun printNode(node: TrieNode<T>, level: Int): String {
         /**
          * eg:
+         * Method GET:
          * ROOT
-         *     ==> campaigns --> path: </campaigns> handler: <<DUMMY>>
-         *         ==> 123 --> path: </campaigns/123> handler: <<DUMMY>>
-         *             ==> details --> path: </campaigns/123/details> handler: <<DUMMY>>
-         *         ==> 789
-         *             ==> detail --> path: </campaigns/789/detail> handler: <<DUMMY>>
-         *         ==> {var:[0-9]+} --> path: </campaigns/{id:[0-9]+}> handler: <<DUMMY>>
-         *         ==> {var} --> path: </campaigns/{id}> handler: <<DUMMY>>
-         *     ==> apidocs
-         *         ==> swagger.json --> path: </apidocs/swagger.json> handler: <<DUMMY>>
-         *         ==> swagger.yaml --> path: </apidocs/swagger.yaml> handler: <<DUMMY>>
+         *  ==> hello --> path: </hello/>, handler: helloController.hello[0]
+         *  	==> error --> path: </hello/error>, handler: helloController.error[0]
+         *  		==> {var} --> path: </hello/error/{errorCode}>, handler: helloController.error[1]
+         *  			==> {var} --> path: </hello/error/{errorCode}/{errorResp}>, handler: helloController.error[2]
+         *  	==> echo --> path: </hello/echo>, handler: helloController.echo[1]
+         *  ==> register --> path: </register>, handler: indexController.register[1]
+         *  ==> changePassword --> path: </changePassword>, handler: indexController.changePassword[1]
+         *  ==> logoff --> path: </logoff>, handler: indexController.logoff[1]
+         *  ==> login --> path: </login>, handler: indexController.login[1]
+         *  ==> api
+         *  	==> params --> path: </api/params>, handler: restApiController.params[1]
+         *  	==> error --> path: </api/error>, handler: restApiController.error[0]
+         *  		==> {var} --> path: </api/error/{status}>, handler: restApiController.error[1]
+         *  			==> {var} --> path: </api/error/{errorCode}/{errorResp}>, handler: restApiController.error[2]
+         *  	==> hello
+         *  		==> {var} --> path: </api/hello/{name}>, handler: restApiController.hello[1]
+         *
+         * Method POST:
+         * ROOT
+         * 	==> register --> path: </register>, handler: indexController.register[3]
+         * 	==> changePassword --> path: </changePassword>, handler: indexController.changePassword[4]
+         * 	==> login --> path: </login>, handler: indexController.login[3]
          */
         val result = StringBuilder()
         result.append(
             if (node.value.isBlank()) "ROOT"
-            else node.value + if (node.route == null) "" else " --> path: <${node.route!!.path}> handler: ${node.route!!.handler}"
+            else node.value + if (node.route == null) "" else " --> path: <${node.route!!.path}>, handler: ${node.route!!.handler}"
         )
         result.append("\n")
         for ((_, v) in node.children) {
@@ -99,8 +114,6 @@ class TrieNode<T>(
         return result.toString()
     }
 }
-
-data class MatchResult<T>(val route: Route<T>, val params: Map<String, String>)
 
 class Router<T> {
     companion object {
@@ -129,7 +142,8 @@ class Router<T> {
         val params = mutableMapOf<String, String>()
         val matched = matchNode(current, parts, 0, params)
         if (matched != null && matched.route != null) {
-            return MatchResult(matched.route!!, params)
+            val route = matched.route!!
+            return MatchResult(route.method, route.path, route.handler, params)
         }
         return null
     }
@@ -162,11 +176,8 @@ class Router<T> {
         current.route = route
     }
 
-    fun matchNode(
-        node: TrieNode<T>,
-        parts: List<String>,
-        index: Int,
-        params: MutableMap<String, String>,
+    private fun matchNode(
+        node: TrieNode<T>, parts: List<String>, index: Int, params: MutableMap<String, String>,
     ): TrieNode<T>? {
         if (index == parts.size) {
             return if (node.route != null) node else null

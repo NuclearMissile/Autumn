@@ -46,17 +46,17 @@ class RouterTest {
 
         result = router.match("GET", "/campaigns/abc")
         assertNotNull(result)
-        assertEquals("/campaigns/{id:[a-zA-Z]+}", result.route.path)
+        assertEquals("/campaigns/{id:[a-zA-Z]+}", result.path)
         assertEquals("abc", result.params["id"])
 
         result = router.match("GET", "/campaigns/456/details")
         assertNotNull(result)
-        assertEquals("/campaigns/456/details", result.route.path)
+        assertEquals("/campaigns/456/details", result.path)
         assertTrue { result.params.isEmpty() }
 
         result = router.match("GET", "/campaigns/789")
         assertNotNull(result)
-        assertEquals("/campaigns/{id:[0-9]+}", result.route.path)
+        assertEquals("/campaigns/{id:[0-9]+}", result.path)
         assertEquals("789", result.params["id"])
 
         result = router.match("GET", "/creatives")

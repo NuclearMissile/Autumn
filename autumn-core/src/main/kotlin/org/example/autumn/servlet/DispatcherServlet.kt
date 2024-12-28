@@ -169,10 +169,8 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
         val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
-        val result = router.match(req.method, url)
-        if (result == null) throw NotFoundException("Not found")
-
-        val handler = result.route.handler
+        val result = router.match(req.method, url) ?: throw NotFoundException("Not found")
+        val handler = result.handler
         try {
             if (handler.isRest)
                 serveRest(url, result.params, handler, req, resp)

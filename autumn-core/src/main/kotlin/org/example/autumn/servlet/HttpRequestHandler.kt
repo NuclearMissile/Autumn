@@ -26,14 +26,16 @@ class HttpRequestHandler(
     val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
     val isVoid = handlerMethod.returnType == Void.TYPE
 
-    private val methodParams = mutableListOf<Param>()
-
-    init {
+    private val methodParams = buildList {
         val params = handlerMethod.parameters
         val paramsAnnos = handlerMethod.parameterAnnotations
         for (i in params.indices) {
-            methodParams += Param(handlerMethod, params[i], paramsAnnos[i].toList())
+            add(Param(handlerMethod, params[i], paramsAnnos[i].toList()))
         }
+    }
+
+    override fun toString(): String {
+        return "$controllerBeanName.${handlerMethod.name}[${methodParams.size}]"
     }
 
     fun process(
