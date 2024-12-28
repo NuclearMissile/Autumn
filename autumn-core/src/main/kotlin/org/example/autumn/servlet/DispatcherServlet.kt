@@ -104,7 +104,7 @@ class DispatcherServlet : HttpServlet() {
             m.isAccessible = true
         }
 
-        clazz.declaredMethods.sortedBy { it.name }.forEach { m ->
+        clazz.declaredMethods.forEach { m ->
             val annos = listOf(
                 Get::class.java,
                 Post::class.java,
@@ -115,25 +115,33 @@ class DispatcherServlet : HttpServlet() {
 
             val anno = annos.first()
             configMethod(m)
-            if (anno is Get) {
-                val urlPattern = prefix + anno.value
-                router.add("GET", urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest))
-            }
-            if (anno is Post) {
-                val urlPattern = prefix + anno.value
-                router.add(
-                    "POST",
-                    urlPattern,
-                    HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
-                )
-            }
-            if (anno is ExceptionHandler) {
-                val exceptionClass = anno.value.java as Class<Exception>
-                val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
-                if (exceptionHandlers.containsKey(exceptionClass))
-                    throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
-                exceptionHandlers[exceptionClass] =
-                    HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+            when (anno) {
+                is Get -> {
+                    val urlPattern = prefix + anno.value
+                    router.add(
+                        "GET",
+                        urlPattern,
+                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                    )
+                }
+
+                is Post -> {
+                    val urlPattern = prefix + anno.value
+                    router.add(
+                        "POST",
+                        urlPattern,
+                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                    )
+                }
+
+                is ExceptionHandler -> {
+                    val exceptionClass = anno.value.java as Class<Exception>
+                    val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
+                    if (exceptionHandlers.containsKey(exceptionClass))
+                        throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
+                    exceptionHandlers[exceptionClass] =
+                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                }
             }
         }
 

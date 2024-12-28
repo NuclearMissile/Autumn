@@ -45,7 +45,7 @@ class HttpRequestHandler(
         val args = methodParams.map { param ->
             when (param.paramAnno) {
                 is PathVariable -> try {
-                    params[param.name!!]!!.toPrimitive(param.paramType)
+                    params[param.name]!!.toPrimitive(param.paramType)
                         ?: throw ServerErrorException("Could not determine argument type: ${param.paramType}")
                 } catch (_: Exception) {
                     throw RequestErrorException("Path variable '${param.name}' is required.")
