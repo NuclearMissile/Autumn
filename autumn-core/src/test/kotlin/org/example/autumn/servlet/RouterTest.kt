@@ -8,6 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 
 class RouterTest {
@@ -70,6 +71,7 @@ class RouterTest {
         router.add("GET", "/campaigns/{id}", dummyHandler)
         try {
             router.add("GET", "/campaigns/{name}", dummyHandler)
+            fail()
         } catch (e: AutumnException) {
             assertTrue { e.message!!.contains("conflicts with existing route") }
         }
@@ -77,11 +79,21 @@ class RouterTest {
         router.add("GET", "/campaigns/{id:[0-9]+}", dummyHandler)
         try {
             router.add("GET", "/campaigns/{name:[0-9]+}", dummyHandler)
+            fail()
         } catch (e: AutumnException) {
             assertTrue { e.message!!.contains("conflicts with existing route") }
         }
 
         router.add("GET", "/campaigns/{id}/{name}", dummyHandler)
+
+        router.add("GET", "/test", dummyHandler)
+        try {
+            router.add("GET", "/test", dummyHandler)
+            fail()
+        } catch (e: AutumnException) {
+            assertTrue { e.message!!.contains("conflicts with existing route") }
+        }
+
         println(router)
     }
 
@@ -89,6 +101,7 @@ class RouterTest {
     fun testUnsupportedMethod() {
         try {
             router.add("DELETE", "/a/{id}", dummyHandler)
+            fail()
         } catch (e: IllegalArgumentException) {
             assertTrue { e.message!!.contains("is not supported") }
         }
