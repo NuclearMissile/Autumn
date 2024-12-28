@@ -25,8 +25,7 @@ object HttpUtils {
                 stack.push(part)
             }
         }
-        val trailingSlash = if (path.last() == '/' && stack.isNotEmpty()) "/" else ""
-        return stack.reversed().joinToString("/", prefix = "/", postfix = trailingSlash)
+        return stack.reversed().joinToString("/", prefix = "/")
     }
 
     fun parseAcceptLanguages(acceptLanguage: String): List<Locale> {
