@@ -32,7 +32,9 @@ class RouterTest {
     fun testRoute() {
         router.add("GET", "/campaigns/{id}", dummyHandler)
         router.add("GET", "/campaigns/{id:[0-9]+}", dummyHandler)
+        router.add("GET", "/campaigns/{id:[a-zA-Z]+}", dummyHandler)
         router.add("GET", "/campaigns/123", dummyHandler)
+        router.add("GET", "/campaigns/123/{id}", dummyHandler)
         router.add("GET", "/campaigns/123/details", dummyHandler)
         router.add("GET", "/campaigns/456/details", dummyHandler)
         router.add("GET", "/campaigns", dummyHandler)
@@ -44,19 +46,20 @@ class RouterTest {
 
         result = router.match("GET", "/campaigns/abc")
         assertNotNull(result)
-        assertEquals("/campaigns/{id}", result.route.path)
+        assertEquals("/campaigns/{id:[a-zA-Z]+}", result.route.path)
         assertEquals("abc", result.params["id"])
 
         result = router.match("GET", "/campaigns/456/details")
         assertNotNull(result)
         assertEquals("/campaigns/456/details", result.route.path)
+        assertTrue { result.params.isEmpty() }
 
         result = router.match("GET", "/campaigns/789")
         assertNotNull(result)
         assertEquals("/campaigns/{id:[0-9]+}", result.route.path)
         assertEquals("789", result.params["id"])
 
-        result = router.match("GET", "/campaigns/abc/details")
+        result = router.match("GET", "/creatives")
         assertNull(result)
 
         println(router)

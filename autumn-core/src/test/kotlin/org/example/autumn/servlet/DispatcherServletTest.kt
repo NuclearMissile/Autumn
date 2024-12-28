@@ -15,6 +15,7 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class DispatcherServletTest {
     private lateinit var dispatcherServlet: DispatcherServlet
@@ -146,10 +147,12 @@ class DispatcherServletTest {
 
         val req3 = createMockRequest("GET", "/api/error")
         val resp3 = createMockResponse()
-        dispatcherServlet.service(req3, resp3)
-        assertEquals(500, resp3.status)
-        assertEquals("text/html", resp3.contentType)
-        assertEquals(resp3.contentAsString, DEFAULT_ERROR_RESP_BODY[500])
+        try {
+            dispatcherServlet.service(req3, resp3)
+            fail()
+        } catch (e: Exception) {
+            assertEquals("test", e.message)
+        }
 
         val req4 = createMockRequest("GET", "/api/error_not_found")
         val resp4 = createMockResponse()

@@ -50,17 +50,17 @@ class TrieNode<T>(
     }
 
     val children = mutableMapOf<String, TrieNode<T>>()
-    val pathVarChildren = sortedSetOf<TrieNode<T>>(COMPARATOR)
     val regexPathVarChildren = sortedSetOf<TrieNode<T>>(COMPARATOR)
+    var pathVarChild: TrieNode<T>? = null
 
-    fun addChild(key: String, child: TrieNode<T>) {
+    internal fun addChild(key: String, child: TrieNode<T>) {
         children[key] = child
         child.value = key
         if (child.pathVar != null) {
             if (child.pathVar!!.pattern != null) {
                 regexPathVarChildren.add(child)
             } else {
-                pathVarChildren.add(child)
+                pathVarChild = child
             }
         }
     }
@@ -107,21 +107,17 @@ class Router<T> {
         private const val PATH_SEPARATOR = "/"
         private const val PATH_VARIABLE_PREFIX = "{"
         private const val PATH_VARIABLE_SUFFIX = "}"
-        private const val PATH_VARIABLE_KEY = "{var}"
         private val SUPPORTED_METHODS = listOf("GET", "POST")
 
         fun isPathVar(part: String): Boolean =
             part.startsWith(PATH_VARIABLE_PREFIX) && part.endsWith(PATH_VARIABLE_SUFFIX)
     }
 
-    private val routes = mutableSetOf<Route<T>>()
     private val roots = mutableMapOf<String, TrieNode<T>>()
 
     init {
         SUPPORTED_METHODS.forEach { method -> roots[method] = TrieNode<T>() }
     }
-
-    fun getRoutes() = routes.toList()
 
     fun match(method: String, path: String): MatchResult<T>? {
         if (!SUPPORTED_METHODS.contains(method)) {
@@ -150,7 +146,7 @@ class Router<T> {
             var key = part
             if (isPathVar(part)) {
                 val pathVar = PathVar.create(part)
-                key = if (pathVar.pattern == null) PATH_VARIABLE_KEY else "{var:${pathVar.pattern}}"
+                key = if (pathVar.pattern == null) "{var}" else "{var:${pathVar.pattern}}"
                 if (!current.hasChild(key)) {
                     current.addChild(key, TrieNode(pathVar = pathVar))
                 }
@@ -164,7 +160,6 @@ class Router<T> {
             throw AutumnException("${route.path} conflicts with existing route ${current.route!!.path}")
         }
         current.route = route
-        routes.add(route)
     }
 
     fun matchNode(
@@ -197,7 +192,7 @@ class Router<T> {
             }
         }
 
-        val pathVarNode = if (node.pathVarChildren.isEmpty()) null else node.pathVarChildren.iterator().next()
+        val pathVarNode = node.pathVarChild
         if (pathVarNode != null) {
             params[pathVarNode.pathVar!!.name] = part
             return matchNode(pathVarNode, parts, index + 1, params)
