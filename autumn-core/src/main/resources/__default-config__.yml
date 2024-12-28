@@ -40,6 +40,8 @@ server:
     session-cookie-name: JSESSIONID
     # session timeout = 30 min = 1800 sec:
     session-timeout: 1800
+    # friendly error page rendering for mvc controller
+    friendly-error-page-rendering: true
 
   # forwarded headers should ONLY set when behind a reverse proxy like Nginx:
   forwarded-headers:

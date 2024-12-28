@@ -46,7 +46,7 @@ class HttpConnector(
                     servletContext.process(req, resp)
                 } catch (e: Throwable) {
                     // fallback error handling
-                    logger.error("unhandled exception caught:", e)
+                    logger.error("unhandled exception caught in HttpConnector:", e)
                     if (!resp.isCommitted)
                         resp.sendError(500, DEFAULT_ERROR_RESP_BODY[500]!!)
                 } finally {

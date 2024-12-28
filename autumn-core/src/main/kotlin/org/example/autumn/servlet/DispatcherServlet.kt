@@ -13,6 +13,7 @@ import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.findClosestMatchingType
 import org.example.autumn.utils.HttpUtils.normalizePath
 import org.example.autumn.utils.JsonUtils.writeJson
+import org.example.autumn.utils.getRequired
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -282,16 +283,18 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
-        logger.warn("Unhandled exception thrown in DispatcherServlet.", e)
-        if (isRest) {
-            val mapper = run {
-                val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
-                if (target != null) exceptionMappers[target]!! else defaultExceptionMapper
-            }
+        val mapper = run {
+            val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
+            if (target != null) exceptionMappers[target] else null
+        }
+        if (mapper != null) {
             mapper.map(e, req, resp)
-        } else {
+        } else if (!isRest && context.config.getRequired("server.web-app.friendly-error-page-rendering")) {
+            logger.info("friendly error page rendered for", e)
             val statusCode = if (e is ResponseErrorException) e.statusCode else 500
             viewResolver.renderError(statusCode, emptyMap(), req, resp)
+        } else {
+            throw e
         }
     }
 }

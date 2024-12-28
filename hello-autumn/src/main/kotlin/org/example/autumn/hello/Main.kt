@@ -41,14 +41,14 @@ class HelloConfig : ContextLoadListener()
 
 class HelloException(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
 
-class HelloException2(val statusCode: Int, message: String, val responseBody: String? = null) : Exception(message)
+class HelloException2(val statusCode: Int, message: String) : Exception(message)
 
 @Component
 class HelloExceptionMapper : ExceptionMapper<HelloException>() {
     private val logger = LoggerFactory.getLogger(javaClass)
     override fun map(e: HelloException, req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI.removePrefix(req.contextPath)
-        logger.warn("process request failed for $url, message: ${e.message}, status: ${e.statusCode}", e)
+        logger.info("exception is handled by exception mapper.")
+        logger.warn("process request failed for ${req.requestURI}, message: ${e.message}, status: ${e.statusCode}", e)
         resp.set(ResponseEntity(e.responseBody, e.statusCode, "text/plain"))
     }
 }
@@ -219,7 +219,7 @@ class HelloController {
 
     @Get("/error")
     fun error(): ModelAndView {
-        return ModelAndView(null, mapOf(), 400)
+        throw Exception("MVC test error")
     }
 
     @Get("/error/{errorCode}/{errorResp}")
