@@ -67,6 +67,13 @@
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io</groupId>
+            <artifactId>routekit</artifactId>
+            <version>0.2.1</version>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/3rd/routekit-0.2.1.jar</systemPath>
+        </dependency>
 
         <dependency>
             <groupId>org.xerial</groupId>

@@ -1,11 +1,14 @@
 package org.example.autumn.servlet
 
+import io.routekit.Router
+import io.routekit.RouterSetup
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
+import org.example.autumn.exception.AutumnException
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
@@ -38,7 +41,11 @@ class DispatcherServlet : HttpServlet() {
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
-    private val router = Router<HttpRequestHandler>()
+    private val routerSetupMap = buildMap {
+        put("GET", RouterSetup<HttpRequestHandler>())
+        put("POST", RouterSetup<HttpRequestHandler>())
+    }
+    private lateinit var routerMap: Map<String, Router<HttpRequestHandler>>
 
     // controller name: (exception class: handler)
     private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, HttpRequestHandler>>()
@@ -63,6 +70,8 @@ class DispatcherServlet : HttpServlet() {
             if (restControllerAnno != null)
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
         }
+
+        routerMap = routerSetupMap.map { it.key to it.value.build() }.toMap()
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -107,20 +116,16 @@ class DispatcherServlet : HttpServlet() {
             configMethod(m)
             when (anno) {
                 is Get -> {
-                    val urlPattern = prefix + anno.value
-                    router.add(
-                        "GET",
-                        urlPattern,
-                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                    val urlPattern = normalizePath(prefix + anno.value)
+                    routerSetupMap["GET"]!!.add(
+                        urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )
                 }
 
                 is Post -> {
-                    val urlPattern = prefix + anno.value
-                    router.add(
-                        "POST",
-                        urlPattern,
-                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
+                    val urlPattern = normalizePath(prefix + anno.value)
+                    routerSetupMap["POST"]!!.add(
+                        urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )
                 }
 
@@ -158,13 +163,15 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
         try {
+            val router = routerMap[req.method] ?: throw AutumnException("unsupported method: ${req.method}")
             val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
-            val result = router.match(req.method, url) ?: throw NotFoundException("Resource not found for: $url")
+            val result = router.routeOrNull(url) ?: throw NotFoundException("Resource not found for: $url")
             val handler = result.handler
+            val params = result.variables().map { it.key to it.value.toString() }.toMap()
             if (handler.isRest)
-                serveRest(url, result.params, handler, req, resp)
+                serveRest(url, params, handler, req, resp)
             else
-                serveMvc(url, result.params, handler, req, resp)
+                serveMvc(url, params, handler, req, resp)
         } catch (e: Exception) {
             serveException(e, req, resp)
         }

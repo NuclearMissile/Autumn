@@ -77,15 +77,15 @@ class RestApiController {
         throw Exception("api test error")
     }
 
-    @Get("/error/{status}")
-    fun error(@PathVariable status: Int): ResponseEntity {
-        return ResponseEntity(getDefaultErrorResponse(status), status, "text/html")
-    }
-
     @Get("/error/{errorCode}/{errorResp}")
     fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
         throw HelloException(
             errorCode, "test", mapOf("errorCode" to errorCode, "errorResp" to errorResp).toJson()
         )
+    }
+
+    @Get("/error/{errorCode}")
+    fun error(@PathVariable("errorCode") status: Int): ResponseEntity {
+        return ResponseEntity(getDefaultErrorResponse(status), status, "text/html")
     }
 }
