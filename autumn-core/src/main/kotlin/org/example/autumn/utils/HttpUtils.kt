@@ -1,12 +1,17 @@
 package org.example.autumn.utils
 
 import jakarta.servlet.http.Cookie
+import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.DEFAULT_LOCALE
 import java.net.URLDecoder
 import java.nio.charset.Charset
 import java.util.*
 
 object HttpUtils {
+    fun getDefaultErrorResponse(status: Int): String {
+        return DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>${status}: Status error</h1>")
+    }
+
     fun String.escapeHtml(): String {
         return this.replace("&", "&amp;")
             .replace("<", "&lt;")

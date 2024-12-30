@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
 import org.example.autumn.exception.NotFoundException
@@ -37,16 +36,6 @@ class DispatcherServlet : HttpServlet() {
                 .requiredInstance as ExceptionMapper<Exception>
         }
     }
-    private val defaultExceptionMapper = object : ExceptionMapper<Exception>() {
-        override fun map(e: Exception, req: HttpServletRequest, resp: HttpServletResponse) {
-            val url = req.requestURI.removePrefix(req.contextPath)
-            val respBody = if (e is ResponseErrorException) e.responseBody else DEFAULT_ERROR_RESP_BODY[500]
-            val statusCode = if (e is ResponseErrorException) e.statusCode else 500
-            logger.info("no match exception mapper found, using default one.")
-            logger.warn("process request failed for $url, status: $statusCode", e)
-            resp.set(ResponseEntity(respBody, statusCode, "text/html"))
-        }
-    }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val router = Router<HttpRequestHandler>()
@@ -77,7 +66,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = req.requestURI.removePrefix(req.contextPath)
+        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
         if (url == faviconPath || url.startsWith(resourcePath))
             resource(req, resp)
         else
@@ -156,7 +145,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveException(NotFoundException("Not found"), req, resp, false)
+                serveException(NotFoundException("Resource not found for: $url"), req, resp)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -168,16 +157,16 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
-        val result = router.match(req.method, url) ?: throw NotFoundException("Not found")
-        val handler = result.handler
         try {
+            val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
+            val result = router.match(req.method, url) ?: throw NotFoundException("Resource not found for: $url")
+            val handler = result.handler
             if (handler.isRest)
                 serveRest(url, result.params, handler, req, resp)
             else
                 serveMvc(url, result.params, handler, req, resp)
         } catch (e: Exception) {
-            serveException(e, req, resp, handler.isRest == true)
+            serveException(e, req, resp)
         }
     }
 
@@ -280,14 +269,14 @@ class DispatcherServlet : HttpServlet() {
         return (ret to _handler)
     }
 
-    private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse, isRest: Boolean) {
+    private fun serveException(e: Exception, req: HttpServletRequest, resp: HttpServletResponse) {
         val mapper = run {
             val target = findClosestMatchingType(e.javaClass, exceptionMappers.keys)
             if (target != null) exceptionMappers[target] else null
         }
         if (mapper != null) {
             mapper.map(e, req, resp)
-        } else if (!isRest && context.config.getRequired("server.web-app.friendly-error-page-rendering")) {
+        } else if (context.config.getRequired("server.web-app.friendly-error-page-rendering")) {
             logger.info("friendly error page rendered for", e)
             val statusCode = if (e is ResponseErrorException) e.statusCode else 500
             viewResolver.renderError(statusCode, emptyMap(), req, resp)

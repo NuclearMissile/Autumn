@@ -9,8 +9,8 @@ import freemarker.template.TemplateExceptionHandler
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.exception.ServerErrorException
+import org.example.autumn.utils.HttpUtils.getDefaultErrorResponse
 import org.slf4j.LoggerFactory
 import java.io.*
 
@@ -70,7 +70,7 @@ class FreeMarkerViewResolver(
             try {
                 template.process(model, this)
             } catch (e: TemplateException) {
-                throw ServerErrorException("Exception thrown while rendering template: $viewName", null, e)
+                throw ServerErrorException("Exception thrown while rendering template: $viewName", "", e)
             }
         }.flush()
     }
@@ -84,9 +84,7 @@ class FreeMarkerViewResolver(
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
         } catch (_: Exception) {
-            resp.sendError(
-                statusCode, DEFAULT_ERROR_RESP_BODY.getOrDefault(statusCode, "<h1>Error: Status $statusCode</h1>")
-            )
+            resp.sendError(statusCode, getDefaultErrorResponse(statusCode))
             return
         }
 
@@ -95,7 +93,7 @@ class FreeMarkerViewResolver(
                 template.process(model, this)
             } catch (e: TemplateException) {
                 logger.warn("Exception thrown while rendering template: $statusCode.html")
-                resp.sendError(500, DEFAULT_ERROR_RESP_BODY[500])
+                resp.sendError(500, getDefaultErrorResponse(500))
             }
         }.flush()
     }

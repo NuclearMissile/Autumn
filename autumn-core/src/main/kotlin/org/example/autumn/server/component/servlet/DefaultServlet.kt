@@ -3,9 +3,9 @@ package org.example.autumn.server.component.servlet
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.utils.DateUtils.formatDateTimeGMT
 import org.example.autumn.utils.HttpUtils.escapeHtml
+import org.example.autumn.utils.HttpUtils.getDefaultErrorResponse
 import org.example.autumn.utils.IOUtils
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -19,9 +19,9 @@ class DefaultServlet : HttpServlet() {
     companion object {
         private fun formatTr(file: Path, size: Long, name: String): String {
             return "<tr>" +
-                "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
-                "<td>${formatSize(size)}</td>" +
-                "<td>${formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
+                    "<td><a href=\"$name\">${name.escapeHtml()}</a></td>" +
+                    "<td>${formatSize(size)}</td>" +
+                    "<td>${formatDateTimeGMT(Files.getLastModifiedTime(file).toMillis())}</td>"
         }
 
         private fun formatSize(size: Long): String {
@@ -47,7 +47,7 @@ class DefaultServlet : HttpServlet() {
         if (!uri.startsWith("/") || uri.indexOf("/../") > 0 || uri.startsWith("/WEB-INF") || uri.startsWith("/META-INF")) {
             // insecure uri:
             logger.debug("prevent access insecure uri: {}", uri)
-            resp.sendError(403, DEFAULT_ERROR_RESP_BODY[403])
+            resp.sendError(403, getDefaultErrorResponse(403))
             return
         }
         val path = Paths.get(req.servletContext.getRealPath(uri))
@@ -86,7 +86,7 @@ class DefaultServlet : HttpServlet() {
             }
 
             else -> {
-                resp.sendError(404, DEFAULT_ERROR_RESP_BODY[404])
+                resp.sendError(404, getDefaultErrorResponse(404))
             }
         }
     }

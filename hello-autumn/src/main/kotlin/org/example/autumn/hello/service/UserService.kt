@@ -1,23 +1,43 @@
 package org.example.autumn.hello.service
 
-import org.example.autumn.annotation.Around
-import org.example.autumn.annotation.Autowired
-import org.example.autumn.annotation.Component
-import org.example.autumn.annotation.PostConstruct
-import org.example.autumn.annotation.Transactional
+import org.example.autumn.annotation.*
+import org.example.autumn.aop.Invocation
+import org.example.autumn.aop.InvocationChain
 import org.example.autumn.db.orm.NaiveOrm
 import org.example.autumn.hello.model.User
 import org.example.autumn.utils.HashUtils
 import org.example.autumn.utils.SecureRandomUtils
 import org.slf4j.LoggerFactory
+import java.lang.reflect.Method
 
-@Around("beforeLogInvocation", "afterLogInvocation")
+@Component
+class BeforeInvocation : Invocation {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
+        logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
+    }
+}
+
+@Component
+class AfterInvocation : Invocation {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override fun after(
+        caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
+    ): Any? {
+        logger.info("[After] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
+        return returnValue
+    }
+}
+
+@Around("beforeInvocation", "afterInvocation")
 @Component
 @Transactional
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+                "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)

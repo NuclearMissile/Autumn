@@ -78,7 +78,6 @@ class TrieNode<T>(
     private fun printNode(node: TrieNode<T>, level: Int): String {
         /**
          * eg:
-         * Method GET:
          * ROOT
          *  ==> hello --> path: </hello/>, handler: helloController.hello[0]
          *  	==> error --> path: </hello/error>, handler: helloController.error[0]
@@ -96,12 +95,6 @@ class TrieNode<T>(
          *  			==> {var} --> path: </api/error/{errorCode}/{errorResp}>, handler: restApiController.error[2]
          *  	==> hello
          *  		==> {var} --> path: </api/hello/{name}>, handler: restApiController.hello[1]
-         *
-         * Method POST:
-         * ROOT
-         * 	==> register --> path: </register>, handler: indexController.register[3]
-         * 	==> changePassword --> path: </changePassword>, handler: indexController.changePassword[4]
-         * 	==> login --> path: </login>, handler: indexController.login[3]
          */
         val result = StringBuilder()
         result.append(
@@ -169,7 +162,7 @@ class Router<T> {
             var key = part
             if (isPathVar(key)) {
                 val pathVar = PathVar.create(key)
-                key = if (pathVar.pattern == null) "{pathVar}" else "{pathVar:${pathVar.pattern}}"
+                key = if (pathVar.pattern == null) "{pathVar}" else "{regexPathVar:${pathVar.pattern}}"
                 if (!current.hasChild(key)) {
                     current.addChild(key, TrieNode(pathVar = pathVar))
                 }

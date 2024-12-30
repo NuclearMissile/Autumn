@@ -67,6 +67,16 @@ class RouterTest {
     }
 
     @Test
+    fun testRoute2() {
+        router.add("GET", "/campaigns/{name}/{id}", dummyHandler)
+        router.add("GET", "/campaigns/{id}", dummyHandler)
+
+        var result = router.match("GET", "/campaigns/123")
+        assertNotNull(result)
+        assertEquals("123", result.params["id"])
+    }
+
+    @Test
     fun testConflict() {
         router.add("GET", "/campaigns/{id}", dummyHandler)
         try {

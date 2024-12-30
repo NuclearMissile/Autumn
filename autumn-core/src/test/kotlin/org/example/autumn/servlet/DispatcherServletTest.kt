@@ -1,8 +1,8 @@
 package org.example.autumn.servlet
 
-import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.context.AnnotationApplicationContext
 import org.example.autumn.utils.ConfigProperties
+import org.example.autumn.utils.HttpUtils.getDefaultErrorResponse
 import org.example.autumn.utils.JsonUtils.readJson
 import org.example.autumn.utils.JsonUtils.toJsonAsBytes
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -15,7 +15,6 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class DispatcherServletTest {
     private lateinit var dispatcherServlet: DispatcherServlet
@@ -147,12 +146,10 @@ class DispatcherServletTest {
 
         val req3 = createMockRequest("GET", "/api/error")
         val resp3 = createMockResponse()
-        try {
-            dispatcherServlet.service(req3, resp3)
-            fail()
-        } catch (e: Exception) {
-            assertEquals("test", e.message)
-        }
+        dispatcherServlet.service(req3, resp3)
+        assertEquals(500, resp3.status)
+        assertEquals("text/html", resp3.contentType)
+        assertEquals("", resp3.contentAsString)
 
         val req4 = createMockRequest("GET", "/api/error_not_found")
         val resp4 = createMockResponse()
@@ -298,10 +295,7 @@ class DispatcherServletTest {
             val resp = createMockResponse()
             dispatcherServlet.service(req, resp)
             assertEquals(status, resp.status)
-            assertEquals(
-                resp.contentAsString,
-                DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>")
-            )
+            assertEquals(resp.contentAsString, getDefaultErrorResponse(status))
         }
     }
 

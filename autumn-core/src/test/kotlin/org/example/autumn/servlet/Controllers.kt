@@ -3,10 +3,10 @@ package org.example.autumn.servlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
-import org.example.autumn.DEFAULT_ERROR_RESP_BODY
 import org.example.autumn.annotation.*
 import org.example.autumn.exception.NotFoundException
 import org.example.autumn.exception.ResponseErrorException
+import org.example.autumn.utils.HttpUtils.getDefaultErrorResponse
 import org.example.autumn.utils.JsonUtils.toJson
 import org.example.autumn.utils.JsonUtils.writeJson
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ class SigninObj(
 class RestApiController {
     @ExceptionHandler(ResponseErrorException::class, "text/plain")
     fun reeExceptionHandler(e: ResponseErrorException, resp: HttpServletResponse): ResponseEntity {
-        return ResponseEntity(e.responseBody ?: "", e.statusCode, "")
+        return ResponseEntity(e.responseBody, e.statusCode, "")
     }
 
     @Get("/error/{errorCode}/{errorResp}")
@@ -209,7 +209,7 @@ class MvcController {
     @Get("/error/{status}")
     fun error(@PathVariable status: Int): ResponseEntity {
         return ResponseEntity(
-            DEFAULT_ERROR_RESP_BODY.getOrDefault(status, "<h1>Error: Status $status</h1>"), status, "text/html"
+            getDefaultErrorResponse(status), status, "text/html"
         )
     }
 
