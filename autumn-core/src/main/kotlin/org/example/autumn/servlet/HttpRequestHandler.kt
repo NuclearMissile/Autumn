@@ -60,7 +60,7 @@ class HttpRequestHandler(
                     val value = req.getParameter(param.name) ?: param.defaultValue!!
                     if (value == DUMMY_VALUE) {
                         if (param.required!!)
-                            throw RequestErrorException("Request parameter '${param.name!!}' is required.")
+                            throw RequestErrorException("Request parameter '${param.name}' is required.")
                         else
                             return@map null
                     }
@@ -72,7 +72,7 @@ class HttpRequestHandler(
                     val value = req.getHeader(param.name) ?: param.defaultValue!!
                     if (value == DUMMY_VALUE) {
                         if (param.required!!)
-                            throw RequestErrorException("Header '${param.name!!}' is required.")
+                            throw RequestErrorException("Header '${param.name}' is required.")
                         else
                             return@map null
                     }
@@ -105,7 +105,7 @@ class HttpRequestHandler(
     }
 
     private class Param(method: Method, param: Parameter, annos: List<Annotation>) {
-        var name: String? = null
+        var name: String = param.name
         val paramAnno: Annotation?
         var defaultValue: String? = null
         var required: Boolean? = null
