@@ -11,6 +11,13 @@
         <relativePath>../autumn-parent/pom.xml</relativePath>
     </parent>
 
+    <repositories>
+        <repository>
+            <id>local-repo</id>
+            <url>file://${pom.basedir}/lib</url>
+        </repository>
+    </repositories>
+
     <artifactId>autumn-core</artifactId>
     <version>1.0.4</version>
 
@@ -68,11 +75,8 @@
             <artifactId>freemarker</artifactId>
         </dependency>
         <dependency>
-            <groupId>io</groupId>
+            <groupId>io.routekit</groupId>
             <artifactId>routekit</artifactId>
-            <version>0.2.1</version>
-            <scope>system</scope>
-            <systemPath>${pom.basedir}/3rd/routekit-0.2.1.jar</systemPath>
         </dependency>
 
         <dependency>
