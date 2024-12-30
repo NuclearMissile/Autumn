@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.example.autumn.annotation.*
 import org.example.autumn.context.ApplicationContextHolder
-import org.example.autumn.exception.AutumnException
 import org.example.autumn.exception.NotFoundException
+import org.example.autumn.exception.RequestErrorException
 import org.example.autumn.exception.ResponseErrorException
 import org.example.autumn.exception.ServerErrorException
 import org.example.autumn.utils.ClassUtils.findClosestMatchingType
@@ -163,7 +163,7 @@ class DispatcherServlet : HttpServlet() {
 
     private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
         try {
-            val router = routerMap[req.method] ?: throw AutumnException("unsupported method: ${req.method}")
+            val router = routerMap[req.method] ?: throw RequestErrorException("unsupported method: ${req.method}")
             val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
             val result = router.routeOrNull(url) ?: throw NotFoundException("Resource not found for: $url")
             val handler = result.handler
