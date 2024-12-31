@@ -41,10 +41,9 @@ class DispatcherServlet : HttpServlet() {
     }
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
-    private val routerSetupMap = buildMap {
-        put("GET", RouterSetup<HttpRequestHandler>())
-        put("POST", RouterSetup<HttpRequestHandler>())
-    }
+    private val routerSetupMap = mapOf(
+        "GET" to RouterSetup<HttpRequestHandler>(), "POST" to RouterSetup<HttpRequestHandler>()
+    )
     private lateinit var routerMap: Map<String, Router<HttpRequestHandler>>
 
     // controller name: (exception class: handler)
