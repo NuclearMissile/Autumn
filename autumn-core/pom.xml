@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.example.autumn</groupId>
+        <groupId>io.nuclearmissile</groupId>
         <artifactId>autumn-parent</artifactId>
-        <version>1.0.5</version>
+        <version>1.1</version>
         <relativePath>../autumn-parent/pom.xml</relativePath>
     </parent>
 
@@ -19,7 +19,7 @@
     </repositories>
 
     <artifactId>autumn-core</artifactId>
-    <version>1.0.5</version>
+    <version>1.1</version>
 
     <dependencies>
         <dependency>
@@ -112,7 +112,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.autumn.server.AutumnServer</mainClass>
+                            <mainClass>io.nuclearmissile.autumn.server.AutumnServer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

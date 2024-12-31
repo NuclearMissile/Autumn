@@ -1,0 +1,17 @@
+# autumn configuration:
+autumn:
+  config-class-name: io.nuclearmissile.autumn.hello.HelloConfig
+  datasource:
+    url: jdbc:sqlite:autumn.hello.db
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+
+# server configuration:
+server:
+  host: localhost
+  port: 8080
+
+  # the only one web app:
+  web-app:
+    name: Hello Application

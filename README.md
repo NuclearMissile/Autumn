@@ -17,7 +17,7 @@ Yet another web application framework imitating Spring in Kotlin.
 
 ## Demo
 
-hello-autumn (user login demo), use Autumn just like Spring
+autumn-hello (user login demo), use Autumn just like Spring
 
 ![](login-demo.png)
 
@@ -29,21 +29,21 @@ ls                     # current path: xxx/autumn
 cd ./autumn-build/     # cd to xxx/autumn/autumn-build/
 mvn clean              # clean previous build
 mvn install            # build and install builds to maven local cache
-cd ../hello-autumn/    # cd to xxx/autumn/hello-autumn/ 
-mvn war:war            # build .war package for hello-autumn project
+cd ../autumn-hello/    # cd to xxx/autumn/autumn-hello/ 
+mvn war:war            # build .war package for autumn-hello project
 
 # start web application with homemade http server
 ls                     # current path: xxx/autumn
-cp ./hello-autumn/target/hello-autumn-1.0.5.war ./autumn-core/target/hello-autumn-1.0.5.war
+cp ./autumn-hello/target/autumn-hello-1.1.war ./autumn-core/target/autumn-hello-1.1.war
 cd ./autumn-core/target/
-# execute hello-autumn-1.0.5.war with homemade http server in autumn-core
-java -jar autumn-core-1.0.5.jar -w hello-autumn-1.0.5.war
+# execute autumn-hello-1.1.war with homemade http server in autumn-core
+java -jar autumn-core-1.1.jar -w autumn-hello-1.1.war
 
 # or start web application with Tomcat and docker
 ls                     # current path: xxx/autumn
-cd ./hello-autumn/
-docker build -t hello-autumn . 
-docker run -p 8080:8080 -t hello-autumn
+cd ./autumn-hello/
+docker build -t autumn-hello . 
+docker run -p 8080:8080 -t autumn-hello
 
 # then access localhost:8080 to play with the demo
 
