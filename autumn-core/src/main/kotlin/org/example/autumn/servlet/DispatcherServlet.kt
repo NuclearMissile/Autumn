@@ -150,7 +150,7 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveException(NotFoundException("Resource not found for: $url"), req, resp)
+                serveException(NotFoundException("resource not found for: $url"), req, resp)
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"
@@ -165,7 +165,7 @@ class DispatcherServlet : HttpServlet() {
         try {
             val router = routerMap[req.method] ?: throw RequestErrorException("unsupported method: ${req.method}")
             val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
-            val result = router.routeOrNull(url) ?: throw NotFoundException("Resource not found for: $url")
+            val result = router.routeOrNull(url) ?: throw NotFoundException("resource not found for: $url")
             val handler = result.handler
             val params = result.variables().map { it.key to it.value.toString() }.toMap()
             if (handler.isRest)

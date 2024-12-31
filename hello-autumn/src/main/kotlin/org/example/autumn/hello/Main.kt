@@ -63,12 +63,12 @@ class LoginEventListener {
 
     @Subscribe(EventMode.SYNC)
     fun onLogin(e: LoginEvent) {
-        logger.info("{Login} ${e.user}")
+        logger.info("Login: ${e.user}")
     }
 
     @Subscribe(EventMode.ASYNC)
     fun onLogoff(e: LogoffEvent) {
-        logger.info("{Logoff} ${e.user}")
+        logger.info("Logoff: ${e.user}")
     }
 }
 
