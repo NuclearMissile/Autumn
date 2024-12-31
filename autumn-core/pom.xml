@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.example.autumn</groupId>
         <artifactId>autumn-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
         <relativePath>../autumn-parent/pom.xml</relativePath>
     </parent>
 
@@ -19,7 +19,7 @@
     </repositories>
 
     <artifactId>autumn-core</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
 
     <dependencies>
         <dependency>
