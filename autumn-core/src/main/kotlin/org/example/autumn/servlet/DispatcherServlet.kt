@@ -184,7 +184,7 @@ class DispatcherServlet : HttpServlet() {
         req: HttpServletRequest,
         resp: HttpServletResponse
     ) {
-        val (ret, _handler) = runDispatcher(handler, params, req, resp)
+        val (ret, _handler) = runHandler(handler, params, req, resp)
         if (resp.isCommitted) return
         when {
             _handler.isResponseBody -> {
@@ -210,7 +210,7 @@ class DispatcherServlet : HttpServlet() {
         req: HttpServletRequest,
         resp: HttpServletResponse
     ) {
-        val (ret, _handler) = runDispatcher(handler, params, req, resp)
+        val (ret, _handler) = runHandler(handler, params, req, resp)
         if (resp.isCommitted) return
         when (ret) {
             is ResponseEntity -> resp.set(ret)
@@ -254,7 +254,7 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun runDispatcher(
+    private fun runHandler(
         handler: HttpRequestHandler, params: Map<String, String>, req: HttpServletRequest, resp: HttpServletResponse,
     ): Pair<Any?, HttpRequestHandler> {
         fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): HttpRequestHandler? {
