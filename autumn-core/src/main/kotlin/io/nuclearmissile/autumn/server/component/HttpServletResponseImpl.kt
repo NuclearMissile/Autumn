@@ -29,8 +29,8 @@ class HttpServletResponseImpl(
     private var printWriter: PrintWriter? = null
 
     private fun commitHeaders(length: Long) {
-        exchangeResp.sendResponseHeaders(status, length)
         isCommitted = true
+        exchangeResp.sendResponseHeaders(status, length)
     }
 
     fun cleanup() {
@@ -132,6 +132,7 @@ class HttpServletResponseImpl(
         outputStream = null
         printWriter = null
         headers.clear()
+        cookies.clear()
     }
 
     override fun setLocale(loc: Locale) {
@@ -150,6 +151,7 @@ class HttpServletResponseImpl(
             throw IllegalStateException("cannot addCookie after committed")
         }
         cookies.add(cookie)
+        headers.getOrPut("Set-Cookie") { mutableListOf() }.add(getCookieHeader(cookie))
     }
 
     override fun containsHeader(name: String): Boolean {
@@ -261,5 +263,30 @@ class HttpServletResponseImpl(
 
     override fun getHeaderNames(): Collection<String> {
         return headers.keys
+    }
+
+    private fun getCookieHeader(cookie: Cookie): String {
+        val buf = StringBuilder()
+        buf.append("${cookie.name}=${cookie.value ?: ""}")
+        if (!cookie.path.isNullOrBlank()) {
+            buf.append("; Path=${cookie.path}")
+        }
+        if (!cookie.domain.isNullOrBlank()) {
+            buf.append("; Domain=${cookie.domain}")
+        }
+        val maxAge = cookie.maxAge
+        if (maxAge >= 0) {
+            buf.append("; Max-Age=$maxAge")
+        }
+        if (cookie.secure) {
+            buf.append("; Secure")
+        }
+        if (cookie.isHttpOnly) {
+            buf.append("; HttpOnly")
+        }
+        cookie.attributes.forEach { key, value ->
+            buf.append(if (value.isEmpty()) "; $key" else "; ${key}=${value}")
+        }
+        return buf.toString()
     }
 }

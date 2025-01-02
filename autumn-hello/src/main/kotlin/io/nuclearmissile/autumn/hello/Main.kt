@@ -9,13 +9,13 @@ import io.nuclearmissile.autumn.eventbus.EventBusConfiguration
 import io.nuclearmissile.autumn.eventbus.EventMode
 import io.nuclearmissile.autumn.exception.RequestErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
+import io.nuclearmissile.autumn.hello.model.User
+import io.nuclearmissile.autumn.hello.service.UserService
 import io.nuclearmissile.autumn.server.AutumnServer
 import io.nuclearmissile.autumn.servlet.ContextLoadListener
 import io.nuclearmissile.autumn.servlet.FilterRegistration
 import io.nuclearmissile.autumn.servlet.ModelAndView
 import io.nuclearmissile.autumn.servlet.WebMvcConfiguration
-import io.nuclearmissile.autumn.hello.model.User
-import io.nuclearmissile.autumn.hello.service.UserService
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest

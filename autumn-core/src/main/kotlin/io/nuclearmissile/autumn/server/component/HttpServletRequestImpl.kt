@@ -344,10 +344,10 @@ class HttpServletRequestImpl(
 
     override fun getSession(create: Boolean): HttpSession? {
         var sessionId: String? = null
-        val cookies = cookies
+        val sessionCookieName = config.getRequiredString("server.web-app.session-cookie-name")
         if (cookies != null) {
-            for (cookie in cookies) {
-                if (cookie.name == config.getRequiredString("server.web-app.session-cookie-name")) {
+            for (cookie in cookies!!) {
+                if (cookie.name == sessionCookieName) {
                     sessionId = cookie.value
                     break
                 }
@@ -359,9 +359,11 @@ class HttpServletRequestImpl(
                 throw IllegalStateException("cannot create session for response committed ")
             }
             sessionId = UUID.randomUUID().toString()
-            val cookieValue = config.getRequiredString("server.web-app.session-cookie-name") +
-                    "=$sessionId; Path=/; SameSite=Strict; HttpOnly"
-            resp.addHeader("Set-Cookie", cookieValue)
+            val sessionCookie = Cookie(sessionCookieName, sessionId)
+            sessionCookie.path = "/"
+            sessionCookie.isHttpOnly = true
+            sessionCookie.setAttribute("SameSite", "Strict")
+            resp.addCookie(sessionCookie)
         }
 
         return servletContext.sessionManager.getSession(sessionId)
