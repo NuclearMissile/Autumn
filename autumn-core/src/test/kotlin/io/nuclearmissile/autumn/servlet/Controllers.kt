@@ -32,12 +32,7 @@ class SigninObj(
 class RestApiController {
     @ExceptionHandler(ResponseErrorException::class, "text/plain")
     fun reeExceptionHandler(e: ResponseErrorException, resp: HttpServletResponse): ResponseEntity {
-        return ResponseEntity(e.responseBody, e.statusCode, "")
-    }
-
-    @Get("/error/{errorCode}/{errorResp}")
-    fun error(@PathVariable errorCode: Int, @PathVariable errorResp: String) {
-        throw ResponseErrorException(errorCode, "test", errorResp)
+        return ResponseEntity(e.statusCode, e.statusCode, "")
     }
 
     @Get("/error/{errorCode}")
@@ -47,7 +42,7 @@ class RestApiController {
 
     @Get("/error_not_found")
     fun notFound() {
-        throw NotFoundException("test", "test_404_error")
+        throw NotFoundException("test")
     }
 
     @Get("/error")

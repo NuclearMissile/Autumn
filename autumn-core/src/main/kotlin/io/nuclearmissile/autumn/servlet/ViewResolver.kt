@@ -70,7 +70,7 @@ class FreeMarkerViewResolver(
             try {
                 template.process(model, this)
             } catch (e: TemplateException) {
-                throw ServerErrorException("Exception thrown while rendering template: $viewName", "", e)
+                throw ServerErrorException("Exception thrown while rendering template: $viewName", e)
             }
         }.flush()
     }

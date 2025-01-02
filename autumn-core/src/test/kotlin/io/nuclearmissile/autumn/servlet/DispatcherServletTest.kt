@@ -130,19 +130,12 @@ class DispatcherServletTest {
 
     @Test
     fun getApiError() {
-        val req = createMockRequest("GET", "/api/error/402/test_402_error")
-        val resp = createMockResponse()
-        dispatcherServlet.service(req, resp)
-        assertEquals(402, resp.status)
-        assertEquals("text/plain", resp.contentType)
-        assertEquals("test_402_error", resp.contentAsString)
-
         val req2 = createMockRequest("GET", "/api/error/400")
         val resp2 = createMockResponse()
         dispatcherServlet.service(req2, resp2)
         assertEquals(400, resp2.status)
         assertEquals("text/plain", resp2.contentType)
-        assertEquals("", resp2.contentAsString)
+        assertEquals("400", resp2.contentAsString)
 
         val req3 = createMockRequest("GET", "/api/error")
         val resp3 = createMockResponse()
@@ -156,7 +149,7 @@ class DispatcherServletTest {
         dispatcherServlet.service(req4, resp4)
         assertEquals(404, resp4.status)
         assertEquals("text/plain", resp4.contentType)
-        assertEquals("test_404_error", resp4.contentAsString)
+        assertEquals("404", resp4.contentAsString)
     }
 
     @Test
