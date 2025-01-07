@@ -185,7 +185,7 @@ class ServletContextImpl(
                 resp.sendError(404, "<h1>404 Not Found</h1><p>No servlet found for URL: ${path.escapeHtml()}</p>")
                 return
             }
-            if (it.size > 1 && it.any { mapping -> it[0] !== mapping }) {
+            if (it.size > 1) {
                 resp.sendError(
                     500,
                     "<h1>500 Internal Error</h1><p>Multiple servlets found for URL: ${path.escapeHtml()}</p>"
