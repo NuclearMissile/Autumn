@@ -49,9 +49,8 @@ docker run -p 8080:8080 -t autumn-hello
 
 ```
 
-<details>
 
-<summary>Code</summary>
+### Example:
 
 ```kotlin
 // Main.kt (part of)
@@ -153,13 +152,13 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
 ```
 
-</details>
 
 ## Ref
 
 - https://github.com/michaelliao/summer-framework
 - https://github.com/zzzzbw/doodle
 - https://github.com/fuzhengwei/small-spring
+- https://github.com/maxim5/routekit
 
 
 
