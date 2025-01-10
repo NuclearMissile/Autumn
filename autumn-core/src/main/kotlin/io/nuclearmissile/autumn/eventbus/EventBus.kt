@@ -1,7 +1,5 @@
 package io.nuclearmissile.autumn.eventbus
 
-import io.nuclearmissile.autumn.annotation.Bean
-import io.nuclearmissile.autumn.annotation.Configuration
 import io.nuclearmissile.autumn.annotation.Order
 import io.nuclearmissile.autumn.annotation.Subscribe
 import io.nuclearmissile.autumn.context.ApplicationContextHolder
@@ -9,19 +7,6 @@ import io.nuclearmissile.autumn.context.BeanPostProcessor
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-
-@Configuration
-class EventBusConfiguration {
-    @Bean(destroyMethod = "close")
-    fun eventBus(): EventBus {
-        return EventBus()
-    }
-
-    @Bean
-    fun eventSubscribeBeanPostProcessor(): EventSubscribeBeanPostProcessor {
-        return EventSubscribeBeanPostProcessor()
-    }
-}
 
 class EventSubscribeBeanPostProcessor : BeanPostProcessor {
     private val eventBus by lazy {

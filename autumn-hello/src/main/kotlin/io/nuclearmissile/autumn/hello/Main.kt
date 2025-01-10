@@ -2,6 +2,8 @@ package io.nuclearmissile.autumn.hello
 
 import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.aop.AroundConfiguration
+import io.nuclearmissile.autumn.context.ApplicationContext
+import io.nuclearmissile.autumn.context.ApplicationContextConfiguration
 import io.nuclearmissile.autumn.db.DbConfiguration
 import io.nuclearmissile.autumn.eventbus.Event
 import io.nuclearmissile.autumn.eventbus.EventBus
@@ -34,7 +36,13 @@ object Main {
 }
 
 @WebListener
-@Import(WebMvcConfiguration::class, DbConfiguration::class, AroundConfiguration::class, EventBusConfiguration::class)
+@Import(
+    WebMvcConfiguration::class,
+    DbConfiguration::class,
+    AroundConfiguration::class,
+    EventBusConfiguration::class,
+    ApplicationContextConfiguration::class,
+)
 class HelloConfig : ContextLoadListener()
 
 @Order(100)
@@ -84,10 +92,14 @@ class IndexController @Autowired constructor(private val userService: UserServic
     @Autowired
     private lateinit var eventBus: EventBus
 
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
     @PostConstruct
     fun init() {
         // @Transactional proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
+        assert(userService === applicationContext.getUniqueBean(UserService::class.java))
     }
 
     @Get("/")
