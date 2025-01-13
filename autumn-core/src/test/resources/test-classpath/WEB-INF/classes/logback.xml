@@ -12,26 +12,9 @@
     </appender>
 
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">　　　
-        <file>hello-autumn.info.log</file>　　　　
+        <file>autumn-hello.info.log</file>　　　　
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">　　　　　　　　　　
-            <fileNamePattern>hello-autumn.%i.info.log.zip</fileNamePattern>　　　　　　　　　　
-            <minIndex>1</minIndex>
-            <maxIndex>3</maxIndex>　　　　　　
-        </rollingPolicy>
-        　　　　　
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">　　　　　　　　　　
-            <maxFileSize>5MB</maxFileSize>　　　　　　
-        </triggeringPolicy>
-        　　　　　
-        <encoder>　　　　　　　　　
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%kvp- %msg%n</pattern>　　　　　　
-        </encoder>
-    </appender>
-
-    <appender name="FILE_WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">　　　
-        <file>hello-autumn.warn.log</file>　　　　
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">　　　　　　　　　　
-            <fileNamePattern>hello-autumn.%i.warn.log.zip</fileNamePattern>　　　　　　　　　　
+            <fileNamePattern>autumn-hello.%i.info.log.zip</fileNamePattern>　　　　　　　　　　
             <minIndex>1</minIndex>
             <maxIndex>3</maxIndex>　　　　　　
         </rollingPolicy>
@@ -50,10 +33,5 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE_INFO"/>
-    </root>
-
-    <root level="WARN">
-        <appender-ref ref="STDERR"/>
-        <appender-ref ref="FILE_WARN"/>
     </root>
 </configuration>

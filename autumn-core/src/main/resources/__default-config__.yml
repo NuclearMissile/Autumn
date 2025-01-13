@@ -9,7 +9,7 @@ autumn:
     template-encoding: UTF-8
 
   datasource:
-    url: # jdbc:sqlite:hello-autumn.db
+    url: # jdbc:sqlite:autumn-hello.db
     driver-class-name: # org.sqlite.JDBC
     username:
     password:
