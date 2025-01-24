@@ -93,13 +93,14 @@ class IndexController @Autowired constructor(private val userService: UserServic
     private lateinit var eventBus: EventBus
 
     @Autowired
-    private lateinit var applicationContext: ApplicationContext
+    private lateinit var context: ApplicationContext
 
     @PostConstruct
     fun init() {
         // @Transactional proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
-        assert(userService === applicationContext.getUniqueBean(UserService::class.java))
+        assert(userService === context.getUniqueBean(UserService::class.java))
+        assert(context.config.getRequiredString("autumn.config-class-name") == "io.nuclearmissile.autumn.hello.HelloConfig")
     }
 
     @Get("/")

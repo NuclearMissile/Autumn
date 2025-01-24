@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertTrue
 
 @Configuration
 class ControllerConfiguration
@@ -153,11 +154,11 @@ class MvcController {
         @Header(defaultValue = "test_header2") header2: String,
         @Header(required = false) header3: String?,
     ): ByteArray {
-        assert(checksum == null)
-        assert(downloadTime == 10f)
-        assert(header1 == "test_header1")
-        assert(header2 == "test_header2")
-        assert(header3 == null)
+        assertTrue(checksum == null)
+        assertTrue(downloadTime == 10f)
+        assertTrue(header1 == "test_header1")
+        assertTrue(header2 == "test_header2")
+        assertTrue(header3 == null)
         return "A".repeat(length).toByteArray(StandardCharsets.UTF_8)
     }
 
