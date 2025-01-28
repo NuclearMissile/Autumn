@@ -61,19 +61,17 @@ class WarClassLoaderTest {
     }
 
     @Test
-    fun testWalkClassesPath() {
+    fun testWalkPaths() {
         val resources = mutableListOf<String>()
-        classLoader.walkClassesPath({ resources.add(it.name) })
+        classLoader.walkPaths { resources.add(it.fqcn) }
+        
+        // class path
         assertTrue(resources.contains("config.yml"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/HelloConfig.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/Main.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/service/UserService.class"))
-    }
-
-    @Test
-    fun testLibPath() {
-        val resources = mutableListOf<String>()
-        classLoader.walkLibPaths { resources.add(it.name) }
+        
+        // lib paths
         assertTrue(resources.contains("org/intellij/lang/annotations/Flow.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/db/JdbcTemplate.class"))
         assertTrue(resources.contains("kotlin/collections/AbstractCollection.class"))

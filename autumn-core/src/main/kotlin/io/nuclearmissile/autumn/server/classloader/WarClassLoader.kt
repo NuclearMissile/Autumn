@@ -11,10 +11,10 @@ import java.util.jar.JarFile
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 
-data class Resource(val path: Path, val name: String)
+data class Resource(val path: Path, val fqcn: String)
 
 class WarClassLoader(classesPath: Path, libPath: Path?) :
-    URLClassLoader("WarClassLoader", createUrls(classesPath, libPath), ClassLoader.getSystemClassLoader()) {
+    URLClassLoader("WarClassLoader", createUrls(classesPath, libPath), getSystemClassLoader()) {
     companion object {
         private fun Path.absPath(): String {
             return "/" + this.toAbsolutePath().normalize().toString().replace("\\", "/").removePrefix("/")
@@ -48,17 +48,17 @@ class WarClassLoader(classesPath: Path, libPath: Path?) :
     private val classesPath = classesPath.toAbsolutePath().normalize()
     private val libPaths = libPath?.scanJars() ?: emptyList()
 
-    fun walkLibPaths(visitor: Consumer<Resource>) {
+    fun walkPaths(visitor: Consumer<Resource>) {
+        // walk class path
+        Files.walk(classesPath).filter(Path::isRegularFile).forEach { path ->
+            visitor.accept(Resource(path, classesPath.relativize(path).toString().replace("\\", "/")))
+        }
+        
+        // walk lib paths
         libPaths.forEach { libPath ->
             JarFile(libPath.toFile()).stream().filter { !it.isDirectory }.forEach {
                 visitor.accept(Resource(libPath, it.name))
             }
-        }
-    }
-
-    fun walkClassesPath(visitor: Consumer<Resource>, basePath: Path = classesPath) {
-        Files.walk(basePath).filter(Path::isRegularFile).forEach { path ->
-            visitor.accept(Resource(path, basePath.relativize(path).toString().replace("\\", "/")))
         }
     }
 }

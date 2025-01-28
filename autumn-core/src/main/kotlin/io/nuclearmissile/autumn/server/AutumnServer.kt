@@ -101,8 +101,8 @@ object AutumnServer {
         val webRoot = classesPath.parent.parent.toString()
         logger.info("set WEBROOT as {}", webRoot)
 
-        val classLoader = WarClassLoader(classesPath, libPath)
-        val config = withClassLoader(classLoader) {
+        val wcl = WarClassLoader(classesPath, libPath)
+        val config = withClassLoader(wcl) {
             // load correct logger config
             try {
                 readInputStreamFromClassPath("logback.xml") {
@@ -124,14 +124,15 @@ object AutumnServer {
 
         // scan class:
         val classSet = mutableSetOf<Class<*>>()
-        val handler = Consumer { r: Resource ->
-            if (r.name.endsWith(".class")) {
-                val className = r.name.substring(0, r.name.length - 6).replace('/', '.')
+
+        wcl.walkPaths(Consumer { r: Resource ->
+            if (r.fqcn.endsWith(".class")) {
+                val className = r.fqcn.removeSuffix(".class").replace('/', '.')
                 if (className.endsWith("module-info") || className.endsWith("package-info")) {
                     return@Consumer
                 }
                 val clazz = try {
-                    classLoader.loadClass(className)
+                    wcl.loadClass(className)
                 } catch (e: Throwable) {
                     logger.debug(
                         "load class '{}' failed: {}: {}", className, e.javaClass.simpleName, e.message
@@ -155,11 +156,9 @@ object AutumnServer {
                     }
                 }
             }
-        }
-        classLoader.walkClassesPath(handler)
-        classLoader.walkLibPaths(handler)
+        })
 
-        start(classSet.toList(), webRoot, tmpPath, config, classLoader, startTime)
+        start(classSet.toList(), webRoot, tmpPath, config, wcl, startTime)
     }
 
     // server entry point
