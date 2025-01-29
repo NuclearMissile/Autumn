@@ -1,5 +1,10 @@
 package io.nuclearmissile.autumn
 
+import io.nuclearmissile.autumn.aop.AroundConfiguration
+import io.nuclearmissile.autumn.context.ApplicationContextConfiguration
+import io.nuclearmissile.autumn.db.DbConfiguration
+import io.nuclearmissile.autumn.eventbus.EventBusConfiguration
+import io.nuclearmissile.autumn.servlet.WebMvcConfiguration
 import java.util.*
 
 const val DUMMY_VALUE = "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n"
@@ -21,4 +26,12 @@ val DEFAULT_ERROR_RESP_BODY = mapOf(
     502 to "<h1>502: Bad Gateway</h1>",
     503 to "<h1>503: Service Unavailable</h1>",
     504 to "<h1>504: Gateway Timeout</h1>",
+)
+
+val IMPORT_DEFAULT_CONFIGURATIONS = listOf(
+    WebMvcConfiguration::class,
+    DbConfiguration::class,
+    AroundConfiguration::class,
+    EventBusConfiguration::class,
+    ApplicationContextConfiguration::class,
 )

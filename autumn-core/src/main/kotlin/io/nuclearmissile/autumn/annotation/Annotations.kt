@@ -1,7 +1,12 @@
 package io.nuclearmissile.autumn.annotation
 
 import io.nuclearmissile.autumn.DUMMY_VALUE
+import io.nuclearmissile.autumn.aop.AroundConfiguration
+import io.nuclearmissile.autumn.context.ApplicationContextConfiguration
+import io.nuclearmissile.autumn.db.DbConfiguration
+import io.nuclearmissile.autumn.eventbus.EventBusConfiguration
 import io.nuclearmissile.autumn.eventbus.EventMode
+import io.nuclearmissile.autumn.servlet.WebMvcConfiguration
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -82,6 +87,11 @@ annotation class Configuration(
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class Import(vararg val value: KClass<*>)
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ImportDefault()
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

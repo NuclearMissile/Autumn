@@ -1,13 +1,9 @@
 package io.nuclearmissile.autumn.hello
 
 import io.nuclearmissile.autumn.annotation.*
-import io.nuclearmissile.autumn.aop.AroundConfiguration
 import io.nuclearmissile.autumn.context.ApplicationContext
-import io.nuclearmissile.autumn.context.ApplicationContextConfiguration
-import io.nuclearmissile.autumn.db.DbConfiguration
 import io.nuclearmissile.autumn.eventbus.Event
 import io.nuclearmissile.autumn.eventbus.EventBus
-import io.nuclearmissile.autumn.eventbus.EventBusConfiguration
 import io.nuclearmissile.autumn.eventbus.EventMode
 import io.nuclearmissile.autumn.exception.RequestErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
@@ -17,7 +13,6 @@ import io.nuclearmissile.autumn.server.AutumnServer
 import io.nuclearmissile.autumn.servlet.ContextLoadListener
 import io.nuclearmissile.autumn.servlet.FilterRegistration
 import io.nuclearmissile.autumn.servlet.ModelAndView
-import io.nuclearmissile.autumn.servlet.WebMvcConfiguration
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
@@ -36,13 +31,7 @@ object Main {
 }
 
 @WebListener
-@Import(
-    WebMvcConfiguration::class,
-    DbConfiguration::class,
-    AroundConfiguration::class,
-    EventBusConfiguration::class,
-    ApplicationContextConfiguration::class,
-)
+@ImportDefault
 class HelloConfig : ContextLoadListener()
 
 @Order(100)

@@ -1,5 +1,6 @@
 package io.nuclearmissile.autumn.context
 
+import io.nuclearmissile.autumn.IMPORT_DEFAULT_CONFIGURATIONS
 import io.nuclearmissile.autumn.DEFAULT_ORDER
 import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.aop.Invocation
@@ -151,6 +152,9 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
         logger.info("component scan in packages: {}", scanPackages.joinToString())
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
         configClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
+        if (configClass.getAnnotation(ImportDefault::class.java) != null) {
+            IMPORT_DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
+        }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
         return classNameSet.toList()
     }
@@ -348,7 +352,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                                "for bean '${info.beanName}': ${info.beanClass.name}"
+                            "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
