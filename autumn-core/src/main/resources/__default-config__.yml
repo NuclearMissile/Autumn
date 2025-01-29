@@ -24,7 +24,7 @@ server:
   backlog: 0
   request-encoding: UTF-8
   response-encoding: UTF-8
-  name: Autumn Web Server/1.0
+  name: Autumn Web Server
   core-pool-size: 5
   max-pool-size: 200
   keep-alive-time: 10

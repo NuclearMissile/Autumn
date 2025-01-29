@@ -70,7 +70,7 @@ class DispatcherServlet : HttpServlet() {
                 addController(info.beanName, restControllerAnno.prefix, bean, true)
         }
 
-        routerMap = routerSetupMap.map { it.key to it.value.build() }.toMap()
+        routerMap = routerSetupMap.mapValues { it.value.build() }
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
