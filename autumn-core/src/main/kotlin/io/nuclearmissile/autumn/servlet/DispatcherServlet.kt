@@ -166,7 +166,7 @@ class DispatcherServlet : HttpServlet() {
             val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
             val result = router.routeOrNull(url) ?: throw NotFoundException("resource not found for: $url")
             val handler = result.handler
-            val params = result.variables().map { it.key to it.value.toString() }.toMap()
+            val params = result.variables().mapValues { it.value.toString() }
             if (handler.isRest)
                 serveRest(url, params, handler, req, resp)
             else
