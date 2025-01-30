@@ -42,12 +42,12 @@ class DispatcherServlet : HttpServlet() {
     private val resourcePath = context.config.getRequiredString("autumn.web.static-path").removeSuffix("/") + "/"
     private val faviconPath = context.config.getRequiredString("autumn.web.favicon-path")
     private val routerSetupMap = mapOf(
-        "GET" to RouterSetup<HttpRequestHandler>(), "POST" to RouterSetup<HttpRequestHandler>()
+        "GET" to RouterSetup<IHttpRequestHandler>(), "POST" to RouterSetup<IHttpRequestHandler>()
     )
-    private lateinit var routerMap: Map<String, Router<HttpRequestHandler>>
+    private lateinit var routerMap: Map<String, Router<IHttpRequestHandler>>
 
     // controller name: (exception class: handler)
-    private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, HttpRequestHandler>>()
+    private val exceptionHandlerMap = mutableMapOf<String, MutableMap<Class<Exception>, IHttpRequestHandler>>()
 
     override fun init() {
         logger.info("init {}.", javaClass.name)
@@ -179,9 +179,9 @@ class DispatcherServlet : HttpServlet() {
     private fun serveRest(
         url: String,
         params: Map<String, String>,
-        handler: HttpRequestHandler,
+        handler: IHttpRequestHandler,
         req: HttpServletRequest,
-        resp: HttpServletResponse
+        resp: HttpServletResponse,
     ) {
         val (ret, _handler) = runHandler(handler, params, req, resp)
         if (resp.isCommitted) return
@@ -205,9 +205,9 @@ class DispatcherServlet : HttpServlet() {
     private fun serveMvc(
         url: String,
         params: Map<String, String>,
-        handler: HttpRequestHandler,
+        handler: IHttpRequestHandler,
         req: HttpServletRequest,
-        resp: HttpServletResponse
+        resp: HttpServletResponse,
     ) {
         val (ret, _handler) = runHandler(handler, params, req, resp)
         if (resp.isCommitted) return
@@ -254,9 +254,9 @@ class DispatcherServlet : HttpServlet() {
     }
 
     private fun runHandler(
-        handler: HttpRequestHandler, params: Map<String, String>, req: HttpServletRequest, resp: HttpServletResponse,
-    ): Pair<Any?, HttpRequestHandler> {
-        fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): HttpRequestHandler? {
+        handler: IHttpRequestHandler, params: Map<String, String>, req: HttpServletRequest, resp: HttpServletResponse,
+    ): Pair<Any?, IHttpRequestHandler> {
+        fun findExceptionHandler(controllerName: String, exceptionClass: Class<Exception>): IHttpRequestHandler? {
             val exceptionHandlers = exceptionHandlerMap[controllerName]!!
             val matchedExceptionClass = findClosestMatchingType(exceptionClass, exceptionHandlers.keys) ?: return null
             return exceptionHandlers[matchedExceptionClass]
@@ -265,7 +265,7 @@ class DispatcherServlet : HttpServlet() {
         var _handler = handler
         if (_handler.produce.isNotEmpty()) resp.contentType = _handler.produce
         val ret = try {
-            _handler.process(req, resp, params)
+            _handler.process(req, resp, params, null)
         } catch (e: Exception) {
             val exceptionHandler = findExceptionHandler(handler.controllerBeanName, e.javaClass) ?: throw e
             _handler = exceptionHandler

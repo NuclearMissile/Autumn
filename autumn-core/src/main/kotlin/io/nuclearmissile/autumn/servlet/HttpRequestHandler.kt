@@ -16,15 +16,30 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
+interface IHttpRequestHandler {
+    val controllerBeanName: String
+    val produce: String
+    val isRest: Boolean
+    val isResponseBody: Boolean
+    val isVoid: Boolean
+
+    fun process(
+        req: HttpServletRequest,
+        resp: HttpServletResponse,
+        params: Map<String, String>,
+        exception: Exception?,
+    ): Any?
+}
+
 class HttpRequestHandler(
     private val controller: Any,
     private val handlerMethod: Method,
-    val controllerBeanName: String,
-    val produce: String,
-    val isRest: Boolean,
-) {
-    val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
-    val isVoid = handlerMethod.returnType == Void.TYPE
+    override val controllerBeanName: String,
+    override val produce: String,
+    override val isRest: Boolean,
+) : IHttpRequestHandler {
+    override val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
+    override val isVoid = handlerMethod.returnType == Void.TYPE
 
     private val methodParams = buildList {
         val params = handlerMethod.parameters
@@ -38,11 +53,11 @@ class HttpRequestHandler(
         return "$controllerBeanName.${handlerMethod.name}[${methodParams.size}]"
     }
 
-    fun process(
+    override fun process(
         req: HttpServletRequest,
         resp: HttpServletResponse,
         params: Map<String, String>,
-        exception: Exception? = null,
+        exception: Exception?,
     ): Any? {
         val args = methodParams.map { param ->
             when (param.paramAnno) {
