@@ -2,7 +2,7 @@
 autumn:
   config-class-name: io.nuclearmissile.autumn.hello.HelloConfig
   datasource:
-    url: jdbc:sqlite:autumn.hello.db
+    url: jdbc:sqlite:autumn-hello.db
     driver-class-name: org.sqlite.JDBC
     username:
     password:
