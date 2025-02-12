@@ -115,7 +115,7 @@ class IndexController @Autowired constructor(private val userService: IUserServi
         return if (userService.register(email, name, password) != null)
             ModelAndView("redirect:/login")
         else
-            ModelAndView("/register.ftl", mapOf("error" to "email is already registered"))
+            ModelAndView("/register.ftl", mapOf("error" to "user registration failed"))
     }
 
     @Get("/login")
