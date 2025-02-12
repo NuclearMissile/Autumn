@@ -55,7 +55,7 @@ docker run -p 8080:8080 -t autumn-hello
 ```kotlin
 // Main.kt (part of)
 @Controller
-class IndexController @Autowired constructor(private val userService: UserService) {
+class IndexController @Autowired constructor(private val userService: IUserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
@@ -68,7 +68,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @PostConstruct
     fun init() {
-        // @Transactional proxy of UserService injected
+        // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(UserService::class.java))
         assert(context.config.getRequiredString("autumn.config-class-name") == "io.nuclearmissile.autumn.hello.HelloConfig")

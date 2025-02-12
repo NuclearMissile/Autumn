@@ -8,6 +8,7 @@ import io.nuclearmissile.autumn.eventbus.EventMode
 import io.nuclearmissile.autumn.exception.RequestErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.hello.model.User
+import io.nuclearmissile.autumn.hello.service.IUserService
 import io.nuclearmissile.autumn.hello.service.UserService
 import io.nuclearmissile.autumn.server.AutumnServer
 import io.nuclearmissile.autumn.servlet.ContextLoadListener
@@ -73,7 +74,7 @@ data class LoginEvent(val user: User) : Event
 data class LogoffEvent(val user: User) : Event
 
 @Controller
-class IndexController @Autowired constructor(private val userService: UserService) {
+class IndexController @Autowired constructor(private val userService: IUserService) {
     companion object {
         const val USER_SESSION_KEY = "USER_SESSION_KEY"
     }
@@ -86,7 +87,7 @@ class IndexController @Autowired constructor(private val userService: UserServic
 
     @PostConstruct
     fun init() {
-        // @Transactional proxy of UserService injected
+        // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(UserService::class.java))
         assert(context.config.getRequiredString("autumn.config-class-name") == "io.nuclearmissile.autumn.hello.HelloConfig")

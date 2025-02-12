@@ -4,9 +4,9 @@ import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.aop.Invocation
 import io.nuclearmissile.autumn.aop.InvocationChain
 import io.nuclearmissile.autumn.db.orm.NaiveOrm
+import io.nuclearmissile.autumn.hello.model.User
 import io.nuclearmissile.autumn.utils.HashUtils
 import io.nuclearmissile.autumn.utils.SecureRandomUtils
-import io.nuclearmissile.autumn.hello.model.User
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 
@@ -31,13 +31,20 @@ class AfterInvocation : Invocation {
     }
 }
 
+interface IUserService {
+    fun getUserByEmail(email: String): User?
+    fun register(email: String, name: String, password: String): User?
+    fun changePassword(user: User, newPassword: String): Boolean
+    fun validate(email: String, password: String): User?
+}
+
 @Around("beforeInvocation", "afterInvocation")
 @Component
 @Transactional
-class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
+class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) : IUserService {
     companion object {
         const val CREATE_USERS = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
+            "email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pwd_salt TEXT NOT NULL, pwd_hash TEXT NOT NULL);"
     }
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -55,12 +62,12 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         }
     }
 
-    fun getUserByEmail(email: String): User? {
+    override fun getUserByEmail(email: String): User? {
         return naiveOrm.selectFrom<User>().where("email = ?", email).first()
     }
 
     @Transactional
-    fun register(email: String, name: String, password: String): User? {
+    override fun register(email: String, name: String, password: String): User? {
         val pwdSalt = SecureRandomUtils.genRandomString(32)
         val pwdHash = HashUtils.hmacSha256(password, pwdSalt)
         val user = User(-1, email, name, pwdSalt, pwdHash)
@@ -74,7 +81,7 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
     }
 
     @Transactional
-    fun changePassword(user: User, newPassword: String): Boolean {
+    override fun changePassword(user: User, newPassword: String): Boolean {
         user.pwdSalt = SecureRandomUtils.genRandomString(32)
         user.pwdHash = HashUtils.hmacSha256(newPassword, user.pwdSalt)
         return try {
@@ -86,7 +93,7 @@ class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) {
         }
     }
 
-    fun validate(email: String, password: String): User? {
+    override fun validate(email: String, password: String): User? {
         val user = getUserByEmail(email) ?: return null
         val pwdHash = HashUtils.hmacSha256(password, user.pwdSalt)
         return if (pwdHash == user.pwdHash) user else null
