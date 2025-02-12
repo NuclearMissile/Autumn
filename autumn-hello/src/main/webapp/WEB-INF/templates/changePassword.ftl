@@ -15,7 +15,7 @@
             <form method="post" action="/changePassword">
                 <div class="mb-3">
                     <label for="old_password" class="form-label">Old password:</label>
-                    <input name="old_password" id="old_password" class="form-control" maxlength="100"/>
+                    <input name="old_password" id="old_password" type="password" class="form-control" maxlength="100"/>
                 </div>
                 <div class="mb-3">
                     <label for="new_password" class="form-label">New password:</label>
