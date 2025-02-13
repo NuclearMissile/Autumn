@@ -13,7 +13,7 @@ class EventSubscribeBeanPostProcessor : BeanPostProcessor {
         ApplicationContextHolder.required.getUniqueBean(EventBus::class.java)
     }
 
-    override fun afterInitialization(bean: Any, beanName: String): Any {
+    override fun beforeInitialization(bean: Any, beanName: String): Any {
         for (method in bean.javaClass.methods) {
             if (method.getAnnotation(Subscribe::class.java) != null) {
                 eventBus.register(bean)

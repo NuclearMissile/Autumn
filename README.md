@@ -70,7 +70,7 @@ class IndexController @Autowired constructor(private val userService: IUserServi
     fun init() {
         // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
-        assert(userService === context.getUniqueBean(UserService::class.java))
+        assert(userService === context.getUniqueBean(IUserService::class.java))
         assert(context.config.getRequiredString("autumn.config-class-name") == "io.nuclearmissile.autumn.hello.HelloConfig")
     }
 
