@@ -32,7 +32,7 @@ object Main {
 }
 
 @WebListener
-@ImportDefault
+@ImportDefaults
 class HelloConfig : ContextLoadListener()
 
 @Order(100)
@@ -85,12 +85,15 @@ class IndexController @Autowired constructor(private val userService: IUserServi
     @Autowired
     private lateinit var context: ApplicationContext
 
+    @Value("autumn.config-class-name")
+    private lateinit var configClassName: String
+
     @PostConstruct
     fun init() {
         // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(IUserService::class.java))
-        assert(context.config.getRequiredString("autumn.config-class-name") == "io.nuclearmissile.autumn.hello.HelloConfig")
+        assert(configClassName == "io.nuclearmissile.autumn.hello.HelloConfig")
     }
 
     @Get("/")

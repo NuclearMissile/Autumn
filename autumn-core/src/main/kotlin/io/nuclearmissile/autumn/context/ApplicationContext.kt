@@ -152,7 +152,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
         logger.info("component scan in packages: {}", scanPackages.joinToString())
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
         configClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
-        if (configClass.getAnnotation(ImportDefault::class.java) != null) {
+        if (configClass.getAnnotation(ImportDefaults::class.java) != null) {
             IMPORT_DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
         }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
