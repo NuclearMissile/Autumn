@@ -194,6 +194,6 @@ class AnnotationApplicationContextTest {
             "convert.zoneddatetime" to "2023-03-29T20:45:01+08:00[Asia/Shanghai]",
             "convert.duration" to "P2DT3H4M",
             "convert.zoneid" to "Asia/Shanghai",
-        ).toProperties()
+        )
     )
 }

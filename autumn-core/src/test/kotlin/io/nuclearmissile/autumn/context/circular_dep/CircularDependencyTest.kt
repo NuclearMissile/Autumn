@@ -6,7 +6,6 @@ import io.nuclearmissile.autumn.context.AnnotationApplicationContext
 import io.nuclearmissile.autumn.exception.DependencyException
 import io.nuclearmissile.autumn.utils.ConfigProperties
 import org.junit.jupiter.api.assertThrows
-import java.util.*
 import kotlin.test.Test
 
 class CircularDependencyTestConfiguration
@@ -22,8 +21,7 @@ class CircularDependencyTest {
     fun testCircularDependency() {
         assertThrows<DependencyException> {
             AnnotationApplicationContext(
-                CircularDependencyTestConfiguration::class.java,
-                ConfigProperties(Properties())
+                CircularDependencyTestConfiguration::class.java, ConfigProperties(emptyMap())
             )
         }
     }

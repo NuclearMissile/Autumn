@@ -22,7 +22,7 @@ class CircularDependencyWorkaroundTest {
     @Test
     fun testCircularDependencyWorkaround() {
         AnnotationApplicationContext(
-            CircularDependencyWorkaroundTestConfiguration::class.java, ConfigProperties(Properties())
+            CircularDependencyWorkaroundTestConfiguration::class.java, ConfigProperties(emptyMap())
         ).close()
     }
 }

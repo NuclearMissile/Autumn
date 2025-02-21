@@ -92,7 +92,7 @@ class EventBusTest {
 
     @Test
     fun testPostTestEventOrder() {
-        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(Properties())).use {
+        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(emptyMap())).use {
             val eventBus = it.getUniqueBean(EventBus::class.java)
             eventBus.post(TestEventOrder("test"))
             assertEquals("12", testEventMessageOrder1)
@@ -102,7 +102,7 @@ class EventBusTest {
 
     @Test
     fun testPostTestEventSync() {
-        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(Properties())).use {
+        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(emptyMap())).use {
             val eventBus = it.getUniqueBean(EventBus::class.java)
             assertEquals("", testEventMessageSync)
             eventBus.post(TestEventSync("test_sync"))
@@ -112,7 +112,7 @@ class EventBusTest {
 
     @Test
     fun testPostTestEventAsync() {
-        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(Properties())).use {
+        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(emptyMap())).use {
             val eventBus = it.getUniqueBean(EventBus::class.java)
             assertEquals("", testEventMessageAsync)
             eventBus.post(TestEventAsync("test_async"))
@@ -124,7 +124,7 @@ class EventBusTest {
 
     @Test
     fun testPostTestEventUnregister() {
-        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(Properties())).use {
+        AnnotationApplicationContext(EventBusTestConfiguration::class.java, ConfigProperties(emptyMap())).use {
             val eventBus = it.getUniqueBean(EventBus::class.java)
             assertTrue(eventBus.isRegistered(it.getUniqueBean(TestEventUnregisterListener::class.java)))
             assertEquals("", testEventMessageUnregister)

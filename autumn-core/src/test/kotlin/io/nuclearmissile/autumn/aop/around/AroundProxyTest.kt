@@ -9,7 +9,7 @@ class AroundProxyTest {
     fun testAroundProxy() {
         AnnotationApplicationContext(
             AroundAopConfiguration::class.java,
-            ConfigProperties(mapOf("customer.name" to "Bob").toProperties())
+            ConfigProperties(mapOf("customer.name" to "Bob"))
         ).use { ctx ->
             val proxy = ctx.getUniqueBean(OriginBean::class.java)
             // OriginBean$ByteBuddy$8NoD1FcQ

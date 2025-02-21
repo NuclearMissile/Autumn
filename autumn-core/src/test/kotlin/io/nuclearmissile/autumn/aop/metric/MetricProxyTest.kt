@@ -8,7 +8,7 @@ import kotlin.test.*
 class MetricProxyTest {
     @Test
     fun testMetricProxy() {
-        AnnotationApplicationContext(MetricConfiguration::class.java, ConfigProperties(Properties())).use { ctx ->
+        AnnotationApplicationContext(MetricConfiguration::class.java, ConfigProperties(emptyMap())).use { ctx ->
             val worker = ctx.getUniqueBean(HashWorker::class.java)
             // proxy class, not origin class:
             assertNotSame(HashWorker::class.java, worker.javaClass)

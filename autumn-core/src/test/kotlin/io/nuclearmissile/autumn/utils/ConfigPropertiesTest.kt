@@ -7,7 +7,6 @@ import org.junit.jupiter.api.condition.OS
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.*
 import kotlin.test.*
 
 
@@ -40,7 +39,7 @@ class ConfigPropertiesTest {
                 "scheduler.started-at" to "2023-03-29T21:45:01",
                 "scheduler.backup-at" to "03:05:10",
                 "scheduler.cleanup" to "P2DT8H21M",
-            ).toProperties()
+            )
         )
         assertEquals("Autumn Framework", cpr.getString("app.title"))
         assertEquals("v1.0", cpr.getString("app.version"))
@@ -76,11 +75,7 @@ class ConfigPropertiesTest {
 
     @Test
     fun requiredProperty() {
-        val props = Properties()
-        props.setProperty("app.title", "Autumn Framework")
-        props.setProperty("app.version", "v1.0")
-
-        val cpr = ConfigProperties(props)
+        val cpr = ConfigProperties(mapOf("app.title" to "Autumn Framework", "app.version" to "v1.0"))
         assertThrows<IllegalArgumentException> {
             cpr.getRequiredString("not.exist")
         }
@@ -91,11 +86,8 @@ class ConfigPropertiesTest {
     fun propertyHolder() {
         val home = System.getenv("HOME")
         println("env HOME=$home")
-
-        val props = Properties()
-        props.setProperty("app.title", "Autumn Framework")
-
-        val cpr = ConfigProperties(props)
+       
+        val cpr = ConfigProperties(mapOf("app.title" to "Autumn Framework"))
         assertEquals("Autumn Framework", cpr.getString("\${app.title}"))
         assertThrows<IllegalArgumentException> {
             cpr.getString("\${app.version}")
@@ -114,7 +106,7 @@ class ConfigPropertiesTest {
     fun propertyHolderOnWin() {
         val os = System.getenv("OS")
         println("env OS=$os")
-        val cpr = ConfigProperties(Properties())
+        val cpr = ConfigProperties(emptyMap())
         assertEquals("Windows_NT", cpr.getString("\${app.os:\${OS}}"))
     }
 }

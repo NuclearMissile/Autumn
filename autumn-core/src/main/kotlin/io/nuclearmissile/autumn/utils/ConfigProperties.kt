@@ -1,9 +1,10 @@
 package io.nuclearmissile.autumn.utils
 
+import io.nuclearmissile.autumn.CONFIG_YML
+import io.nuclearmissile.autumn.DEFAULT_CONFIG_YML
 import io.nuclearmissile.autumn.utils.ClassUtils.toPrimitive
 import io.nuclearmissile.autumn.utils.YamlUtils.loadYamlAsPlainMap
 import java.time.*
-import java.util.*
 
 data class PropertyExpr(val key: String, val defaultValue: String?)
 
@@ -33,26 +34,21 @@ inline fun <reified T> IProperties.getRequired(key: String): T {
     return getRequired(key, T::class.java)
 }
 
-class ConfigProperties(props: Properties) : IProperties {
+class ConfigProperties(props: Map<String, String>) : IProperties {
     companion object {
-        private const val CONFIG_YML = "/config.yml"
-        private const val DEFAULT_CONFIG_YML = "/__default-config__.yml"
-
         fun load(): IProperties {
             return loadYaml(DEFAULT_CONFIG_YML).merge(loadYaml(CONFIG_YML))
         }
 
         fun loadYaml(yamlPath: String, fromClassPath: Boolean = true): IProperties {
-            return ConfigProperties(loadYamlAsPlainMap(yamlPath, fromClassPath).toProperties())
+            return ConfigProperties(loadYamlAsPlainMap(yamlPath, fromClassPath))
         }
     }
 
-    private val properties: MutableMap<String, String> = mutableMapOf()
+    private val properties: MutableMap<String, String> = props.toMutableMap()
 
     init {
         properties += System.getenv()
-        @Suppress("UNCHECKED_CAST")
-        properties += props.toMap() as Map<String, String>
     }
 
     override fun merge(other: IProperties): IProperties {

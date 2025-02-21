@@ -13,6 +13,10 @@ const val DEFAULT_ORDER = Int.MAX_VALUE - 10000
 
 const val DEFAULT_TX_MANAGER_ORDER = Int.MAX_VALUE - 1000
 
+const val CONFIG_YML = "/config.yml"
+
+const val DEFAULT_CONFIG_YML = "/__default-config__.yml"
+
 val DEFAULT_LOCALE: Locale = Locale.getDefault()
 
 val DEFAULT_ERROR_RESP_BODY = mapOf(
