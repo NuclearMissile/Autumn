@@ -6,6 +6,7 @@ import freemarker.template.Configuration
 import freemarker.template.DefaultObjectWrapper
 import freemarker.template.TemplateException
 import freemarker.template.TemplateExceptionHandler
+import freemarker.template.TemplateNotFoundException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
 import jakarta.servlet.ServletContext
@@ -91,7 +92,7 @@ class FreeMarkerViewResolver(
         resp.writer.apply {
             try {
                 template.process(model, this)
-            } catch (e: TemplateException) {
+            } catch (_: Exception) {
                 logger.warn("Exception thrown while rendering template: $statusCode.html")
                 resp.sendError(500, getDefaultErrorResponse(500))
             }

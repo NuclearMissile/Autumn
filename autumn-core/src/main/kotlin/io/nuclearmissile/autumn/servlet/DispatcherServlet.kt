@@ -7,6 +7,7 @@ import io.nuclearmissile.autumn.exception.RequestErrorException
 import io.nuclearmissile.autumn.exception.ResponseErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.ClassUtils.findClosestMatchingType
+import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
 import io.nuclearmissile.autumn.utils.HttpUtils.normalizePath
 import io.nuclearmissile.autumn.utils.JsonUtils.writeJson
 import io.nuclearmissile.autumn.utils.getRequired
@@ -28,6 +29,8 @@ abstract class ExceptionMapper<T : Exception> {
 class DispatcherServlet : HttpServlet() {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val context = ApplicationContextHolder.required
+    private val friendlyErrorPageRendering =
+        context.config.getRequired<Boolean>("server.web-app.friendly-error-page-rendering")
     private val viewResolver = context.getUniqueBean(ViewResolver::class.java)
     private val exceptionMappers = run {
         val infoToTarget = context.getBeanInfos(ExceptionMapper::class.java).associateWith {
@@ -282,10 +285,12 @@ class DispatcherServlet : HttpServlet() {
         }
         if (mapper != null) {
             mapper.map(e, req, resp)
-        } else if (context.config.getRequired("server.web-app.friendly-error-page-rendering")) {
+        } else if (friendlyErrorPageRendering) {
             logger.info("friendly error page rendered for", e)
             val statusCode = if (e is ResponseErrorException) e.statusCode else 500
             viewResolver.renderError(statusCode, emptyMap(), req, resp)
+        } else if (e is ResponseErrorException) {
+            resp.sendError(e.statusCode, getDefaultErrorResponse(e.statusCode))
         } else {
             throw e
         }
