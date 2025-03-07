@@ -152,7 +152,8 @@ class DispatcherServlet : HttpServlet() {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
-                serveException(NotFoundException("resource not found for: $url"), req, resp)
+                logger.warn("resource not found: {}", url)
+                resp.sendError(404, getDefaultErrorResponse(404))
             } else {
                 val filePath = url.removeSuffix("/")
                 resp.contentType = ctx.getMimeType(filePath) ?: "application/octet-stream"

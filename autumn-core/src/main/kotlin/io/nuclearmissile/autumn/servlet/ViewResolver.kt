@@ -63,14 +63,14 @@ class FreeMarkerViewResolver(
 
         val template = try {
             freeMarkerConfig.getTemplate(viewName)
-        } catch (_: Exception) {
-            throw ServerErrorException("Template '$viewName' not found.")
+        } catch (e: Exception) {
+            throw ServerErrorException("Exception thrown while rendering template: $viewName", e)
         }
 
         resp.writer.apply {
             try {
                 template.process(model, this)
-            } catch (e: TemplateException) {
+            } catch (e: Exception) {
                 throw ServerErrorException("Exception thrown while rendering template: $viewName", e)
             }
         }.flush()
@@ -84,7 +84,8 @@ class FreeMarkerViewResolver(
 
         val template = try {
             freeMarkerErrorConfig.getTemplate("$statusCode.html")
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Exception thrown while rendering template: $statusCode.html", e)
             resp.sendError(statusCode, getDefaultErrorResponse(statusCode))
             return
         }
@@ -92,8 +93,8 @@ class FreeMarkerViewResolver(
         resp.writer.apply {
             try {
                 template.process(model, this)
-            } catch (_: Exception) {
-                logger.warn("Exception thrown while rendering template: $statusCode.html")
+            } catch (e: Exception) {
+                logger.warn("Exception thrown while rendering template: $statusCode.html", e)
                 resp.sendError(500, getDefaultErrorResponse(500))
             }
         }.flush()
