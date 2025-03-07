@@ -12,9 +12,9 @@
     </appender>
 
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">　　　
-        <file>autumn-hello.info.log</file>　　　　
+        <file>autumn-hello.log</file>　　　　
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">　　　　　　　　　　
-            <fileNamePattern>autumn-hello.%i.info.log.zip</fileNamePattern>　　　　　　　　　　
+            <fileNamePattern>autumn-hello.%i.log.zip</fileNamePattern>　　　　　　　　　　
             <minIndex>1</minIndex>
             <maxIndex>3</maxIndex>　　　　　　
         </rollingPolicy>
