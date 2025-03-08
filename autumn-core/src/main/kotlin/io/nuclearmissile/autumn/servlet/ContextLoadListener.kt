@@ -3,6 +3,7 @@ package io.nuclearmissile.autumn.servlet
 import io.nuclearmissile.autumn.context.AnnotationApplicationContext
 import io.nuclearmissile.autumn.context.ApplicationContextHolder
 import io.nuclearmissile.autumn.exception.AutumnException
+import io.nuclearmissile.autumn.utils.ClassUtils.getBeanName
 import io.nuclearmissile.autumn.utils.ConfigProperties
 import io.nuclearmissile.autumn.utils.IOUtils.readStringFromClassPath
 import io.nuclearmissile.autumn.utils.IProperties
@@ -60,17 +61,18 @@ abstract class ContextLoadListener : ServletContextListener {
         val context = ApplicationContextHolder.required
         for (filterRegBean in context.getBeans(FilterRegistration::class.java)) {
             val urlPatterns = filterRegBean.urlPatterns
+            val filterBeanName = filterRegBean.javaClass.getBeanName()
             require(urlPatterns.isNotEmpty()) {
-                "No url patterns for ${filterRegBean.javaClass.name}"
+                "No url patterns for $filterBeanName"
             }
             val filter = requireNonNull(filterRegBean.filter) {
                 "FilterRegistrationBean.filter must not return null."
             }
             logger.info(
-                "register filter '{}' {} for url pattern: {}",
-                filterRegBean.name, filter.javaClass.name, urlPatterns.joinToString()
+                "register filter: {} ({}) for url pattern: {}",
+                filterBeanName, filter.javaClass.name, urlPatterns.joinToString()
             )
-            servletContext.addFilter(filterRegBean.name, filter)?.addMappingForUrlPatterns(
+            servletContext.addFilter(filterBeanName, filter)?.addMappingForUrlPatterns(
                 EnumSet.of(DispatcherType.REQUEST), true, *urlPatterns.toTypedArray()
             )
         }

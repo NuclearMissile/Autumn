@@ -38,7 +38,6 @@ class HelloConfig : ContextLoadListener()
 @Order(100)
 @Component
 class LogFilter : FilterRegistration() {
-    override val name = "logFilter"
     override val urlPatterns = listOf("/*")
     override val filter = object : Filter {
         private val logger = LoggerFactory.getLogger(javaClass)
