@@ -69,7 +69,7 @@ abstract class ContextLoadListener : ServletContextListener {
                 "FilterRegistrationBean.filter must not return null."
             }
             logger.info(
-                "register filter: {} ({}) for url pattern: {}",
+                "register filter '{}': {} for url pattern: {}",
                 filterBeanName, filter.javaClass.name, urlPatterns.joinToString()
             )
             servletContext.addFilter(filterBeanName, filter)?.addMappingForUrlPatterns(
