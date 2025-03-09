@@ -14,6 +14,7 @@ import io.nuclearmissile.autumn.server.AutumnServer
 import io.nuclearmissile.autumn.servlet.ContextLoadListener
 import io.nuclearmissile.autumn.servlet.FilterRegistration
 import io.nuclearmissile.autumn.servlet.ModelAndView
+import io.nuclearmissile.autumn.utils.IProperties
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
@@ -87,12 +88,16 @@ class IndexController @Autowired constructor(private val userService: IUserServi
     @Value("autumn.config-class-name")
     private lateinit var configClassName: String
 
+    @Autowired
+    private lateinit var applicationConfig: IProperties
+
     @PostConstruct
     fun init() {
         // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(IUserService::class.java))
         assert(configClassName == "io.nuclearmissile.autumn.hello.HelloConfig")
+        assert(applicationConfig.getString("autumn.config-class-name") == configClassName)
     }
 
     @Get("/")
