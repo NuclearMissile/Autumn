@@ -40,6 +40,7 @@ open class JdbcTestBase {
         const val SELECT_USER_NAME = "SELECT name FROM users WHERE id = ?"
         const val SELECT_USER_AGE = "SELECT age FROM users WHERE id = ?"
         const val SELECT_ADDRESS_BY_USERID = "SELECT * FROM addresses WHERE userId = ?"
+        const val SELECT_USER_ID_SUM = "SELECT SUM(id) FROM users WHERE id = ?"
     }
 
     val config = ConfigProperties.load()

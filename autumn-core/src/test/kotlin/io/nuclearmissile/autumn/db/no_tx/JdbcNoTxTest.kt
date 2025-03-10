@@ -130,14 +130,15 @@ class JdbcNoTxTest : JdbcTestBase() {
             assertContentEquals(list1, list3[0])
             assertContentEquals(list2, list3[1])
 
-            val userCount = jdbcTemplate.query<Int>(SELECT_USER_COUNT)
-            assertEquals(2, userCount)
+            assertEquals(2, jdbcTemplate.query<Int>(SELECT_USER_COUNT))
+            assertEquals(2, jdbcTemplate.query<Byte>(SELECT_USER_COUNT))
+            assertEquals(2, jdbcTemplate.query<Short>(SELECT_USER_COUNT))
+            assertEquals(2, jdbcTemplate.query<Int>(SELECT_USER_COUNT))
+            assertEquals(2, jdbcTemplate.query<Long>(SELECT_USER_COUNT))
+            assertEquals(2, jdbcTemplate.query<Number>(SELECT_USER_COUNT))
 
-            jdbcTemplate.query<Byte>(SELECT_USER_COUNT)
-            jdbcTemplate.query<Short>(SELECT_USER_COUNT)
-            jdbcTemplate.query<Int>(SELECT_USER_COUNT)
-            jdbcTemplate.query<Long>(SELECT_USER_COUNT)
-            jdbcTemplate.query<Number>(SELECT_USER_COUNT)
+            assertEquals(1, jdbcTemplate.query<Int>(SELECT_USER_ID_SUM, 1))
+            assertEquals(2, jdbcTemplate.query<Int>(SELECT_USER_ID_SUM, 2))
 
             assertThrows<IllegalArgumentException> { jdbcTemplate.query<ArrayList<*>>(SELECT_USER, userId1) }
         }

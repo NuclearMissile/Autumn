@@ -209,49 +209,20 @@ class RowExtractor<T> private constructor(private val clazz: Class<T>) : ResultS
     companion object {
         // cache single elem row extractors
         private val ROW_EXTRACTOR_CACHE = ConcurrentHashMap<Class<*>, ResultSetExtractor<*>>().apply {
-            put(Boolean::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getBoolean(1)
-            })
-            put(java.lang.Boolean::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getBoolean(1)
-            })
-            put(Long::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getLong(1)
-            })
-            put(java.lang.Long::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getLong(1)
-            })
-            put(Int::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getInt(1)
-            })
-            put(java.lang.Integer::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getInt(1)
-            })
-            put(Short::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getShort(1)
-            })
-            put(java.lang.Short::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getShort(1)
-            })
-            put(Byte::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getByte(1)
-            })
-            put(java.lang.Byte::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getByte(1)
-            })
-            put(Float::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getFloat(1)
-            })
-            put(java.lang.Float::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getFloat(1)
-            })
-            put(Double::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getDouble(1)
-            })
-            put(java.lang.Double::class.java, ResultSetExtractor {
-                if (it.getObject(1) == null) null else it.getDouble(1)
-            })
-
+            put(Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
+            put(java.lang.Boolean::class.java, ResultSetExtractor { it.getBoolean(1) })
+            put(Long::class.java, ResultSetExtractor { it.getLong(1) })
+            put(java.lang.Long::class.java, ResultSetExtractor { it.getLong(1) })
+            put(Int::class.java, ResultSetExtractor { it.getInt(1) })
+            put(java.lang.Integer::class.java, ResultSetExtractor { it.getInt(1) })
+            put(Short::class.java, ResultSetExtractor { it.getShort(1) })
+            put(java.lang.Short::class.java, ResultSetExtractor { it.getShort(1) })
+            put(Byte::class.java, ResultSetExtractor { it.getByte(1) })
+            put(java.lang.Byte::class.java, ResultSetExtractor { it.getByte(1) })
+            put(Float::class.java, ResultSetExtractor { it.getFloat(1) })
+            put(java.lang.Float::class.java, ResultSetExtractor { it.getFloat(1) })
+            put(Double::class.java, ResultSetExtractor { it.getDouble(1) })
+            put(java.lang.Double::class.java, ResultSetExtractor { it.getDouble(1) })
             put(java.lang.String::class.java, ResultSetExtractor { it.getString(1) })
             put(String::class.java, ResultSetExtractor { it.getString(1) })
             put(Number::class.java, ResultSetExtractor { it.getObject(1) as Number? })
