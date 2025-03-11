@@ -119,6 +119,7 @@ class EntityMapper<T>(private val entityClass: Class<T>) {
     val updatableProperties by lazy { properties.filter(EntityProperty::updatable) }
 
     val selectSQL by lazy { "SELECT * FROM $tableName WHERE ${id.colName} = ?" }
+    val selectForUpdateSQL by lazy { "SELECT * FROM $tableName WHERE ${id.colName} = ? FOR UPDATE" }
     val insertSQL by lazy {
         "INSERT INTO $tableName (${insertableProperties.joinToString { it.colName }}) VALUES (${
             List(insertableProperties.count()) { "?" }.joinToString()

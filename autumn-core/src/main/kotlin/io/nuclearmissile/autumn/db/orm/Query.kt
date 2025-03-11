@@ -17,6 +17,7 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
     val orderBys = mutableListOf<String>()
     var selectClause = ""
     var whereClause = ""
+    var forUpdate = false
     var limit = 0L
     var offset = 0L
 
@@ -35,6 +36,9 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
             }
             if (limit > 0 && offset >= 0) {
                 it.append(" LIMIT ? OFFSET ? ")
+            }
+            if (forUpdate) {
+                it.append(" FOR UPDATE ")
             }
         }.toString()
     }
@@ -103,9 +107,10 @@ class Criteria<T>(private val naiveOrm: NaiveOrm, private val entityMapper: Enti
     }
 }
 
-class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean) {
+class SelectFrom<T>(private val criteria: Criteria<T>, distinct: Boolean, forUpdate: Boolean) {
     init {
         criteria.selectClause = if (distinct) " SELECT DISTINCT * " else " SELECT * "
+        criteria.forUpdate = forUpdate
     }
 
     fun join(joinClause: String, vararg args: Any): Join<T> {

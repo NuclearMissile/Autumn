@@ -26,16 +26,17 @@ class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
         return classMapping.values.sortedBy { it.tableName }.joinToString("\n\n") { it.ddl }
     }
 
-    inline fun <reified T> selectById(id: Any): T? {
+    inline fun <reified T> selectById(id: Any, forUpdate: Boolean = false): T? {
         val mapper = mapperOf(T::class.java)
+        val sql = if (forUpdate) mapper.selectForUpdateSQL else mapper.selectSQL
         if (logger.isDebugEnabled) {
-            logger.debug("selectById SQL: {}, args: {}", mapper.selectSQL, id)
+            logger.debug("selectById SQL: {}, args: {}", sql, id)
         }
-        return jdbcTemplate.queryForOrm(mapper.listExtractor, mapper.selectSQL, id)!!.firstOrNull()
+        return jdbcTemplate.queryForOrm(mapper.listExtractor, sql, id)!!.firstOrNull()
     }
 
-    inline fun <reified T> selectFrom(distinct: Boolean = false): SelectFrom<T> {
-        return SelectFrom(Criteria(this, mapperOf(T::class.java)), distinct)
+    inline fun <reified T> selectFrom(distinct: Boolean = false, forUpdate: Boolean = false): SelectFrom<T> {
+        return SelectFrom(Criteria(this, mapperOf(T::class.java)), distinct, forUpdate)
     }
 
     fun <T> delete(clazz: Class<T>, entity: T) {
