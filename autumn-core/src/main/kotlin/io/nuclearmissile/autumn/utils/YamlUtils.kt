@@ -8,7 +8,7 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
 import org.yaml.snakeyaml.resolver.Resolver
-import java.nio.file.Path
+import java.nio.file.Paths
 
 object YamlUtils {
     fun loadYamlAsPlainMap(path: String, fromClassPath: Boolean): Map<String, String> {
@@ -29,7 +29,7 @@ object YamlUtils {
         return if (fromClassPath)
             readInputStreamFromClassPath(path) { input -> yaml.load(input) }
         else
-            readInputStream(Path.of(path)) { input -> yaml.load(input) }
+            readInputStream(Paths.get(path)) { input -> yaml.load(input) }
     }
 
     private fun flatten(source: Map<*, *>, prefix: String, plain: MutableMap<String, String>) {

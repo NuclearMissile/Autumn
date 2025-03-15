@@ -8,7 +8,7 @@ import io.nuclearmissile.autumn.exception.ResponseErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.ClassUtils.findClosestMatchingType
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
-import io.nuclearmissile.autumn.utils.HttpUtils.normalizePath
+import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
 import io.nuclearmissile.autumn.utils.JsonUtils.writeJson
 import io.nuclearmissile.autumn.utils.getRequired
 import io.routekit.Router
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
+import java.nio.file.Paths
 
 abstract class ExceptionMapper<T : Exception> {
     abstract fun map(e: T, req: HttpServletRequest, resp: HttpServletResponse)
@@ -77,15 +78,16 @@ class DispatcherServlet : HttpServlet() {
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
+        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toPortableString()
         if (url == faviconPath || url.startsWith(resourcePath))
-            resource(req, resp)
+            resource(url, req, resp)
         else
-            serve(req, resp)
+            serve(url, req, resp)
     }
 
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
-        serve(req, resp)
+        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toPortableString()
+        serve(url, req, resp)
     }
 
     private fun addController(controllerBeanName: String, prefix: String, instance: Any, isRest: Boolean) {
@@ -118,14 +120,14 @@ class DispatcherServlet : HttpServlet() {
             configMethod(m)
             when (anno) {
                 is Get -> {
-                    val urlPattern = normalizePath(prefix + anno.value)
+                    val urlPattern = Paths.get(prefix + anno.value).normalize().toPortableString()
                     routerSetupMap["GET"]!!.add(
                         urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )
                 }
 
                 is Post -> {
-                    val urlPattern = normalizePath(prefix + anno.value)
+                    val urlPattern = Paths.get(prefix + anno.value).normalize().toPortableString()
                     routerSetupMap["POST"]!!.add(
                         urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )
@@ -147,8 +149,7 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun resource(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
+    private fun resource(url: String, req: HttpServletRequest, resp: HttpServletResponse) {
         val ctx = req.servletContext
         ctx.getResourceAsStream(url).use { input ->
             if (input == null) {
@@ -164,10 +165,9 @@ class DispatcherServlet : HttpServlet() {
         }
     }
 
-    private fun serve(req: HttpServletRequest, resp: HttpServletResponse) {
+    private fun serve(url: String, req: HttpServletRequest, resp: HttpServletResponse) {
         try {
             val router = routerMap[req.method] ?: throw RequestErrorException("unsupported method: ${req.method}")
-            val url = normalizePath(req.requestURI.removePrefix(req.contextPath))
             val result = router.routeOrNull(url) ?: throw NotFoundException("resource not found for: $url")
             val handler = result.handler
             val params = result.variables().mapValues { it.value.toString() }

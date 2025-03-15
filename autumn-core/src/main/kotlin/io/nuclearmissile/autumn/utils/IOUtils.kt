@@ -27,4 +27,21 @@ object IOUtils {
     fun readString(path: Path): String {
         return readInputStream(path) { input -> String(input.readAllBytes()) }
     }
+
+    fun Path.toPortableString(): String {
+        val sb = StringBuilder()
+        var first = true
+        val root = this.root
+        if (root != null) {
+            sb.append(root.toString().replace('\\', '/'))
+        }
+        this.forEach { elem ->
+            if (first)
+                first = false
+            else
+                sb.append('/')
+            sb.append(elem.toString())
+        }
+        return sb.toString()
+    }
 }

@@ -12,18 +12,6 @@ import kotlin.test.assertNull
 
 class HttpUtilsTest {
     @Test
-    fun testNormalizePath() {
-        assertEquals("/", HttpUtils.normalizePath("/"))
-        assertEquals("/abc", HttpUtils.normalizePath("/abc/"))
-        assertEquals("/abc/def", HttpUtils.normalizePath("/abc/def"))
-        assertEquals("/abc/def", HttpUtils.normalizePath("/abc/def//"))
-        assertEquals("/", HttpUtils.normalizePath("//"))
-        assertEquals("/abc", HttpUtils.normalizePath("/abc/def/.."))
-        assertEquals("/abc", HttpUtils.normalizePath("/abc/def/../"))
-        assertEquals("/", HttpUtils.normalizePath("/abc/def/../../"))
-    }
-
-    @Test
     fun testEscapeHtml() {
         val html = "<h1>Hello & \"World!\"</h1>"
         val escaped = html.escapeHtml()

@@ -1,11 +1,22 @@
 package io.nuclearmissile.autumn.utils
 
+import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
 import io.nuclearmissile.autumn.utils.YamlUtils.loadYamlAsPlainMap
+import java.nio.file.Paths
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class IOUtilsTest {
+    @Test
+    fun toPortableString() {
+        assertEquals("/a/b/c/d", Paths.get("\\a\\b\\c\\d").toPortableString())
+        assertEquals("C:/a/b/c/d", Paths.get("C:\\a\\b\\c\\d").toPortableString())
+        assertEquals("a/b", Paths.get("a\\b").toPortableString())
+        assertEquals("a/b", Paths.get("a\\b\\").toPortableString())
+        assertEquals("a", Paths.get("a").toPortableString())
+    }
+
     @Test
     fun testLoadYaml() {
         val c0 = loadYamlAsPlainMap("/test.yml", true)

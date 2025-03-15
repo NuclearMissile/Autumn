@@ -89,7 +89,7 @@ object AutumnServer {
             return Triple(classesPath, libPath, tmpPath)
         }
 
-        val warPath = Path.of(war).toAbsolutePath().normalize()
+        val warPath = Paths.get(war).toAbsolutePath().normalize()
         require(warPath.isRegularFile() || warPath.isDirectory()) {
             "warDir must be a file or a directory"
         }

@@ -3,13 +3,13 @@ package io.nuclearmissile.autumn.server.classloader
 import io.nuclearmissile.autumn.utils.ClassUtils.extractTarget
 import org.junit.jupiter.api.assertThrows
 import java.lang.reflect.InvocationTargetException
-import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.test.*
 
 class WarClassLoaderTest {
     private val classLoader = run {
-        val classPath = Path.of("src", "test", "resources", "test-classpath", "WEB-INF", "classes")
-        val libPath = Path.of("src", "test", "resources", "test-classpath", "WEB-INF", "lib")
+        val classPath = Paths.get("src", "test", "resources", "test-classpath", "WEB-INF", "classes")
+        val libPath = Paths.get("src", "test", "resources", "test-classpath", "WEB-INF", "lib")
         WarClassLoader(classPath, libPath)
     }
 
@@ -64,13 +64,13 @@ class WarClassLoaderTest {
     fun testWalkPaths() {
         val resources = mutableListOf<String>()
         classLoader.walkPaths { resources.add(it.fqcn) }
-        
+
         // class path
         assertTrue(resources.contains("config.yml"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/HelloConfig.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/Main.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/hello/service/UserService.class"))
-        
+
         // lib paths
         assertTrue(resources.contains("org/intellij/lang/annotations/Flow.class"))
         assertTrue(resources.contains("io/nuclearmissile/autumn/db/JdbcTemplate.class"))

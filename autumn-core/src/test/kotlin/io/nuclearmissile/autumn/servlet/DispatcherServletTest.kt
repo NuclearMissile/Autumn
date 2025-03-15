@@ -11,7 +11,7 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.mock.web.MockHttpSession
 import org.springframework.mock.web.MockServletContext
-import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -345,7 +345,7 @@ class DispatcherServletTest {
     }
 
     private fun createMockServletContext(): MockServletContext {
-        val path = Path.of("./src/test/resources").toAbsolutePath().normalize()
+        val path = Paths.get("./src/test/resources").toAbsolutePath().normalize()
         val ctx = MockServletContext(
             if (System.getProperty("os.name").lowercase().contains("windows")) "file:///$path" else "file://$path"
         )

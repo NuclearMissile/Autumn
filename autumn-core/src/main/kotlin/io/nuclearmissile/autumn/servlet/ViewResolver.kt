@@ -4,16 +4,16 @@ import freemarker.cache.TemplateLoader
 import freemarker.core.HTMLOutputFormat
 import freemarker.template.Configuration
 import freemarker.template.DefaultObjectWrapper
-import freemarker.template.TemplateException
 import freemarker.template.TemplateExceptionHandler
-import freemarker.template.TemplateNotFoundException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
+import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import java.io.*
+import java.nio.file.Paths
 
 interface ViewResolver {
     fun init()
@@ -103,10 +103,10 @@ class FreeMarkerViewResolver(
 
 class ServletTemplateLoader(private val servletContext: ServletContext, subDirPath: String) : TemplateLoader {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val subDirPath = "/${subDirPath.replace("\\", "/").trim('/')}/"
+    private val subDirPath = Paths.get(subDirPath)
 
     override fun findTemplateSource(name: String): Any? {
-        val realPath = servletContext.getRealPath(subDirPath + name)
+        val realPath = servletContext.getRealPath(subDirPath.resolve(name).toPortableString())
         logger.atDebug().log("try to load template {}, real path: {}", name, realPath)
         if (realPath != null) {
             val file = File(realPath)

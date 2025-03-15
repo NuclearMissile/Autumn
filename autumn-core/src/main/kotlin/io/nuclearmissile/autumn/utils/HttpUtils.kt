@@ -19,20 +19,6 @@ object HttpUtils {
             .replace("\"", "&quot;")
     }
 
-    fun normalizePath(path: String): String {
-        val stack = ArrayDeque<String>()
-        for (part in path.split('/')) {
-            if (part.isEmpty() || part == ".") {
-                continue
-            } else if (part == ".." && stack.isNotEmpty()) {
-                stack.pop()
-            } else {
-                stack.push(part)
-            }
-        }
-        return stack.reversed().joinToString("/", prefix = "/")
-    }
-
     fun parseAcceptLanguages(acceptLanguage: String): List<Locale> {
         // parse Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
         val ret = mutableListOf<Locale>()
