@@ -138,12 +138,19 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
     private fun Class<*>.isPrimary() = isAnnotationPresent(Primary::class.java)
     private fun Method.isPrimary() = isAnnotationPresent(Primary::class.java)
     private fun Class<*>.beanCtor() = run {
-        val ctors = declaredConstructors.sortedByDescending { it.parameterCount }
-        ctors.firstOrNull { it.isAnnotationPresent(Autowired::class.java) } ?: ctors.firstOrNull {
-            it.parameters.all { p ->
+        val autowiredCtors = declaredConstructors.filter { it.isAnnotationPresent(Autowired::class.java) }
+        val allAutowiredParamsCtors = declaredConstructors.filter {
+            it.parameters.isNotEmpty() && it.parameters.all { p ->
                 p.isAnnotationPresent(Autowired::class.java) || p.isAnnotationPresent(Value::class.java)
             }
-        } ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
+        }
+        if (autowiredCtors.size + allAutowiredParamsCtors.size > 1)
+            throw BeanDefinitionException("Ambiguous bean constructors found in class: $name.")
+        val noParamCtor = declaredConstructors.find { it.parameters.isEmpty() }
+        autowiredCtors.firstOrNull()
+            ?: allAutowiredParamsCtors.firstOrNull()
+            ?: noParamCtor
+            ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
     }
 
     private fun scanClassNamesOnConfigClass(configClass: Class<*>): List<String> {
@@ -352,7 +359,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
                 else -> {
                     throw BeanCreationException(
                         "Cannot specify both @Autowired and @Value when inject ${clazz.simpleName}.$accessibleName " +
-                            "for bean '${info.beanName}': ${info.beanClass.name}"
+                                "for bean '${info.beanName}': ${info.beanClass.name}"
                     )
                 }
             }
