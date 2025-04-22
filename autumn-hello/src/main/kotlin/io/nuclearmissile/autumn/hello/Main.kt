@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        AutumnServer.start(listOf(HelloConfig::class.java))
+        AutumnServer.start(listOf(HelloApplication::class.java))
     }
 }
 
 @WebListener
 @ImportDefaults
-class HelloConfig : ContextLoadListener()
+class HelloApplication : ContextLoadListener()
 
 @Order(100)
 @Component
@@ -85,9 +85,6 @@ class IndexController @Autowired constructor(private val userService: IUserServi
     @Autowired
     private lateinit var context: ApplicationContext
 
-    @Value("autumn.config-class-name")
-    private lateinit var configClassName: String
-
     @Autowired
     private lateinit var applicationConfig: IProperties
 
@@ -96,8 +93,7 @@ class IndexController @Autowired constructor(private val userService: IUserServi
         // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(IUserService::class.java))
-        assert(configClassName == "io.nuclearmissile.autumn.hello.HelloConfig")
-        assert(applicationConfig.getString("autumn.config-class-name") == configClassName)
+        assert(applicationConfig.getString("server.web-app.name") == "Hello Application")
     }
 
     @Get("/")

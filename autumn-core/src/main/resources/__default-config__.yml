@@ -1,6 +1,5 @@
 # default autumn configuration:
 autumn:
-  config-class-name: # io.nuclearmissile.autumn.hello.HelloConfig
   web:
     static-path: /static/
     favicon-path: /favicon.ico

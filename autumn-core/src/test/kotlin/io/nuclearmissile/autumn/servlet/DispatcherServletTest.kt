@@ -1,5 +1,6 @@
 package io.nuclearmissile.autumn.servlet
 
+import io.nuclearmissile.autumn.IS_WINDOWS
 import io.nuclearmissile.autumn.context.AnnotationApplicationContext
 import io.nuclearmissile.autumn.utils.ConfigProperties
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
@@ -347,7 +348,7 @@ class DispatcherServletTest {
     private fun createMockServletContext(): MockServletContext {
         val path = Paths.get("./src/test/resources").toAbsolutePath().normalize()
         val ctx = MockServletContext(
-            if (System.getProperty("os.name").lowercase().contains("windows")) "file:///$path" else "file://$path"
+            if (IS_WINDOWS) "file:///$path" else "file://$path"
         )
         ctx.requestCharacterEncoding = "UTF-8"
         ctx.responseCharacterEncoding = "UTF-8"

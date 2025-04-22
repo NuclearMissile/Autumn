@@ -1,6 +1,5 @@
 # autumn configuration:
 autumn:
-  config-class-name: # io.nuclearmissile.autumn.hello.HelloConfiguration
   datasource:
     url: jdbc:sqlite:test_jdbc.db
     driver-class-name: org.sqlite.JDBC

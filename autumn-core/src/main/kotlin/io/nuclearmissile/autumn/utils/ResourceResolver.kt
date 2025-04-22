@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-data class Resource(val path: String, val name: String)
+data class Resource(val path: Path, val name: String)
 
 class ResourceResolver(private val basePackage: String) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -44,10 +44,10 @@ class ResourceResolver(private val basePackage: String) {
     ) {
         Files.walk(root).filter { path -> Files.isRegularFile(path) }.forEach { path ->
             val res = if (isJar) {
-                Resource(baseDir, path.toString().removePrefix("/"))
+                Resource(Paths.get(baseDir), path.toString().removePrefix("/"))
             } else {
                 val name = path.toString().substring(baseDir.length).removePrefix("/")
-                Resource("file:$path", name)
+                Resource(path, name)
             }
             logger.atDebug().log("found resource: {}", res)
             mapper(res)?.also { collector.add(it) }

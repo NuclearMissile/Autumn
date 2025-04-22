@@ -83,7 +83,7 @@ object ApplicationContextHolder {
         get() = requireNotNull(instance) { "ApplicationContext is not set." }
 }
 
-class AnnotationApplicationContext(configClass: Class<*>, override val config: IProperties) : ApplicationContext {
+class AnnotationApplicationContext(appClass: Class<*>, override val config: IProperties) : ApplicationContext {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val sortedBeanInfos: List<IBeanInfo>
     private val postProcessors = mutableListOf<BeanPostProcessor>()
@@ -95,7 +95,7 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
     init {
         // register this to app context holder
         ApplicationContextHolder.instance = this
-        managedClassNames = scanClassNamesOnConfigClass(configClass)
+        managedClassNames = scanClassNamesWithinAppClass(appClass)
         beanInfoMap = createBeanInfos(managedClassNames)
         sortedBeanInfos = beanInfoMap.values.sorted()
         // init @Configuration beans
@@ -153,13 +153,13 @@ class AnnotationApplicationContext(configClass: Class<*>, override val config: I
             ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
     }
 
-    private fun scanClassNamesOnConfigClass(configClass: Class<*>): List<String> {
-        val scanPackages = configClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
-            ?: listOf(configClass.packageName)
+    private fun scanClassNamesWithinAppClass(appClass: Class<*>): List<String> {
+        val scanPackages = appClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
+            ?: listOf(appClass.packageName)
         logger.info("component scan in packages: {}", scanPackages.joinToString())
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
-        configClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
-        if (configClass.getAnnotation(ImportDefaults::class.java) != null) {
+        appClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
+        if (appClass.getAnnotation(ImportDefaults::class.java) != null) {
             IMPORT_DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
         }
         logger.atDebug().log("class found by component scan: {}", classNameSet)

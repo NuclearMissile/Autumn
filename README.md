@@ -65,16 +65,16 @@ class IndexController @Autowired constructor(private val userService: IUserServi
 
     @Autowired
     private lateinit var context: ApplicationContext
-    
-    @Value("autumn.config-class-name")
-    private lateinit var configClassName: String
+
+    @Autowired
+    private lateinit var applicationConfig: IProperties
 
     @PostConstruct
     fun init() {
         // proxy of UserService injected
         assert(userService.javaClass != UserService::class.java)
         assert(userService === context.getUniqueBean(IUserService::class.java))
-        assert(configClassName == "io.nuclearmissile.autumn.hello.HelloConfig")
+        assert(applicationConfig.getString("server.web-app.name") == "Hello Application")
     }
 
     @Get("/")

@@ -27,17 +27,14 @@ abstract class ContextLoadListener : ServletContextListener {
         servletContext.requestCharacterEncoding = config.getRequiredString("server.request-encoding")
         servletContext.responseCharacterEncoding = config.getRequiredString("server.response-encoding")
 
-        val configClassName = config.getRequiredString("autumn.config-class-name")
-        logger.info("init ApplicationContext by configuration: {}", configClassName)
-        if (configClassName.isEmpty()) {
-            throw AutumnException("Cannot init ApplicationContext for missing configClassName", null)
-        }
-        val configClass = try {
-            Class.forName(configClassName, true, Thread.currentThread().contextClassLoader)
+        val appClassName = javaClass.name
+        logger.info("init ApplicationContext by application class: {}", appClassName)
+        val appClass = try {
+            Class.forName(appClassName, true, Thread.currentThread().contextClassLoader)
         } catch (e: ClassNotFoundException) {
-            throw AutumnException("Could not load autumn config class: $configClassName", null)
+            throw AutumnException("Could not load autumn config class: $appClassName", null)
         }
-        val applicationContext = AnnotationApplicationContext(configClass, config)
+        val applicationContext = AnnotationApplicationContext(appClass, config)
         logger.info("Application context created: {}", applicationContext)
 
         registerFilters(servletContext)
