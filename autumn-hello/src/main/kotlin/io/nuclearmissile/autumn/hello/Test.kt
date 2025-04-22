@@ -3,6 +3,7 @@ package io.nuclearmissile.autumn.hello
 import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.servlet.*
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
+import io.nuclearmissile.autumn.utils.IProperties
 import io.nuclearmissile.autumn.utils.JsonUtils.toJson
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -60,7 +61,7 @@ class HelloController {
 }
 
 @RestController("/api")
-class RestApiController {
+class RestApiController @Autowired constructor(private val applicationConfig: IProperties) {
     @Get("/hello/{name}")
     @ResponseBody
     fun hello(@PathVariable name: String): String {
@@ -70,6 +71,11 @@ class RestApiController {
     @Get("/params")
     fun params(@RequestParam test: String): Map<String, String> {
         return mapOf("test" to test)
+    }
+
+    @Get("/config", "application/json")
+    fun config(): Map<String, String> {
+        return applicationConfig.toMap()
     }
 
     @Get("/error")
