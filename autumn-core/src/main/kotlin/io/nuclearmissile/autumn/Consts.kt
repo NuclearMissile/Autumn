@@ -19,6 +19,8 @@ const val DEFAULT_CONFIG_YML = "/__default-config__.yml"
 
 val DEFAULT_LOCALE: Locale = Locale.getDefault()
 
+val IS_WINDOWS: Boolean = System.getProperty("os.name").lowercase().startsWith("windows")
+
 val DEFAULT_ERROR_RESP_BODY = mapOf(
     400 to "<h1>400: Bad Request</h1>",
     401 to "<h1>401: Unauthorized</h1>",

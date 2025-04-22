@@ -8,7 +8,7 @@ import io.nuclearmissile.autumn.exception.ResponseErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.ClassUtils.findClosestMatchingType
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
-import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
+import io.nuclearmissile.autumn.utils.IOUtils.toUnixString
 import io.nuclearmissile.autumn.utils.JsonUtils.writeJson
 import io.nuclearmissile.autumn.utils.getRequired
 import io.routekit.Router
@@ -78,7 +78,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toPortableString()
+        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toUnixString()
         if (url == faviconPath || url.startsWith(resourcePath))
             resource(url, req, resp)
         else
@@ -86,7 +86,7 @@ class DispatcherServlet : HttpServlet() {
     }
 
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
-        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toPortableString()
+        val url = Paths.get(req.requestURI.removePrefix(req.contextPath)).normalize().toUnixString()
         serve(url, req, resp)
     }
 
@@ -120,14 +120,14 @@ class DispatcherServlet : HttpServlet() {
             configMethod(m)
             when (anno) {
                 is Get -> {
-                    val urlPattern = Paths.get(prefix + anno.value).normalize().toPortableString()
+                    val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
                     routerSetupMap["GET"]!!.add(
                         urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )
                 }
 
                 is Post -> {
-                    val urlPattern = Paths.get(prefix + anno.value).normalize().toPortableString()
+                    val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
                     routerSetupMap["POST"]!!.add(
                         urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
                     )

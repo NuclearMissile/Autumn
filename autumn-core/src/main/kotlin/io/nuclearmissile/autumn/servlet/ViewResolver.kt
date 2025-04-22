@@ -7,7 +7,7 @@ import freemarker.template.DefaultObjectWrapper
 import freemarker.template.TemplateExceptionHandler
 import io.nuclearmissile.autumn.exception.ServerErrorException
 import io.nuclearmissile.autumn.utils.HttpUtils.getDefaultErrorResponse
-import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
+import io.nuclearmissile.autumn.utils.IOUtils.toUnixString
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -106,7 +106,7 @@ class ServletTemplateLoader(private val servletContext: ServletContext, subDirPa
     private val subDirPath = Paths.get(subDirPath)
 
     override fun findTemplateSource(name: String): Any? {
-        val realPath = servletContext.getRealPath(subDirPath.resolve(name).toPortableString())
+        val realPath = servletContext.getRealPath(subDirPath.resolve(name).toUnixString())
         logger.atDebug().log("try to load template {}, real path: {}", name, realPath)
         if (realPath != null) {
             val file = File(realPath)

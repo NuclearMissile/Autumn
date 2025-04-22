@@ -28,20 +28,23 @@ object IOUtils {
         return readInputStream(path) { input -> String(input.readAllBytes()) }
     }
 
-    fun Path.toPortableString(): String {
-        val sb = StringBuilder()
-        var first = true
-        val root = this.root
-        if (root != null) {
-            sb.append(root.toString().replace('\\', '/'))
+    /**
+     * Converts a path string to Unix style (forward slashes) regardless of platform.
+     * Handles normalization of path separators and removes trailing slashes.
+     *
+     * @param path The path string to convert
+     * @return A normalized Unix-style path string
+     */
+    fun Path.toUnixString(): String {
+        // Replace backslashes with forward slashes
+        val unixPath = toString().replace('\\', '/')
+        // Normalize multiple consecutive slashes to a single slash
+        val normalizedPath = unixPath.replace(Regex("/+"), "/")
+        // Remove trailing slash except for a root path "/"
+        return if (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+            normalizedPath.substring(0, normalizedPath.length - 1)
+        } else {
+            normalizedPath
         }
-        this.forEach { elem ->
-            if (first)
-                first = false
-            else
-                sb.append('/')
-            sb.append(elem.toString())
-        }
-        return sb.toString()
     }
 }

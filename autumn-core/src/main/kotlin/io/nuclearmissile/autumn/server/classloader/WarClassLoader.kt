@@ -1,6 +1,7 @@
 package io.nuclearmissile.autumn.server.classloader
 
-import io.nuclearmissile.autumn.utils.IOUtils.toPortableString
+import io.nuclearmissile.autumn.IS_WINDOWS
+import io.nuclearmissile.autumn.utils.IOUtils.toUnixString
 import java.io.IOException
 import java.net.URI
 import java.net.URL
@@ -18,19 +19,19 @@ class WarClassLoader(classesPath: Path, libPath: Path?) :
     URLClassLoader("WarClassLoader", createUrls(classesPath, libPath), getSystemClassLoader()) {
     companion object {
         private fun Path.absPath(): String {
-            return '/' + this.toAbsolutePath().normalize().toPortableString()
+            return (if (IS_WINDOWS) "/" else "") + this.toAbsolutePath().normalize().toUnixString()
         }
 
         private fun Path.dirUrl(): URL {
             if (!Files.isDirectory(this))
                 throw IOException("Path '$this' is not a directory")
-            return URI.create("file://${this.absPath()}/").toURL()
+            return URI.create("${if (IS_WINDOWS) "file://" else "file:"}${this.absPath()}/").toURL()
         }
 
         private fun Path.jarUrl(): URL {
             if (!Files.isRegularFile(this) || this.extension != "jar")
                 throw IOException("Path '$this' is not a .jar file")
-            return URI.create("file://${this.absPath()}").toURL()
+            return URI.create("${if (IS_WINDOWS) "file://" else "file:"}${this.absPath()}").toURL()
         }
 
         private fun Path.scanJars(): List<Path> {
@@ -52,7 +53,7 @@ class WarClassLoader(classesPath: Path, libPath: Path?) :
     fun walkPaths(visitor: Consumer<Resource>) {
         // walk class path
         Files.walk(classesPath).filter(Path::isRegularFile).forEach { path ->
-            visitor.accept(Resource(path, classesPath.relativize(path).toPortableString()))
+            visitor.accept(Resource(path, classesPath.relativize(path).toUnixString()))
         }
 
         // walk lib paths
