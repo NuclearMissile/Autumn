@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.Objects.requireNonNull
 
-abstract class ContextLoadListener : ServletContextListener {
+abstract class AutumnApplication : ServletContextListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun contextInitialized(sce: ServletContextEvent) {

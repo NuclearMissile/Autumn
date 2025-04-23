@@ -11,7 +11,7 @@ import io.nuclearmissile.autumn.hello.model.User
 import io.nuclearmissile.autumn.hello.service.IUserService
 import io.nuclearmissile.autumn.hello.service.UserService
 import io.nuclearmissile.autumn.server.AutumnServer
-import io.nuclearmissile.autumn.servlet.ContextLoadListener
+import io.nuclearmissile.autumn.servlet.AutumnApplication
 import io.nuclearmissile.autumn.servlet.FilterRegistration
 import io.nuclearmissile.autumn.servlet.ModelAndView
 import io.nuclearmissile.autumn.utils.IProperties
@@ -34,7 +34,7 @@ object Main {
 
 @WebListener
 @ImportDefaults
-class HelloApplication : ContextLoadListener()
+class HelloApplication : AutumnApplication()
 
 @Order(100)
 @Component
