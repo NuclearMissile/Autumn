@@ -7,18 +7,18 @@
     <parent>
         <groupId>io.nuclearmissile</groupId>
         <artifactId>autumn-parent</artifactId>
-        <version>1.1</version>
+        <version>1.1.1</version>
         <relativePath>../autumn-parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>autumn-hello</artifactId>
-    <version>1.1</version>
+    <version>1.1.1</version>
 
     <dependencies>
         <dependency>
             <groupId>io.nuclearmissile</groupId>
             <artifactId>autumn-core</artifactId>
-            <version>1.1</version>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
