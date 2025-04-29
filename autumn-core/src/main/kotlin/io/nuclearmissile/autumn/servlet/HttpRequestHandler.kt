@@ -4,7 +4,6 @@ import io.nuclearmissile.autumn.DUMMY_VALUE
 import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.exception.RequestErrorException
 import io.nuclearmissile.autumn.exception.ServerErrorException
-import io.nuclearmissile.autumn.utils.ClassUtils.extractTarget
 import io.nuclearmissile.autumn.utils.ClassUtils.toPrimitive
 import io.nuclearmissile.autumn.utils.JsonUtils.readJson
 import jakarta.servlet.ServletContext
@@ -12,7 +11,7 @@ import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
-import java.lang.reflect.InvocationTargetException
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
@@ -32,25 +31,30 @@ interface IHttpRequestHandler {
 }
 
 class HttpRequestHandler(
-    private val controller: Any,
-    private val handlerMethod: Method,
+    controller: Any,
+    private val method: Method,
     override val controllerBeanName: String,
     override val produce: String,
     override val isRest: Boolean,
 ) : IHttpRequestHandler {
-    override val isResponseBody = handlerMethod.getAnnotation(ResponseBody::class.java) != null
-    override val isVoid = handlerMethod.returnType == Void.TYPE
+    companion object {
+        private val lookup = MethodHandles.lookup()
+    }
 
+    override val isResponseBody = method.getAnnotation(ResponseBody::class.java) != null
+    override val isVoid = method.returnType == Void.TYPE
+
+    private val methodHandle = lookup.unreflect(method).bindTo(controller)
     private val methodParams = buildList {
-        val params = handlerMethod.parameters
-        val paramsAnnos = handlerMethod.parameterAnnotations
+        val params = method.parameters
+        val paramsAnnos = method.parameterAnnotations
         for (i in params.indices) {
-            add(Param(handlerMethod, params[i], paramsAnnos[i].toList()))
+            add(Param(method, params[i], paramsAnnos[i].toList()))
         }
     }
 
     override fun toString(): String {
-        return "$controllerBeanName.${handlerMethod.name}[${methodParams.size}]"
+        return "$controllerBeanName.${method.name}(${methodParams.joinToString(", ")})"
     }
 
     override fun process(
@@ -112,11 +116,7 @@ class HttpRequestHandler(
             }
         }
 
-        return try {
-            handlerMethod.invoke(controller, *args.toTypedArray())
-        } catch (e: InvocationTargetException) {
-            throw e.extractTarget()
-        }
+        return methodHandle.invokeWithArguments(args)
     }
 
     private class Param(method: Method, param: Parameter, annos: List<Annotation>) {

@@ -18,7 +18,6 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
-import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.nio.file.Paths
@@ -90,63 +89,57 @@ class DispatcherServlet : HttpServlet() {
         serve(url, req, resp)
     }
 
-    private fun addController(controllerBeanName: String, prefix: String, instance: Any, isRest: Boolean) {
-        logger.info(
-            "add {} controller '{}': {}", if (isRest) "REST" else "MVC", controllerBeanName, instance.javaClass.name
-        )
-        exceptionHandlerMap[controllerBeanName] = mutableMapOf()
-        addMethods(controllerBeanName, prefix, instance, instance.javaClass, isRest)
-    }
+    private fun addController(controllerBeanName: String, prefix: String, controller: Any, isRest: Boolean) {
+        fun addMethods(controllerBeanName: String, prefix: String, controller: Any, clazz: Class<*>, isRest: Boolean) {
+            clazz.declaredMethods.forEach { method ->
+                val annos = listOf(
+                    Get::class.java,
+                    Post::class.java,
+                    ExceptionHandler::class.java
+                ).mapNotNull { method.getAnnotation(it) }
+                if (annos.isEmpty()) return@forEach
+                if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $controllerBeanName: $method")
+                if (Modifier.isStatic(method.modifiers))
+                    throw ServletException("Cannot map url to a static method: $method.")
 
-    private fun addMethods(
-        controllerBeanName: String, prefix: String, instance: Any, clazz: Class<*>, isRest: Boolean,
-    ) {
-        fun configMethod(m: Method) {
-            if (Modifier.isStatic(m.modifiers))
-                throw ServletException("Cannot map url to a static method: $m.")
-            m.isAccessible = true
-        }
+                method.isAccessible = true
+                val anno = annos.first()
+                when (anno) {
+                    is Get -> {
+                        val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
+                        routerSetupMap["GET"]!!.add(
+                            urlPattern, HttpRequestHandler(controller, method, controllerBeanName, anno.produce, isRest)
+                        )
+                    }
 
-        clazz.declaredMethods.forEach { m ->
-            val annos = listOf(
-                Get::class.java,
-                Post::class.java,
-                ExceptionHandler::class.java
-            ).mapNotNull { m.getAnnotation(it) }
-            if (annos.isEmpty()) return@forEach
-            if (annos.size > 1) throw IllegalArgumentException("Ambiguous annotation for $controllerBeanName: $m")
+                    is Post -> {
+                        val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
+                        routerSetupMap["POST"]!!.add(
+                            urlPattern, HttpRequestHandler(controller, method, controllerBeanName, anno.produce, isRest)
+                        )
+                    }
 
-            val anno = annos.first()
-            configMethod(m)
-            when (anno) {
-                is Get -> {
-                    val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
-                    routerSetupMap["GET"]!!.add(
-                        urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
-                    )
+                    is ExceptionHandler -> {
+                        val exceptionClass = anno.value.java as Class<Exception>
+                        val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
+                        if (exceptionHandlers.containsKey(exceptionClass))
+                            throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
+                        exceptionHandlers[exceptionClass] =
+                            HttpRequestHandler(controller, method, controllerBeanName, anno.produce, isRest)
+                    }
                 }
+            }
 
-                is Post -> {
-                    val urlPattern = Paths.get(prefix + anno.value).normalize().toUnixString()
-                    routerSetupMap["POST"]!!.add(
-                        urlPattern, HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
-                    )
-                }
-
-                is ExceptionHandler -> {
-                    val exceptionClass = anno.value.java as Class<Exception>
-                    val exceptionHandlers = exceptionHandlerMap[controllerBeanName]!!
-                    if (exceptionHandlers.containsKey(exceptionClass))
-                        throw IllegalArgumentException("Ambiguous exception handler for $controllerBeanName:$exceptionClass")
-                    exceptionHandlers[exceptionClass] =
-                        HttpRequestHandler(instance, m, controllerBeanName, anno.produce, isRest)
-                }
+            if (clazz.superclass != null) {
+                addMethods(controllerBeanName, prefix, controller, clazz.superclass, isRest)
             }
         }
 
-        if (clazz.superclass != null) {
-            addMethods(controllerBeanName, prefix, instance, clazz.superclass, isRest)
-        }
+        logger.info(
+            "add {} controller '{}': {}", if (isRest) "REST" else "MVC", controllerBeanName, controller.javaClass.name
+        )
+        exceptionHandlerMap[controllerBeanName] = mutableMapOf()
+        addMethods(controllerBeanName, prefix, controller, controller.javaClass, isRest)
     }
 
     private fun resource(url: String, req: HttpServletRequest, resp: HttpServletResponse) {
