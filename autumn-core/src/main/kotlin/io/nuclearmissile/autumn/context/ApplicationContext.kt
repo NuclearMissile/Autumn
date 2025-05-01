@@ -17,7 +17,7 @@ interface ApplicationContext : AutoCloseable {
     /**
      * all bean classnames managed by ctx
      */
-    val managedClassNames: List<String>
+    val managedClassNames: Set<String>
 
     /**
      * all BeanInfos associated with bean names
@@ -89,7 +89,7 @@ class AnnotationApplicationContext(appClass: Class<*>, override val config: IPro
     private val postProcessors = mutableListOf<BeanPostProcessor>()
     private val creatingBeanNames = mutableSetOf<String>()
 
-    override val managedClassNames: List<String>
+    override val managedClassNames: Set<String>
     override val beanInfoMap: MutableMap<String, IBeanInfo>
 
     init {
@@ -153,7 +153,7 @@ class AnnotationApplicationContext(appClass: Class<*>, override val config: IPro
             ?: throw BeanDefinitionException("No valid bean constructor found in class: $name.")
     }
 
-    private fun scanClassNamesWithinAppClass(appClass: Class<*>): List<String> {
+    private fun scanClassNamesWithinAppClass(appClass: Class<*>): Set<String> {
         val scanPackages = appClass.getAnnotation(ComponentScan::class.java)?.value?.toList()
             ?: listOf(appClass.packageName)
         logger.info("component scan in packages: {}", scanPackages.joinToString())
@@ -163,7 +163,7 @@ class AnnotationApplicationContext(appClass: Class<*>, override val config: IPro
             IMPORT_DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
         }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
-        return classNameSet.toList()
+        return classNameSet
     }
 
     private fun createBeanInfos(classNames: Collection<String>): MutableMap<String, IBeanInfo> {
