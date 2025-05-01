@@ -34,7 +34,7 @@ val DEFAULT_ERROR_RESP_BODY = mapOf(
     504 to "<h1>504: Gateway Timeout</h1>",
 )
 
-val IMPORT_DEFAULT_CONFIGURATIONS = listOf(
+val DEFAULT_CONFIGURATIONS = listOf(
     WebMvcConfiguration::class,
     DbConfiguration::class,
     AroundConfiguration::class,

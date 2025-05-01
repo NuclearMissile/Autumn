@@ -33,7 +33,6 @@ object Main {
 }
 
 @WebListener
-@ImportDefaults
 class HelloApplication : AutumnApplication()
 
 @Order(100)
