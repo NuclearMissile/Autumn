@@ -86,7 +86,7 @@ annotation class Import(vararg val value: KClass<*>)
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class ImportDefaults()
+annotation class ImportDefault()
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

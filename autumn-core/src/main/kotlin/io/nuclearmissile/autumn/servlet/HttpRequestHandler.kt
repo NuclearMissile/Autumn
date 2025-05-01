@@ -177,7 +177,7 @@ class HttpRequestHandler(
         }
 
         override fun toString(): String {
-            return "Param(name=$name, paramAnno=$paramAnno, paramClassType=$paramType)"
+            return "Param(name=$name, paramAnno=$paramAnno, paramClassType=${paramType.toString().substring(6)})"
         }
     }
 }
