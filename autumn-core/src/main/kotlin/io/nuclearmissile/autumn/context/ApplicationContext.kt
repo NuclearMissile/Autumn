@@ -1,6 +1,6 @@
 package io.nuclearmissile.autumn.context
 
-import io.nuclearmissile.autumn.DEFAULT_CONFIGURATIONS
+import io.nuclearmissile.autumn.IMPORT_DEFAULT_CONFIGURATIONS
 import io.nuclearmissile.autumn.DEFAULT_ORDER
 import io.nuclearmissile.autumn.annotation.*
 import io.nuclearmissile.autumn.aop.Invocation
@@ -159,8 +159,9 @@ class AnnotationApplicationContext(appClass: Class<*>, override val config: IPro
         logger.info("component scan in packages: {}", scanPackages.joinToString())
         val classNameSet = scanClassNames(scanPackages).toMutableSet()
         appClass.getAnnotation(Import::class.java)?.value?.map { it.java.name }?.apply(classNameSet::addAll)
-        DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
-        
+        if (appClass.getAnnotation(ImportDefaults::class.java) != null) {
+            IMPORT_DEFAULT_CONFIGURATIONS.map { it.java.name }.apply(classNameSet::addAll)
+        }
         logger.atDebug().log("class found by component scan: {}", classNameSet)
         return classNameSet
     }
