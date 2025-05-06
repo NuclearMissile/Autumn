@@ -7,10 +7,12 @@ import io.nuclearmissile.autumn.annotation.Bean
 import io.nuclearmissile.autumn.annotation.Configuration
 import io.nuclearmissile.autumn.annotation.Value
 import io.nuclearmissile.autumn.aop.AroundProxyBeanPostProcessor
+import io.nuclearmissile.autumn.context.ApplicationContextHolder
 import io.nuclearmissile.autumn.db.DataSourceTransactionManager
 import io.nuclearmissile.autumn.db.JdbcTemplate
 import io.nuclearmissile.autumn.db.TransactionManager
 import io.nuclearmissile.autumn.db.TransactionalBeanPostProcessor
+import jakarta.persistence.Entity
 import javax.sql.DataSource
 
 @Configuration
@@ -44,7 +46,11 @@ class OrmTestConfiguration {
 
     @Bean
     fun naiveOrm(@Autowired jdbcTemplate: JdbcTemplate): NaiveOrm {
-        return NaiveOrm(jdbcTemplate)
+        val classMapping = ApplicationContextHolder.required.managedClassNames
+            .map { Class.forName(it) }
+            .filter { it.isAnnotationPresent(Entity::class.java) }
+            .associateWith { EntityMapper(it) }
+        return NaiveOrm(jdbcTemplate, classMapping)
     }
 
     @Bean

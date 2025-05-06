@@ -11,10 +11,6 @@ class JdbcTemplate(private val dataSource: DataSource) {
         return query(T::class.java.getRowExtractor(), sql, *args)
     }
 
-    fun executeInitSql(sql: String) {
-        sql.split(";").map { it.trim() }.filter { it.isNotBlank() }.forEach { update(it) }
-    }
-
     fun <T> query(rse: ResultSetExtractor<T>, sql: String, vararg args: Any?): T? {
         return execute(preparedStatementCreator(sql, *args)) { ps ->
             ps.executeQuery().use { rs -> if (!rs.next()) null else rse.extract(rs) }

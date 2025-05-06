@@ -1,20 +1,11 @@
 package io.nuclearmissile.autumn.db.orm
 
-import io.nuclearmissile.autumn.context.ApplicationContextHolder
 import io.nuclearmissile.autumn.db.JdbcTemplate
-import jakarta.persistence.Entity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class NaiveOrm(val jdbcTemplate: JdbcTemplate) {
+class NaiveOrm(val jdbcTemplate: JdbcTemplate, private val classMapping: Map<Class<*>, EntityMapper<*>>) {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
-
-    private val classMapping by lazy {
-        ApplicationContextHolder.required.managedClassNames
-            .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
-            .filter { it.isAnnotationPresent(Entity::class.java) }
-            .associateWith { EntityMapper(it) }
-    }
 
     @Suppress("UNCHECKED_CAST")
     fun <T> mapperOf(clazz: Class<T>): EntityMapper<T> {

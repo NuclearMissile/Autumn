@@ -4,7 +4,10 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nuclearmissile.autumn.DEFAULT_TX_MANAGER_ORDER
 import io.nuclearmissile.autumn.annotation.*
+import io.nuclearmissile.autumn.context.ApplicationContextHolder
+import io.nuclearmissile.autumn.db.orm.EntityMapper
 import io.nuclearmissile.autumn.db.orm.NaiveOrm
+import jakarta.persistence.Entity
 import javax.sql.DataSource
 
 @Configuration
@@ -38,7 +41,11 @@ class DbConfiguration {
 
     @Bean
     fun naiveOrm(@Autowired jdbcTemplate: JdbcTemplate): NaiveOrm {
-        return NaiveOrm(jdbcTemplate)
+        val classMapping = ApplicationContextHolder.required.managedClassNames
+            .map { Class.forName(it) }
+            .filter { it.isAnnotationPresent(Entity::class.java) }
+            .associateWith { EntityMapper(it) }
+        return NaiveOrm(jdbcTemplate, classMapping)
     }
 
     @Bean
