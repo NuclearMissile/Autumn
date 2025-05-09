@@ -47,7 +47,7 @@ class OrmTestConfiguration {
     @Bean
     fun naiveOrm(@Autowired jdbcTemplate: JdbcTemplate): NaiveOrm {
         val classMapping = ApplicationContextHolder.required.managedClassNames
-            .map { Class.forName(it) }
+            .map { Class.forName(it, true, Thread.currentThread().contextClassLoader) }
             .filter { it.isAnnotationPresent(Entity::class.java) }
             .associateWith { EntityMapper(it) }
         return NaiveOrm(jdbcTemplate, classMapping)
