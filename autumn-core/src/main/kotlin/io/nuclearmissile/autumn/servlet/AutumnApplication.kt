@@ -31,8 +31,8 @@ abstract class AutumnApplication : ServletContextListener {
         logger.info("init ApplicationContext by application class: {}", appClassName)
         val appClass = try {
             Class.forName(appClassName, true, Thread.currentThread().contextClassLoader)
-        } catch (e: ClassNotFoundException) {
-            throw AutumnException("Could not load autumn config class: $appClassName", null)
+        } catch (e: Exception) {
+            throw AutumnException("Could not load autumn config class: $appClassName", e)
         }
         val applicationContext = AnnotationApplicationContext(appClass, config)
         logger.info("Application context created: {}", applicationContext)
