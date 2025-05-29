@@ -18,7 +18,7 @@
         <kotlin.compiler.apiVersion>2.1</kotlin.compiler.apiVersion>
         <kotlin.compiler.languageVersion>2.1</kotlin.compiler.languageVersion>
 
-        <kotlin.version>2.1.20</kotlin.version>
+        <kotlin.version>2.1.21</kotlin.version>
         <commons-cli.version>1.9.0</commons-cli.version>
         <jakarta.persistence-api.verion>3.2.0</jakarta.persistence-api.verion>
         <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
@@ -30,7 +30,7 @@
         <hikaricp.version>6.3.0</hikaricp.version>
         <freemarker.version>2.3.34</freemarker.version>
         <sqlite.version>3.49.1.0</sqlite.version>
-        <spring.version>6.2.6</spring.version>
+        <spring.version>6.2.7</spring.version>
         <routekit.version>0.2.1</routekit.version>
 
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
