@@ -2,7 +2,7 @@
 
 <div align="center"> 
 <h1>Autumn Framework</h1>
-Yet another web application framework imitating Spring in Kotlin.
+Yet another web application framework inspired by Spring in Kotlin.
 </div>
 
 ![](screenshot.png)
