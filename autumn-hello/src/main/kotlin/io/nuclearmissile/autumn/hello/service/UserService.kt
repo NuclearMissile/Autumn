@@ -11,17 +11,12 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 
 @Component
-class BeforeInvocation : Invocation {
+class LoggerInvocation : Invocation {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun before(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?) {
         logger.info("[Before] ${method.declaringClass.toString().removePrefix("class ")}.${method.name}")
     }
-}
-
-@Component
-class AfterInvocation : Invocation {
-    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun after(
         caller: Any, returnValue: Any?, method: Method, chain: InvocationChain, args: Array<Any?>?,
@@ -38,7 +33,7 @@ interface IUserService {
     fun validate(email: String, password: String): User?
 }
 
-@Around("beforeInvocation", "afterInvocation")
+@Around("loggerInvocation")
 @Component
 @Transactional
 class UserService @Autowired constructor(private val naiveOrm: NaiveOrm) : IUserService {
