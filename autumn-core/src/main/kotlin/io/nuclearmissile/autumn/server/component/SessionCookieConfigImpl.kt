@@ -38,10 +38,12 @@ class SessionCookieConfigImpl(
         return path
     }
 
+    @Deprecated("Deprecated in Java")
     @Suppress("removal")
     override fun setComment(comment: String) {
     }
 
+    @Deprecated("Deprecated in Java")
     @Suppress("removal")
     override fun getComment(): String? {
         return null
