@@ -10,13 +10,19 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender
 import net.bytebuddy.matcher.ElementMatchers
 import org.slf4j.LoggerFactory
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 
 object ClassUtils {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val byteBuddy = ByteBuddy()
+    private val lookup = MethodHandles.lookup()
+    private val methodHandleCache = ConcurrentHashMap<Method, MethodHandle>()
 
     fun <T> createProxy(bean: T, aopHandlers: List<Invocation>): T {
         if (aopHandlers.isEmpty()) return bean
@@ -25,7 +31,8 @@ object ClassUtils {
         val proxyClass = byteBuddy.subclass(targetClass, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
             .method(ElementMatchers.isPublic())
             .intercept(InvocationHandlerAdapter.of { _, method, args ->
-                InvocationChain(aopHandlers).invokeChain(bean, method, args)
+                val methodHandle = methodHandleCache.computeIfAbsent(method) { lookup.unreflect(method) }
+                InvocationChain(aopHandlers, methodHandle).invokeChain(bean, method, args)
             })
             .attribute(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER)
             .make().load(targetClass.classLoader).loaded

@@ -1,10 +1,11 @@
 package io.nuclearmissile.autumn.aop
 
 import io.nuclearmissile.autumn.utils.ClassUtils.extractTarget
+import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
-class InvocationChain(handlers: List<Invocation>) {
+class InvocationChain(handlers: List<Invocation>, private val methodHandle: MethodHandle) {
     private val iter = handlers.iterator()
 
     fun invokeChain(caller: Any, method: Method, args: Array<Any?>?): Any? {
@@ -12,7 +13,7 @@ class InvocationChain(handlers: List<Invocation>) {
             if (iter.hasNext())
                 iter.next().invoke(caller, method, this, args)
             else
-                method.invoke(caller, *(args ?: emptyArray()))
+                methodHandle.bindTo(caller).invokeWithArguments(*(args ?: emptyArray()))
         } catch (e: InvocationTargetException) {
             throw e.extractTarget()
         }
