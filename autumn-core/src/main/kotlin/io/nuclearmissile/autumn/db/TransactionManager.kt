@@ -17,17 +17,17 @@ class TransactionalBeanPostProcessor : AnnotationProxyBeanPostProcessor<Transact
 
 class DataSourceTransactionManager(private val dataSource: DataSource) : TransactionManager, Invocation {
     companion object {
-        private val holder = ThreadLocal<TransactionStatus>()
-        val connection: Connection?
-            get() = holder.get()?.connection
-    }
+        private val holder = ScopedValue.newInstance<TransactionStatus>()
+        private val logger = LoggerFactory.getLogger(DataSourceTransactionManager::class.java)
 
-    private val logger = LoggerFactory.getLogger(javaClass)
+        val connection: Connection?
+            get() = if (holder.isBound) holder.get().connection else null
+    }
 
     override fun invoke(caller: Any, method: Method, chain: InvocationChain, args: Array<Any?>?): Any? {
         // join current tx
         val txAnno = method.declaringClass.getAnnotation(Transactional::class.java)
-        if (holder.get() != null || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
+        if (holder.isBound || txAnno == null || !method.isAnnotationPresent(Transactional::class.java))
             return chain.invokeChain(caller, method, args)
 
         dataSource.connection.use { conn ->
@@ -36,21 +36,21 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
                 conn.autoCommit = false
             }
             try {
-                holder.set(TransactionStatus(conn))
-                val ret = chain.invokeChain(caller, method, args)
-                conn.commit()
-                return ret
-            } catch (e: Exception) {
+                return ScopedValue.where(holder, TransactionStatus(conn)).call<Any?, Throwable> {
+                    val ret = chain.invokeChain(caller, method, args)
+                    conn.commit()
+                    ret
+                }
+            } catch (e: Throwable) {
                 logger.warn("rollback transaction for the following exception:", e)
                 try {
                     conn.rollback()
-                } catch (e: Exception) {
-                    logger.warn("exception thrown while rollback transaction, ignored:", e)
-                    e.addSuppressed(e)
+                } catch (rollbackEx: Exception) {
+                    logger.warn("exception thrown while rollback transaction, ignored:", rollbackEx)
+                    e.addSuppressed(rollbackEx)
                 }
                 throw e
             } finally {
-                holder.remove()
                 if (autoCommit) {
                     conn.autoCommit = true
                 }
@@ -58,4 +58,3 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
         }
     }
 }
-
