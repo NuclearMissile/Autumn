@@ -38,7 +38,7 @@ class DataSourceTransactionManager(private val dataSource: DataSource) : Transac
             try {
                 return ScopedValue.where(holder, TransactionStatus(conn)).call<Any?, Throwable> {
                     val ret = chain.invokeChain(caller, method, args)
-                    conn.commit()
+                    holder.get().connection.commit()
                     ret
                 }
             } catch (e: Throwable) {
