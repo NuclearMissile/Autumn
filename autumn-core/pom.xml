@@ -19,7 +19,6 @@
     </repositories>
 
     <artifactId>autumn-core</artifactId>
-    <version>1.1.1</version>
 
     <dependencies>
         <dependency>
@@ -142,6 +141,14 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
             </plugin>
         </plugins>
 

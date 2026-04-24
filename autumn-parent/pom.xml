@@ -13,24 +13,24 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <kotlin.version>2.2.20</kotlin.version>
-        <commons-cli.version>1.10.0</commons-cli.version>
+        <kotlin.version>2.3.20</kotlin.version>
+        <commons-cli.version>1.11.0</commons-cli.version>
         <jakarta.persistence-api.verion>3.2.0</jakarta.persistence-api.verion>
         <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
-        <jackson.version>2.20.0</jackson.version>
-        <snakeyaml.version>2.5</snakeyaml.version>
-        <logback.version>1.5.18</logback.version>
+        <jackson.version>2.21.2</jackson.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
+        <logback.version>1.5.32</logback.version>
         <slf4j.version>2.0.17</slf4j.version>
-        <bytebuddy.version>1.17.7</bytebuddy.version>
+        <bytebuddy.version>1.18.8</bytebuddy.version>
         <hikaricp.version>7.0.2</hikaricp.version>
         <freemarker.version>2.3.34</freemarker.version>
-        <sqlite.version>3.50.3.0</sqlite.version>
-        <spring.version>6.2.11</spring.version>
+        <sqlite.version>3.53.0.0</sqlite.version>
+        <spring.version>7.0.7</spring.version>
         <routekit.version>0.2.1</routekit.version>
 
-        <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
-        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
-        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
+        <maven-war-plugin.version>3.5.1</maven-war-plugin.version>
+        <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+        <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -128,6 +128,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -152,7 +160,7 @@
                 </executions>
                 <configuration>
                     <args>
-                        <arg>-Xjvm-default=all</arg>
+                        <arg>-jvm-default=enable</arg>
                         <arg>-java-parameters</arg>
                     </args>
                     <compilerPlugins>

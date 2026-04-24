@@ -16,7 +16,7 @@ object JsonUtils {
      * Holds ObjectMapper for internal use: NEVER modify!
      */
     val OBJECT_MAPPER = ObjectMapper().apply {
-        setSerializationInclusion(JsonInclude.Include.ALWAYS)
+        setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
         // add support for kotlin classes without no-arg ctor
         registerKotlinModule()
         // disabled features:

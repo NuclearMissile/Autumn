@@ -371,7 +371,7 @@ class DispatcherServletTest {
                 params?.forEach { (k, v) -> req.setParameter(k, v) }
             }
         }
-        req.session = MockHttpSession()
+        req.setSession(MockHttpSession())
         return req
     }
 

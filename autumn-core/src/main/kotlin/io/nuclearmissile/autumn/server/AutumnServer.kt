@@ -13,7 +13,11 @@ import io.nuclearmissile.autumn.utils.getRequired
 import jakarta.servlet.annotation.WebFilter
 import jakarta.servlet.annotation.WebListener
 import jakarta.servlet.annotation.WebServlet
-import org.apache.commons.cli.*
+import org.apache.commons.cli.DefaultParser
+import org.apache.commons.cli.Option
+import org.apache.commons.cli.Options
+import org.apache.commons.cli.ParseException
+import org.apache.commons.cli.help.HelpFormatter
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.lang.management.ManagementFactory
@@ -39,17 +43,17 @@ object AutumnServer {
         val startTime = System.currentTimeMillis()
         val options = Options().addOption(
             Option.builder("w").longOpt("war").argName("file").hasArg()
-                .desc("specify war file.").required().build()
+                .desc("specify war file.").required().get()
         ).addOption(
             Option.builder("c").longOpt("config").argName("file").hasArg()
-                .desc("specify external configuration file.").build()
+                .desc("specify external configuration file.").get()
         )
 
         val cmd = try {
             DefaultParser().parse(options, args)
         } catch (e: ParseException) {
             System.err.println(e.message)
-            HelpFormatter().printHelp("java -jar jarPath [options]", options)
+            HelpFormatter.builder().get().printHelp("java -jar jarPath [options]", "", options, "", true)
             exitProcess(1)
         }
         val war = cmd.getOptionValue("war")!!
@@ -187,7 +191,6 @@ object AutumnServer {
             )
         }
         val executor = if (enableVirtualThread && jvmVersion >= 21) {
-            @Suppress("Since15")
             Executors.newVirtualThreadPerTaskExecutor()
         } else ThreadPoolExecutor(
             config.getRequired("server.core-pool-size"),
